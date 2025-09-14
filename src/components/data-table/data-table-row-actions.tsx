@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import Link from 'next/link';
+import { Hotel } from '@/lib/types';
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -32,6 +34,7 @@ export function HotelDataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const { toast } = useToast();
+  const hotel = row.original as Hotel;
 
   const copyLoginLink = () => {
     navigator.clipboard.writeText('https://weso.systems/hotel/login-link-placeholder');
@@ -54,7 +57,9 @@ export function HotelDataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[180px]">
-          <DropdownMenuItem>Hotelier-Dashboard ansehen</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>Einstellungen</DropdownMenuItem>
           <DropdownMenuItem onClick={copyLoginLink}>
             Login-Link kopieren

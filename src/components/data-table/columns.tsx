@@ -6,6 +6,7 @@ import { Hotel } from '@/lib/types';
 import { HotelDataTableRowActions } from './data-table-row-actions';
 import { Button } from '../ui/button';
 import { ArrowUpDown } from 'lucide-react';
+import Link from 'next/link';
 
 export const hotelColumns: ColumnDef<Hotel>[] = [
   {
@@ -43,9 +44,14 @@ export const hotelColumns: ColumnDef<Hotel>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue('hotelName')}</div>
-    ),
+    cell: ({ row }) => {
+      const hotel = row.original as Hotel;
+      return (
+        <Link href={`/dashboard/${hotel.id}`} className="font-medium hover:underline">
+          {row.getValue('hotelName')}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: 'domain',
