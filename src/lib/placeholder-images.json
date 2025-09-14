@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "landing-background",
+      "description": "Modern architecture background for the landing page",
+      "imageUrl": "https://picsum.photos/seed/wesosystems/1920/1080",
+      "imageHint": "modern architecture"
+    }
+  ]
 }
