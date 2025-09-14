@@ -2,20 +2,20 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
 import { mockBookings } from '@/lib/data';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Booking } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useParams } from 'next/navigation';
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
@@ -64,7 +64,8 @@ const bookingColumns: ColumnDef<Booking>[] = [
   },
 ];
 
-export default function BookingsPage({ params }: { params: { hotelId: string } }) {
+export default function BookingsPage() {
+  const params = useParams<{ hotelId: string }>();
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
