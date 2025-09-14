@@ -13,6 +13,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { useParams } from 'next/navigation';
 
 const chartData = [
   { date: 'Mo', revenue: 1250 },
@@ -31,11 +32,8 @@ const chartConfig = {
   },
 };
 
-export default function HotelierDashboardPage({
-  params,
-}: {
-  params: { hotelId: string };
-}) {
+export default function HotelierDashboardPage() {
+  const params = useParams<{ hotelId: string }>();
   return (
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">
