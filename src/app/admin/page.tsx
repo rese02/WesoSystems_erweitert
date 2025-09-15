@@ -3,9 +3,24 @@ import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { hotelColumns } from '@/components/data-table/columns';
 import { DataTable } from '@/components/data-table/data-table';
-import { mockHotels } from '@/lib/data';
+import { db } from '@/lib/firebase/client';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { Hotel } from '@/lib/types';
 
-export default function AgencyDashboardPage() {
+async function getHotels(): Promise<Hotel[]> {
+  const hotelsCollection = collection(db, 'hotels');
+  const q = query(hotelsCollection, orderBy('createdAt', 'desc'));
+  const hotelsSnapshot = await getDocs(q);
+  const hotelsList = hotelsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Hotel[];
+  return hotelsList;
+}
+
+export default async function AgencyDashboardPage() {
+  const hotels = await getHotels();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -24,7 +39,7 @@ export default function AgencyDashboardPage() {
       </div>
       <DataTable
         columns={hotelColumns}
-        data={mockHotels}
+        data={hotels}
         filterColumnId="hotelName"
         filterPlaceholder="Hotels filtern..."
       />
