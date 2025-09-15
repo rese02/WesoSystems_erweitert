@@ -19,16 +19,17 @@ export default function Home() {
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-200">
                 <MountainIcon className="h-6 w-6 text-gray-600" />
               </div>
-              <span className="text-xl font-semibold">Alpenlink Booking</span>
             </div>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4 p-0">
-            <CardTitle className="font-headline text-3xl font-bold text-center">
-              Alpenlink Booking
-            </CardTitle>
-            <CardDescription className="text-center">
-              Das moderne Buchungssystem für Ihr Hotel.
-            </CardDescription>
+            <div className="text-center mb-2">
+                <CardTitle className="font-headline text-3xl font-bold">
+                Alpenlink Booking
+                </CardTitle>
+                <CardDescription>
+                Das moderne Buchungssystem für Ihr Hotel.
+                </CardDescription>
+            </div>
             <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
               <Button asChild size="lg" className="h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90">
                 <Link href="/agency/login">
@@ -39,7 +40,7 @@ export default function Home() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-12 border-gray-300 bg-gray-100 text-base font-semibold text-gray-800 hover:bg-gray-200"
+                className="h-12 border-gray-300 bg-transparent text-base font-semibold text-gray-800 hover:bg-gray-100"
               >
                 <Link href="/hotel/login">Hotel-Login</Link>
               </Button>
