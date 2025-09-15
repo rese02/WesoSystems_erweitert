@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { mockBookings } from '@/lib/data';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Booking } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -16,23 +15,46 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
-    className={cn('capitalize text-white', {
-      'bg-green-600 hover:bg-green-600/90': status === 'Confirmed',
-      'bg-yellow-500 hover:bg-yellow-500/90': status === 'Partial Payment',
-      'bg-blue-500 hover:bg-blue-500/90': status === 'Sent',
-      'bg-red-600 hover:bg-red-600/90': status === 'Cancelled',
+    className={cn('capitalize', {
+      'bg-green-100 text-green-800 border-green-200': status === 'Confirmed',
+      'bg-yellow-100 text-yellow-800 border-yellow-200': status === 'Partial Payment',
+      'bg-blue-100 text-blue-800 border-blue-200': status === 'Sent',
+      'bg-red-100 text-red-800 border-red-200': status === 'Cancelled',
     })}
-    variant="default"
+    variant="outline"
   >
     {status}
   </Badge>
 );
 
+
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!params.hotelId) return;
+    const bookingsCollection = collection(db, 'hotels', params.hotelId, 'bookings');
+    const q = query(bookingsCollection, orderBy('checkIn', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const bookingsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Booking[];
+      setBookings(bookingsList);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [params.hotelId]);
 
   const bookingColumns: ColumnDef<Booking>[] = [
     { accessorKey: 'guestName', header: 'Gast' },
@@ -94,9 +116,10 @@ export default function BookingsPage() {
       </div>
       <DataTable
         columns={bookingColumns}
-        data={mockBookings}
+        data={bookings}
         filterColumnId="guestName"
         filterPlaceholder="Buchungen filtern..."
+        loading={loading}
       />
     </div>
   );

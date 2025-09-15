@@ -27,12 +27,14 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
+import { Skeleton } from '../ui/skeleton';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   filterColumnId: string;
   filterPlaceholder: string;
+  loading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +42,7 @@ export function DataTable<TData, TValue>({
   data,
   filterColumnId,
   filterPlaceholder,
+  loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
@@ -99,7 +102,17 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading ? (
+                 [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                        {columns.map((column, j) => (
+                            <TableCell key={j}>
+                                <Skeleton className="h-6 w-full" />
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                 ))
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
