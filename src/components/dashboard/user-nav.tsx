@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, User } from 'lucide-react';
+import Link from 'next/link';
 
 export function UserNav() {
   return (
@@ -41,9 +42,11 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Abmelden</span>
+        <DropdownMenuItem asChild>
+          <Link href="/">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Abmelden</span>
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

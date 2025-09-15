@@ -16,7 +16,7 @@ export default function CreateHotelPage() {
         <h1 className="font-headline text-3xl font-bold">
           Neues Hotel-System anlegen
         </h1>
-        <p className="text-muted-foreground">
+        <p className="mt-1 text-muted-foreground">
           Setzen Sie ein komplettes, eigenständiges System für einen neuen
           Hotelkunden auf.
         </p>
@@ -94,7 +94,7 @@ export default function CreateHotelPage() {
               <CardTitle>Aktionen</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 Hotel erstellen
               </Button>
             </CardContent>

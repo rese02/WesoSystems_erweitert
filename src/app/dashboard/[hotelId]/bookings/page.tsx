@@ -19,11 +19,11 @@ import { useParams } from 'next/navigation';
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
-    className={cn('text-white', {
-      'bg-green-500': status === 'Confirmed',
-      'bg-yellow-500': status === 'Partial Payment',
-      'bg-blue-500': status === 'Sent',
-      'bg-red-500': status === 'Cancelled',
+    className={cn('text-white capitalize', {
+      'bg-green-600 hover:bg-green-600/90': status === 'Confirmed',
+      'bg-yellow-500 hover:bg-yellow-500/90': status === 'Partial Payment',
+      'bg-blue-500 hover:bg-blue-500/90': status === 'Sent',
+      'bg-red-600 hover:bg-red-600/90': status === 'Cancelled',
     })}
     variant="default"
   >
@@ -32,7 +32,7 @@ const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
 );
 
 const bookingColumns: ColumnDef<Booking>[] = [
-  { accessorKey: 'guestName', header: 'Gastname' },
+  { accessorKey: 'guestName', header: 'Gast' },
   { accessorKey: 'checkIn', header: 'Check-in' },
   { accessorKey: 'checkOut', header: 'Check-out' },
   {
@@ -43,40 +43,60 @@ const bookingColumns: ColumnDef<Booking>[] = [
   {
     accessorKey: 'price',
     header: 'Preis',
-    cell: ({ row }) =>
-      `€${(row.getValue('price') as number).toFixed(2)}`,
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue('price'));
+      const formatted = new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(amount);
+      return <div className="font-medium">{formatted}</div>;
+    },
   },
   {
     id: 'actions',
     cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Menü öffnen</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>Buchung ansehen</DropdownMenuItem>
-          <DropdownMenuItem>Status ändern</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Menü öffnen</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Buchung ansehen</DropdownMenuItem>
+            <DropdownMenuItem>Status ändern</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     ),
   },
 ];
 
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-headline text-3xl font-bold">Buchungsübersicht</h1>
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-headline text-3xl font-bold">Buchungsübersicht</h1>
+          <p className="mt-1 text-muted-foreground">
+            Alle Buchungen für Ihr Hotel im Überblick.
+          </p>
+        </div>
+        <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Link href={`/dashboard/${params.hotelId}/bookings/create`}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Neue Buchung
+          </Link>
+        </Button>
       </div>
       <DataTable
         columns={bookingColumns}
         data={mockBookings}
         filterColumnId="guestName"
-        filterPlaceholder="Buchungen nach Gastname filtern..."
+        filterPlaceholder="Buchungen filtern..."
       />
     </div>
   );

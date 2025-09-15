@@ -8,12 +8,17 @@ import { mockHotels } from '@/lib/data';
 export default function AgencyDashboardPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-headline text-3xl font-bold">Hotelübersicht</h1>
-        <Button asChild className='bg-accent text-accent-foreground hover:bg-accent/90'>
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-headline text-3xl font-bold">Hotelübersicht</h1>
+          <p className="mt-1 text-muted-foreground">
+            Verwalten Sie alle Ihre Hotelpartner an einem Ort.
+          </p>
+        </div>
+        <Button asChild className='bg-primary text-primary-foreground hover:bg-primary/90'>
           <Link href="/admin/create-hotel">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Neues Hotel erstellen
+            Neues Hotel anlegen
           </Link>
         </Button>
       </div>
