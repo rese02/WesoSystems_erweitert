@@ -12,6 +12,10 @@ export async function createHotelAction(formData: FormData) {
     hotelierEmail: formData.get('hotelierEmail') as string,
     contactEmail: formData.get('contactEmail') as string,
     contactPhone: formData.get('contactPhone') as string,
+    accountHolder: formData.get('accountHolder') as string,
+    iban: formData.get('iban') as string,
+    bic: formData.get('bic') as string,
+    bankName: formData.get('bankName') as string,
     createdAt: new Date().toISOString(),
   };
 

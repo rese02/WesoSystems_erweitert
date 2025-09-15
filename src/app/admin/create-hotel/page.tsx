@@ -103,6 +103,41 @@ export default function CreateHotelPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Bankverbindung für Überweisungen</CardTitle>
+              <CardDescription>
+                Diese Daten werden dem Gast für die Überweisung angezeigt.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid gap-2 md:col-span-2">
+                <Label htmlFor="accountHolder">Kontoinhaber</Label>
+                <Input
+                  id="accountHolder"
+                  name="accountHolder"
+                  placeholder="Ihr Name oder Firmenname"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="iban">IBAN</Label>
+                <Input id="iban" name="iban" placeholder="Ihre IBAN" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="bic">BIC/SWIFT</Label>
+                <Input id="bic" name="bic" placeholder="Ihr BIC/SWIFT" />
+              </div>
+              <div className="grid gap-2 md:col-span-2">
+                <Label htmlFor="bankName">Bank</Label>
+                <Input
+                  id="bankName"
+                  name="bankName"
+                  placeholder="Name Ihrer Bank"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:col-span-1">
