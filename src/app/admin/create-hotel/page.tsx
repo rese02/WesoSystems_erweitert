@@ -90,6 +90,7 @@ export default function CreateHotelPage() {
                   name="contactEmail"
                   type="email"
                   placeholder="info@hotel.com"
+                  required
                 />
               </div>
               <div className="grid gap-2">
@@ -99,6 +100,7 @@ export default function CreateHotelPage() {
                   name="contactPhone"
                   type="tel"
                   placeholder="+49 123 456789"
+                  required
                 />
               </div>
             </CardContent>
@@ -118,15 +120,21 @@ export default function CreateHotelPage() {
                   id="accountHolder"
                   name="accountHolder"
                   placeholder="Ihr Name oder Firmenname"
+                  required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="iban">IBAN</Label>
-                <Input id="iban" name="iban" placeholder="Ihre IBAN" />
+                <Input id="iban" name="iban" placeholder="Ihre IBAN" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="bic">BIC/SWIFT</Label>
-                <Input id="bic" name="bic" placeholder="Ihr BIC/SWIFT" />
+                <Input
+                  id="bic"
+                  name="bic"
+                  placeholder="Ihr BIC/SWIFT"
+                  required
+                />
               </div>
               <div className="grid gap-2 md:col-span-2">
                 <Label htmlFor="bankName">Bank</Label>
@@ -134,6 +142,7 @@ export default function CreateHotelPage() {
                   id="bankName"
                   name="bankName"
                   placeholder="Name Ihrer Bank"
+                  required
                 />
               </div>
             </CardContent>
