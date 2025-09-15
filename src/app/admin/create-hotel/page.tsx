@@ -1,3 +1,4 @@
+import { createHotelAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +23,7 @@ export default function CreateHotelPage() {
         </p>
       </div>
 
-      <form className="grid gap-8 lg:grid-cols-3">
+      <form action={createHotelAction} className="grid gap-8 lg:grid-cols-3">
         <div className="grid gap-8 lg:col-span-2">
           <Card>
             <CardHeader>
@@ -36,13 +37,19 @@ export default function CreateHotelPage() {
                 <Label htmlFor="hotelName">Hotelname</Label>
                 <Input
                   id="hotelName"
+                  name="hotelName"
                   placeholder="z.B. Hotel Hatzis"
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="domain">Domain</Label>
-                <Input id="domain" placeholder="z.B. hatzis.com" required />
+                <Input
+                  id="domain"
+                  name="domain"
+                  placeholder="z.B. hatzis.com"
+                  required
+                />
               </div>
             </CardContent>
           </Card>
@@ -59,6 +66,7 @@ export default function CreateHotelPage() {
                 <Label htmlFor="hotelierEmail">E-Mail des Hoteliers</Label>
                 <Input
                   id="hotelierEmail"
+                  name="hotelierEmail"
                   type="email"
                   placeholder="hotelier@example.com"
                   required
@@ -67,7 +75,7 @@ export default function CreateHotelPage() {
             </CardContent>
           </Card>
 
-           <Card>
+          <Card>
             <CardHeader>
               <CardTitle>Kontaktdaten</CardTitle>
               <CardDescription>
@@ -77,15 +85,24 @@ export default function CreateHotelPage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-                <Input id="contactEmail" type="email" placeholder="info@hotel.com" />
+                <Input
+                  id="contactEmail"
+                  name="contactEmail"
+                  type="email"
+                  placeholder="info@hotel.com"
+                />
               </div>
-               <div className="grid gap-2">
+              <div className="grid gap-2">
                 <Label htmlFor="contactPhone">Kontakt Telefon</Label>
-                <Input id="contactPhone" type="tel" placeholder="+49 123 456789" />
+                <Input
+                  id="contactPhone"
+                  name="contactPhone"
+                  type="tel"
+                  placeholder="+49 123 456789"
+                />
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         <div className="lg:col-span-1">
@@ -94,7 +111,10 @@ export default function CreateHotelPage() {
               <CardTitle>Aktionen</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                type="submit"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 Hotel erstellen
               </Button>
             </CardContent>
