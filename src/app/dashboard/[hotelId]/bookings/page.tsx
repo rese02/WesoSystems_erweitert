@@ -19,12 +19,13 @@ import { useParams } from 'next/navigation';
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
-    className={cn({
-      'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300': status === 'Confirmed',
-      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300': status === 'Partial Payment',
-      'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300': status === 'Sent',
-      'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300': status === 'Cancelled',
+    className={cn('text-white', {
+      'bg-green-500': status === 'Confirmed',
+      'bg-yellow-500': status === 'Partial Payment',
+      'bg-blue-500': status === 'Sent',
+      'bg-red-500': status === 'Cancelled',
     })}
+    variant="default"
   >
     {status}
   </Badge>
@@ -70,12 +71,6 @@ export default function BookingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-bold">Buchungsübersicht</h1>
-        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <Link href={`/dashboard/${params.hotelId}/bookings/create`}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Neue Buchung anlegen
-          </Link>
-        </Button>
       </div>
       <DataTable
         columns={bookingColumns}

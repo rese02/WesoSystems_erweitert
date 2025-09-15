@@ -6,6 +6,8 @@ import {
   Hotel,
   LayoutDashboard,
   Users,
+  Settings,
+  BookOpen,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -48,13 +50,13 @@ export function DashboardSidebar({ role, hotelId }: DashboardSidebarProps) {
         },
         {
           href: `/dashboard/${hotelId}/bookings`,
-          icon: <Users />,
+          icon: <BookOpen />,
           label: 'Buchungen',
         },
         {
-          href: `/dashboard/${hotelId}/bookings/create`,
-          icon: <CalendarPlus />,
-          label: 'Neue Buchung',
+          href: '#', // Placeholder link
+          icon: <Settings />,
+          label: 'Einstellungen',
         },
       ]
     : [];
@@ -65,8 +67,10 @@ export function DashboardSidebar({ role, hotelId }: DashboardSidebarProps) {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Building className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-headline font-semibold">WesoSystems</h1>
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <span className="font-bold text-lg">H</span>
+          </div>
+          <h1 className="text-xl font-headline font-semibold">hetzis</h1>
         </div>
       </SidebarHeader>
       <SidebarContent>

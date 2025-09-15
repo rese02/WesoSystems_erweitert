@@ -2,7 +2,7 @@ import { Hotel, Booking } from './types';
 
 export const mockHotels: Hotel[] = [
   {
-    id: 'hatzis-hotel',
+    id: 'hetzis',
     hotelName: 'Hotel Hatzis',
     domain: 'hatzis.com',
     createdAt: '2023-10-27',

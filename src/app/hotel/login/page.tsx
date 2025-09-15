@@ -39,7 +39,7 @@ export default function HotelLoginPage() {
               <Input id="password" type="password" required />
             </div>
             <Button asChild className="w-full bg-primary hover:bg-primary/90 transition-transform active:scale-95">
-              <Link href="/dashboard/hatzis-hotel">Anmelden</Link>
+              <Link href="/dashboard/hetzis">Anmelden</Link>
             </Button>
           </CardContent>
         </Card>
