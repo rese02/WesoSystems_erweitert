@@ -15,7 +15,7 @@ export default function AgencyDashboardPage() {
             Verwalten Sie alle Ihre Hotelpartner an einem Ort.
           </p>
         </div>
-        <Button asChild className='bg-primary text-primary-foreground hover:bg-primary/90'>
+        <Button asChild>
           <Link href="/admin/create-hotel">
             <PlusCircle className="mr-2 h-4 w-4" />
             Neues Hotel anlegen

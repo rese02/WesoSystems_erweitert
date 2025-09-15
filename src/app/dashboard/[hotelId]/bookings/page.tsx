@@ -85,7 +85,7 @@ export default function BookingsPage() {
             Alle Buchungen für Ihr Hotel im Überblick.
           </p>
         </div>
-        <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button asChild>
           <Link href={`/dashboard/${params.hotelId}/bookings/create`}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Neue Buchung
