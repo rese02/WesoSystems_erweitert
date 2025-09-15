@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { Hotel } from '@/lib/types';
+import { deleteHotelAction } from '@/actions/hotel-actions';
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -42,6 +43,22 @@ export function HotelDataTableRowActions<TData>({
       title: 'Link kopiert!',
       description: 'Der Login-Link wurde in die Zwischenablage kopiert.',
     });
+  };
+
+  const handleDelete = async () => {
+    const result = await deleteHotelAction(hotel.id);
+    if (result.success) {
+      toast({
+        title: 'Hotel gelöscht',
+        description: 'Das Hotel wurde erfolgreich entfernt.',
+      });
+    } else {
+      toast({
+        title: 'Fehler',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -83,13 +100,8 @@ export function HotelDataTableRowActions<TData>({
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => {
-              toast({
-                title: 'Hotel gelöscht',
-                description: 'Das Hotel wurde erfolgreich entfernt.',
-                variant: 'destructive',
-              });
-            }}
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={handleDelete}
           >
             Fortfahren
           </AlertDialogAction>

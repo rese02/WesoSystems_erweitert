@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase/client';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -40,4 +40,21 @@ export async function createHotelAction(formData: FormData) {
   revalidatePath('/admin');
   // Redirect to the agency dashboard
   redirect('/admin');
+}
+
+export async function deleteHotelAction(hotelId: string) {
+  try {
+    await deleteDoc(doc(db, 'hotels', hotelId));
+    revalidatePath('/admin');
+    return {
+      message: 'Hotel erfolgreich gelöscht.',
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error deleting hotel:', error);
+    return {
+      message: 'Fehler beim Löschen des Hotels.',
+      success: false,
+    };
+  }
 }
