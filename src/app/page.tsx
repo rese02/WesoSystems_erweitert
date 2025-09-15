@@ -1,54 +1,51 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MountainIcon } from 'lucide-react';
 
 export default function Home() {
-  const landingBg = PlaceHolderImages.find(
-    (img) => img.id === 'landing-background'
-  );
-
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-8">
-      {landingBg && (
-        <Image
-          src={landingBg.imageUrl}
-          alt={landingBg.description}
-          fill
-          className="object-cover"
-          priority
-          data-ai-hint={landingBg.imageHint}
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-      <div className="absolute inset-0 bg-background/30 dark:bg-black/50" />
-
-      <div className="relative z-10 flex flex-col items-center text-center text-white">
-        <h1 className="font-headline text-5xl font-extrabold tracking-tight text-white drop-shadow-md md:text-7xl">
-          WesoSystems
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-white/90 drop-shadow-sm">
-          Das intuitive und sichere Buchungssystem, das Agenturen, Hoteliers und
-          Gäste begeistert.
-        </p>
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-            <Link href="/agency/login">
-              Agentur-Login
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="secondary"
-            className="bg-white/90 text-primary hover:bg-white"
-          >
-            <Link href="/hotel/login">Hotelier-Login</Link>
-          </Button>
-        </div>
-      </div>
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-[#F7F7F7] p-4">
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #E5E5E5 1px, transparent 1px)',
+          backgroundSize: '20px 20px'
+        }}
+      />
+      <Card className="relative z-10 w-full max-w-md rounded-2xl border-none bg-white/80 p-8 shadow-lg backdrop-blur-sm">
+          <CardHeader className="items-center p-0 pb-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-200">
+                <MountainIcon className="h-6 w-6 text-gray-600" />
+              </div>
+              <span className="text-xl font-semibold">Alpenlink Booking</span>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4 p-0">
+            <CardTitle className="font-headline text-3xl font-bold text-center">
+              Alpenlink Booking
+            </CardTitle>
+            <CardDescription className="text-center">
+              Das moderne Buchungssystem für Ihr Hotel.
+            </CardDescription>
+            <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              <Button asChild size="lg" className="h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90">
+                <Link href="/agency/login">
+                  Agentur-Login
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 border-gray-300 bg-gray-100 text-base font-semibold text-gray-800 hover:bg-gray-200"
+              >
+                <Link href="/hotel/login">Hotel-Login</Link>
+              </Button>
+            </div>
+          </CardContent>
+      </Card>
     </main>
   );
 }
