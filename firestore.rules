@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow reads and writes to hotels and bookings for authenticated users
+    match /hotels/{hotelId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /hotels/{hotelId}/bookings/{bookingId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
