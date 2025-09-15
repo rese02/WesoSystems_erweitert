@@ -19,7 +19,7 @@ import { useParams } from 'next/navigation';
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
-    className={cn('text-white capitalize', {
+    className={cn('capitalize text-white', {
       'bg-green-600 hover:bg-green-600/90': status === 'Confirmed',
       'bg-yellow-500 hover:bg-yellow-500/90': status === 'Partial Payment',
       'bg-blue-500 hover:bg-blue-500/90': status === 'Sent',
@@ -31,50 +31,50 @@ const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   </Badge>
 );
 
-const bookingColumns: ColumnDef<Booking>[] = [
-  { accessorKey: 'guestName', header: 'Gast' },
-  { accessorKey: 'checkIn', header: 'Check-in' },
-  { accessorKey: 'checkOut', header: 'Check-out' },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => <BookingStatusBadge status={row.getValue('status')} />,
-  },
-  {
-    accessorKey: 'price',
-    header: 'Preis',
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue('price'));
-      const formatted = new Intl.NumberFormat('de-DE', {
-        style: 'currency',
-        currency: 'EUR',
-      }).format(amount);
-      return <div className="font-medium">{formatted}</div>;
-    },
-  },
-  {
-    id: 'actions',
-    cell: () => (
-      <div className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Menü öffnen</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Buchung ansehen</DropdownMenuItem>
-            <DropdownMenuItem>Status ändern</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
-  },
-];
-
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
+
+  const bookingColumns: ColumnDef<Booking>[] = [
+    { accessorKey: 'guestName', header: 'Gast' },
+    { accessorKey: 'checkIn', header: 'Check-in' },
+    { accessorKey: 'checkOut', header: 'Check-out' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <BookingStatusBadge status={row.getValue('status')} />,
+    },
+    {
+      accessorKey: 'price',
+      header: 'Preis',
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue('price'));
+        const formatted = new Intl.NumberFormat('de-DE', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(amount);
+        return <div className="font-medium">{formatted}</div>;
+      },
+    },
+    {
+      id: 'actions',
+      cell: () => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Menü öffnen</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Buchung ansehen</DropdownMenuItem>
+              <DropdownMenuItem>Status ändern</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
