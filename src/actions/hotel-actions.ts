@@ -45,8 +45,17 @@ export async function createHotelAction(prevState: any, formData: FormData) {
   };
 
   try {
-    // In a real app, you would also create the user in Firebase Auth
+    // SICHERHEITSHINWEIS: Erstellung des Hotelier-Benutzers
+    // In einer echten Anwendung wird hier ein neuer Benutzer in Firebase Authentication erstellt.
+    // Das Passwort wird NICHT von der Agentur gesetzt. Stattdessen wird eine E-Mail
+    // zum Zurücksetzen des Passworts an den Hotelier gesendet, damit dieser sein eigenes,
+    // sicheres Passwort festlegen kann.
+    //
+    // Beispiel-Logik (erfordert Firebase Admin SDK):
     // const userRecord = await auth.createUser({ email: hotelData.hotelier.email });
+    // await auth.generatePasswordResetLink(hotelData.hotelier.email);
+    //
+    // Die 'ownerUid' aus dem userRecord wird dann im Hotel-Dokument gespeichert.
     // await addDoc(collection(db, 'hotels'), { ...hotelData, ownerUid: userRecord.uid });
 
     const docRef = await addDoc(collection(db, 'hotels'), hotelData);
