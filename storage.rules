@@ -2,20 +2,18 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default deny all reads and writes
+    // Standardmäßig alle Lese- und Schreibzugriffe verweigern.
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Allow writes to guest-uploads for authenticated users
-    match /guest-uploads/{linkId}/{fileName} {
-      allow write: if request.auth != null;
-    }
-
-    // Allow reads for specific paths if you have a use case for it
-    // For example, if you store public images in a `public` folder
-    match /public/{allPaths=**} {
-      allow read: if true;
+    // Erlaube Uploads nur für authentifizierte Benutzer.
+    // In einer echten App würde man den Pfad genauer einschränken,
+    // z.B. /hotels/{hotelId}/documents/{userId}/{fileName}
+    // und prüfen, ob der `request.auth.uid` die Berechtigung hat.
+    match /uploads/{userId}/{fileName} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null; // Erlaube Lesevorgänge für authentifizierte Benutzer
     }
   }
 }

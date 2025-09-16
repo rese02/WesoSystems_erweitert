@@ -40,12 +40,47 @@ export type Hotel = {
   };
 };
 
+export type BookingStatus =
+  | 'Pending'
+  | 'Sent'
+  | 'Data Provided'
+  | 'Partial Payment'
+  | 'Confirmed'
+  | 'Cancelled';
+
+export type Room = {
+  type: string;
+  adults: number;
+  children: number;
+};
 
 export type Booking = {
-  id: string;
-  guestName: string;
-  checkIn: string;
-  checkOut: string;
-  status: 'Sent' | 'Partial Payment' | 'Confirmed' | 'Cancelled';
+  id: string; // Document ID in Firestore
+  hotelId: string;
+  guestName: string; // Vor- und Nachname des Hauptgastes
+  checkIn: string; // ISO Date String
+  checkOut: string; // ISO Date String
+  status: BookingStatus;
   price: number;
+  mealType: string;
+  language: string;
+  rooms: Room[];
+  internalNotes?: string;
+  createdAt: any; // Firestore Timestamp
+};
+
+export type GuestData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  street: string;
+  zip: string;
+  city: string;
+  fellowTravelers: { name: string }[];
+  specialRequests?: string;
+};
+
+export type GuestLinkData = {
+  id: string; // Document ID in Firestore, der `linkId`
+  booking: Booking;
 };

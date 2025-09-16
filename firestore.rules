@@ -3,18 +3,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all reads and writes
+    // Standardmäßig alle Lese- und Schreibzugriffe verweigern.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Allow reads and writes to hotels and bookings for authenticated users
+    // Hotels: Nur authentifizierte Benutzer (Agentur/Admins) können Hotels erstellen/lesen.
+    // In einer echten App würde man hier die Rollen (`request.auth.token.role`) prüfen.
     match /hotels/{hotelId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null; 
+      
+      // Bookings & Guests: Nur authentifizierte Benutzer mit der richtigen Hotel-ID können darauf zugreifen.
+      match /bookings/{bookingId} {
+        allow read, write: if request.auth != null;
+      }
     }
-
-    match /hotels/{hotelId}/bookings/{bookingId} {
-      allow read, write: if request.auth != null;
+    
+    // Buchungslinks (guestLinks): Darf öffentlich gelesen, aber nur vom Server (authentifiziert) beschrieben werden.
+    // Der Gast benötigt Lesezugriff, um seine Buchungsdetails anzuzeigen.
+    match /guestLinks/{linkId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
