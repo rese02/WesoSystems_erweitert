@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useActionState } from 'react';
 import { createHotelAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useFormState } from 'react-dom';
 
 export default function CreateHotelPage() {
   const [roomCategories, setRoomCategories] = useState<string[]>([
@@ -28,7 +27,7 @@ export default function CreateHotelPage() {
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [initialState, action] = useFormState(createHotelAction, { message: '' });
+  const [state, action] = useActionState(createHotelAction, { message: '' });
 
   const handleFormSubmit = (formData: FormData) => {
     // Append dynamic data to formData before submitting
