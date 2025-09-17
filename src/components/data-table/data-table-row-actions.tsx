@@ -47,7 +47,7 @@ export function HotelDataTableRowActions<TData>({
   };
 
   const copyLoginCredentials = () => {
-    if (!hotel.hotelier.email || !hotel.hotelier.password) {
+    if (!hotel.hotelier || !hotel.hotelier.email || !hotel.hotelier.password) {
        toast({
         title: 'Fehler',
         description: 'Login-Daten für dieses Hotel nicht vollständig.',

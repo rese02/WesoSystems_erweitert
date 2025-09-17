@@ -36,6 +36,7 @@ export default function AgencyDashboardPage() {
           return {
             id: doc.id,
             ...data,
+            hotelier: data.hotelier || {},
             createdAt: createdAt,
           } as Hotel;
         });
