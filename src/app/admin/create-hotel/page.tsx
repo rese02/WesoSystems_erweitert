@@ -12,7 +12,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CreateHotelPage() {
   const [roomCategories, setRoomCategories] = useState<string[]>([
@@ -25,6 +26,8 @@ export default function CreateHotelPage() {
     vollpension: false,
     ohne: false,
   });
+  const [hotelierPassword, setHotelierPassword] = useState('');
+  const { toast } = useToast();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [state, action] = useActionState(createHotelAction, { message: '' });
@@ -38,6 +41,16 @@ export default function CreateHotelPage() {
       }
     });
     action(formData);
+  };
+  
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setHotelierPassword(password);
+    toast({ title: 'Neues Passwort generiert!' });
   };
 
 
@@ -121,6 +134,23 @@ export default function CreateHotelPage() {
                   placeholder="hotelier@example.com"
                   required
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="hotelierPassword">Passwort</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="hotelierPassword"
+                    name="hotelierPassword"
+                    value={hotelierPassword}
+                    readOnly
+                    placeholder="Klicken Sie auf 'Generieren'"
+                    required
+                  />
+                  <Button type="button" variant="outline" onClick={generatePassword}>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Generieren
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
