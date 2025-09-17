@@ -38,10 +38,11 @@ export function HotelDataTableRowActions<TData>({
   const hotel = row.original as Hotel;
 
   const copyLoginLink = () => {
-    navigator.clipboard.writeText('https://weso.systems/hotel/login-link-placeholder');
+    const loginLink = `${window.location.origin}/hotel/login`;
+    navigator.clipboard.writeText(loginLink);
     toast({
       title: 'Link kopiert!',
-      description: 'Der Login-Link wurde in die Zwischenablage kopiert.',
+      description: 'Der Hotel-Login-Link wurde in die Zwischenablage kopiert.',
     });
   };
 
@@ -77,7 +78,9 @@ export function HotelDataTableRowActions<TData>({
           <DropdownMenuItem asChild>
             <Link href={`/dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>Einstellungen</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+             <Link href={`/dashboard/${hotel.id}/settings`}>Einstellungen</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={copyLoginLink}>
             Login-Link kopieren
           </DropdownMenuItem>

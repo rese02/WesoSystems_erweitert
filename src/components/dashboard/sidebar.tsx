@@ -64,7 +64,7 @@ export function DashboardSidebar({ role, hotelId }: DashboardSidebarProps) {
           label: 'Buchungen',
         },
         {
-          href: '#',
+          href: `/dashboard/${hotelId}/settings`,
           icon: <Settings />,
           label: 'Einstellungen',
         },
