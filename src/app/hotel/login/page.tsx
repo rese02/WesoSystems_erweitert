@@ -38,11 +38,12 @@ export default function HotelLoginPage() {
                 placeholder="name@ihr-hotel.de"
                 required
                 className="h-12 text-base"
+                autoComplete="off"
             />
             </div>
             <div className="grid gap-2">
             <Label htmlFor="password">Passwort</Label>
-            <Input id="password" type="password" required className="h-12 text-base"/>
+            <Input id="password" type="password" required className="h-12 text-base" autoComplete="off"/>
             </div>
             <div className="grid gap-3 pt-4">
                 <Button asChild size="lg" className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95">
