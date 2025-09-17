@@ -49,6 +49,7 @@ export type Room = {
   type: string;
   adults: number;
   children: number;
+  infants: number;
 };
 
 export type Booking = {

@@ -128,7 +128,7 @@ export async function createBookingAction(
   }
 
   const bookingData: Omit<Booking, 'id' | 'hotelId'> = {
-    guestName: formData.get('guestName') as string,
+    guestName: `${formData.get('firstName')} ${formData.get('lastName')}`,
     checkIn: Timestamp.fromDate(date.from),
     checkOut: Timestamp.fromDate(date.to),
     price: parseFloat(formData.get('price') as string),

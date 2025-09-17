@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CalendarIcon, PlusCircle, Trash2, Loader2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -33,15 +33,16 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Room } from '@/lib/types';
 import { createBookingAction } from '@/actions/hotel-actions';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 type RoomState = Room & { id: number };
 
 export default function CreateBookingPage() {
   const params = useParams<{ hotelId: string }>();
+  const router = useRouter();
   const [date, setDate] = useState<DateRange | undefined>();
   const [rooms, setRooms] = useState<RoomState[]>([
-    { id: 1, type: 'Doppelzimmer', adults: 2, children: 0 },
+    { id: 1, type: 'Doppelzimmer', adults: 2, children: 0, infants: 0 },
   ]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -49,7 +50,7 @@ export default function CreateBookingPage() {
   const addRoom = () => {
     setRooms([
       ...rooms,
-      { id: Date.now(), type: 'Einzelzimmer', adults: 1, children: 0 },
+      { id: Date.now(), type: 'Einzelzimmer', adults: 1, children: 0, infants: 0 },
     ]);
   };
 
@@ -65,9 +66,10 @@ export default function CreateBookingPage() {
     if (result.success) {
       toast({
           title: 'Buchungslink erstellt!',
-          description: 'Der Link wurde in die Zwischenablage kopiert und kann an den Gast gesendet werden.'
+          description: 'Der Link kann an den Gast gesendet werden. Er wurde in die Zwischenablage kopiert.'
       });
       navigator.clipboard.writeText(result.link || '');
+      router.push(`/dashboard/${params.hotelId}/bookings`);
     } else {
       toast({
         title: 'Fehler',
@@ -78,24 +80,32 @@ export default function CreateBookingPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-3xl font-bold">Neue Buchung anlegen</h1>
-        <p className="text-muted-foreground">
-          Bereiten Sie eine Buchung vor und generieren Sie einen Link für den Gast.
-        </p>
+    <form action={handleCreateBooking} className="space-y-6">
+       <div className="flex items-center justify-between">
+        <div>
+            <h1 className="font-headline text-3xl font-bold">Neue Buchung erstellen</h1>
+            <p className="text-muted-foreground">
+            Bereiten Sie eine Buchung vor und generieren Sie einen Link für den Gast.
+            </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <X className="h-5 w-5"/>
+        </Button>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <form action={handleCreateBooking} className="grid gap-8 lg:col-span-2">
+      <div className="grid gap-8">
           <Card>
             <CardHeader>
               <CardTitle>Gastdaten</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="guestName">Vor- und Nachname</Label>
-                <Input id="guestName" name="guestName" required />
+                <Label htmlFor="firstName">Vorname</Label>
+                <Input id="firstName" name="firstName" required placeholder="Vorname des Gastes"/>
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="lastName">Nachname</Label>
+                <Input id="lastName" name="lastName" required placeholder="Nachname des Gastes"/>
               </div>
             </CardContent>
           </Card>
@@ -103,10 +113,11 @@ export default function CreateBookingPage() {
           <Card>
             <CardHeader>
               <CardTitle>Buchungsdaten</CardTitle>
+              <CardDescription>Gesamtpreis und Details für die gesamte Buchung.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label>An- und Abreise</Label>
+                <Label>Zeitraum (Anreise - Abreise)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -127,7 +138,7 @@ export default function CreateBookingPage() {
                           format(date.from, 'dd. LLL y', { locale: de })
                         )
                       ) : (
-                        <span>Datum auswählen</span>
+                        <span>Zeitraum auswählen</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -145,12 +156,12 @@ export default function CreateBookingPage() {
                 </Popover>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="price">Preis (€)</Label>
-                <Input id="price" name="price" type="number" step="0.01" required />
+                <Label htmlFor="price">Gesamtpreis (€)</Label>
+                <Input id="price" name="price" type="number" step="0.01" required placeholder="Preis in Euro"/>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="mealType">Verpflegung</Label>
-                <Select name="mealType" required>
+                <Select name="mealType" required defaultValue="Keine">
                   <SelectTrigger>
                     <SelectValue placeholder="Verpflegung auswählen" />
                   </SelectTrigger>
@@ -158,12 +169,12 @@ export default function CreateBookingPage() {
                     <SelectItem value="Frühstück">Frühstück</SelectItem>
                     <SelectItem value="Halbpension">Halbpension</SelectItem>
                     <SelectItem value="Vollpension">Vollpension</SelectItem>
-                    <SelectItem value="Keine">Keine</SelectItem>
+                    <SelectItem value="Keine">Ohne Verpflegung</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="language">Sprache für Gast</Label>
+                <Label htmlFor="language">Sprache für Gastformular</Label>
                 <Select name="language" defaultValue="de">
                   <SelectTrigger>
                     <SelectValue placeholder="Sprache auswählen" />
@@ -180,12 +191,12 @@ export default function CreateBookingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Zimmerkonfiguration</CardTitle>
+              <CardTitle>Zimmerdetails</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {rooms.map((room, index) => (
                 <div key={room.id} className="grid grid-cols-12 gap-2 rounded-md border p-4">
-                  <div className="col-span-11 grid gap-4 sm:grid-cols-3">
+                  <div className="col-span-11 grid gap-4 sm:grid-cols-4">
                     <div className="grid gap-2">
                       <Label>Zimmertyp</Label>
                       <Select 
@@ -200,6 +211,7 @@ export default function CreateBookingPage() {
                         <SelectContent>
                           <SelectItem value="Einzelzimmer">Einzelzimmer</SelectItem>
                           <SelectItem value="Doppelzimmer">Doppelzimmer</SelectItem>
+                           <SelectItem value="Standard">Standard</SelectItem>
                           <SelectItem value="Suite">Suite</SelectItem>
                         </SelectContent>
                       </Select>
@@ -213,10 +225,18 @@ export default function CreateBookingPage() {
                         }}/>
                     </div>
                     <div className="grid gap-2">
-                      <Label>Kinder</Label>
+                      <Label>Kinder (3+)</Label>
                       <Input type="number" min="0" defaultValue={room.children} onChange={(e) => {
                           const newRooms = [...rooms];
                           newRooms[index].children = parseInt(e.target.value);
+                          setRooms(newRooms);
+                        }}/>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Kleinkinder (0-2J)</Label>
+                      <Input type="number" min="0" defaultValue={room.infants} onChange={(e) => {
+                          const newRooms = [...rooms];
+                          newRooms[index].infants = parseInt(e.target.value);
                           setRooms(newRooms);
                         }}/>
                     </div>
@@ -232,36 +252,29 @@ export default function CreateBookingPage() {
               ))}
               <Button type="button" variant="outline" onClick={addRoom}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Zimmer hinzufügen
+                Weiteres Zimmer hinzufügen
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-                <CardTitle>Interne Bemerkungen</CardTitle>
+                <CardTitle>Interne Bemerkungen (Optional)</CardTitle>
+                <CardDescription>Zusätzliche Informationen für das Hotelpersonal.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Textarea name="internalNotes" placeholder="z.B. VIP-Gast, besondere Wünsche vermerken..." />
             </CardContent>
           </Card>
-          
-           <div className="lg:col-span-2">
-                <Card className="sticky top-20">
-                    <CardHeader>
-                    <CardTitle>Aktionen</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                    <Button type="submit" disabled={loading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Buchung mit Link erstellen
-                    </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        </form>
 
+           <div className="flex justify-end gap-2 border-t pt-4">
+                 <Button type="button" variant="outline" onClick={() => router.back()}>Abbrechen</Button>
+                <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Buchung erstellen
+                </Button>
+            </div>
       </div>
-    </div>
+    </form>
   );
 }
