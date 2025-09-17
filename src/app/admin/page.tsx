@@ -13,9 +13,19 @@ async function getHotels(): Promise<Hotel[]> {
   const hotelsSnapshot = await getDocs(q);
   const hotelsList = hotelsSnapshot.docs.map((doc) => {
     const data = doc.data();
-    // Convert Firestore Timestamp to a simple string or number.
-    // Here, we'll convert it to an ISO string.
-    const createdAt = data.createdAt.toDate().toISOString();
+    
+    // Handle both Firestore Timestamps and JS Date objects
+    let createdAt: string;
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+      // It's a Firestore Timestamp
+      createdAt = data.createdAt.toDate().toISOString();
+    } else if (data.createdAt) {
+      // It's likely already a JS Date or a string, convert to ISO string
+      createdAt = new Date(data.createdAt).toISOString();
+    } else {
+        createdAt = new Date().toISOString();
+    }
+
     return {
       id: doc.id,
       ...data,
