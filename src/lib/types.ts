@@ -39,7 +39,6 @@ export type Hotel = {
 
 export type BookingStatus =
   | 'Pending'
-  | 'Sent'
   | 'Data Provided'
   | 'Partial Payment'
   | 'Confirmed'

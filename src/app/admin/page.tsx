@@ -6,7 +6,7 @@ import {PlusCircle} from 'lucide-react';
 import {hotelColumns} from '@/components/data-table/columns';
 import {DataTable} from '@/components/data-table/data-table';
 import {db} from '@/lib/firebase/client';
-import {collection, getDocs, orderBy, query, onSnapshot} from 'firebase/firestore';
+import {collection, onSnapshot, orderBy, query} from 'firebase/firestore';
 import {Hotel} from '@/lib/types';
 import {useEffect, useState} from 'react';
 

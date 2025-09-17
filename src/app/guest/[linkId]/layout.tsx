@@ -9,7 +9,16 @@ async function getHotelName(linkId: string): Promise<string> {
     if (!linkSnap.exists() || linkSnap.data().status === 'used') {
         notFound();
     }
-    return linkSnap.data().booking.hotelName || 'Ihr Hotel';
+    const booking = linkSnap.data().booking;
+    
+    const hotelRef = doc(db, 'hotels', booking.hotelId);
+    const hotelSnap = await getDoc(hotelRef);
+
+    if (hotelSnap.exists()) {
+        return hotelSnap.data().hotelName;
+    }
+
+    return 'Ihr Hotel';
 }
 
 export default async function GuestLayout({
@@ -30,4 +39,8 @@ export default async function GuestLayout({
       </header>
       <main className="bg-muted/40 p-4 sm:p-8">{children}</main>
       <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} W
+        © {new Date().getFullYear()} WesoSystems. All rights reserved.
+      </footer>
+    </div>
+  );
+}

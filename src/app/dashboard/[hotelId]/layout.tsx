@@ -3,6 +3,7 @@ import { DashboardSidebar } from '@/components/dashboard/sidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { db } from '@/lib/firebase/client';
 import { doc, getDoc } from 'firebase/firestore';
+import { notFound } from 'next/navigation';
 
 async function getHotelName(hotelId: string) {
   const hotelRef = doc(db, 'hotels', hotelId);
@@ -10,7 +11,7 @@ async function getHotelName(hotelId: string) {
   if (hotelSnap.exists()) {
     return hotelSnap.data().hotelName;
   }
-  return 'Hotel nicht gefunden';
+  notFound();
 }
 
 export default async function DashboardLayout({

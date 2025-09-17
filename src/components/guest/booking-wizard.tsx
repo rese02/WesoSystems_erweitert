@@ -216,3 +216,4 @@ export function BookingWizard({ linkId }: { linkId: string }) {
       )}
     </div>
   );
+}

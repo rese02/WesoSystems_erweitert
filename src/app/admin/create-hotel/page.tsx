@@ -26,12 +26,6 @@ export default function CreateHotelPage() {
     'Einzelzimmer',
     'Doppelzimmer',
   ]);
-  const [mealTypes, setMealTypes] = useState({
-    fruehstueck: true,
-    halbpension: false,
-    vollpension: false,
-    ohne: false,
-  });
   const [hotelierPassword, setHotelierPassword] = useState('');
   const { toast } = useToast();
   const [state, action] = useActionState(createHotelAction, initialState);

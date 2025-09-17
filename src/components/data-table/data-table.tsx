@@ -23,10 +23,6 @@ import {
 } from '@/components/ui/table';
 import { DataTablePagination } from './data-table-pagination';
 import { Input } from '../ui/input';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 
 interface DataTableProps<TData, TValue> {
@@ -47,7 +43,6 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
     data,
@@ -58,11 +53,9 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
-      rowSelection,
     },
   });
 
@@ -80,11 +73,11 @@ export function DataTable<TData, TValue>({
           className="max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="border-b-0">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
