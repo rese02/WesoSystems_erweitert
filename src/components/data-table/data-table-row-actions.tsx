@@ -46,6 +46,23 @@ export function HotelDataTableRowActions<TData>({
     });
   };
 
+  const copyLoginCredentials = () => {
+    if (!hotel.hotelier.email || !hotel.hotelier.password) {
+       toast({
+        title: 'Fehler',
+        description: 'Login-Daten für dieses Hotel nicht vollständig.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const credentials = `E-Mail: ${hotel.hotelier.email}\nPasswort: ${hotel.hotelier.password}`;
+    navigator.clipboard.writeText(credentials);
+    toast({
+      title: 'Zugangsdaten kopiert!',
+      description: 'Sie können die Daten nun an den Hotelier senden.',
+    });
+  };
+
   const handleDelete = async () => {
     const result = await deleteHotelAction(hotel.id);
     if (result.success) {
@@ -80,6 +97,9 @@ export function HotelDataTableRowActions<TData>({
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
              <Link href={`/dashboard/${hotel.id}/settings`}>Einstellungen</Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem onClick={copyLoginCredentials}>
+            Login-Daten kopieren
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyLoginLink}>
             Login-Link kopieren

@@ -9,6 +9,7 @@ export type Hotel = {
 
   hotelier: {
     email: string;
+    password?: string;
   };
 
   contact: {

@@ -24,6 +24,7 @@ export async function createHotelAction(prevState: any, formData: FormData) {
 
     hotelier: {
       email: formData.get('hotelierEmail') as string,
+      password: formData.get('hotelierPassword') as string,
     },
 
     contact: {
@@ -52,6 +53,12 @@ export async function createHotelAction(prevState: any, formData: FormData) {
   };
 
   try {
+    // TODO: Create user in Firebase Auth
+    console.log(
+      'Would create user with:',
+      hotelData.hotelier.email,
+      hotelData.hotelier.password
+    );
     const docRef = await addDoc(collection(db, 'hotels'), hotelData);
 
     console.log('Hotel created with ID: ', docRef.id);
