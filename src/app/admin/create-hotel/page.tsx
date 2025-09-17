@@ -1,5 +1,5 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { createHotelAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const initialState = {
+  message: '',
+  success: false,
+};
 
 export default function CreateHotelPage() {
   const [roomCategories, setRoomCategories] = useState<string[]>([
@@ -28,10 +34,18 @@ export default function CreateHotelPage() {
   });
   const [hotelierPassword, setHotelierPassword] = useState('');
   const { toast } = useToast();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [state, action] = useActionState(createHotelAction, { message: '' });
+  const [state, action] = useActionState(createHotelAction, initialState);
   
+  useEffect(() => {
+    if (state.message && !state.success) {
+      toast({
+        title: 'Fehler bei der Erstellung',
+        description: state.message,
+        variant: 'destructive',
+      });
+    }
+  }, [state, toast]);
+
   const generatePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
     let password = '';
@@ -143,6 +157,14 @@ export default function CreateHotelPage() {
               </div>
             </CardContent>
           </Card>
+          
+          {state.message && !state.success && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Fehler</AlertTitle>
+                <AlertDescription>{state.message}</AlertDescription>
+              </Alert>
+            )}
 
           <Card>
             <CardHeader>

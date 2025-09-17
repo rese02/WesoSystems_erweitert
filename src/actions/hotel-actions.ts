@@ -7,13 +7,39 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {Booking, Room} from '@/lib/types';
 import {DateRange} from 'react-day-picker';
 
-export async function createHotelAction(prevState: any, formData: FormData) {
+type CreateHotelState = {
+  message: string;
+  success: boolean;
+};
+
+export async function createHotelAction(
+  prevState: CreateHotelState,
+  formData: FormData
+): Promise<CreateHotelState> {
+  const hotelierEmail = formData.get('hotelierEmail') as string;
+
+  // Check if email already exists
+  const hotelsRef = collection(db, 'hotels');
+  const q = query(hotelsRef, where('hotelier.email', '==', hotelierEmail));
+  const querySnapshot = await getDocs(q);
+
+  if (!querySnapshot.empty) {
+    return {
+      message: 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.',
+      success: false,
+    };
+  }
+
+
   const mealTypes = formData.getAll('mealTypes') as string[];
   const roomCategories = formData.getAll('roomCategories') as string[];
 
@@ -23,7 +49,7 @@ export async function createHotelAction(prevState: any, formData: FormData) {
     createdAt: new Date(),
 
     hotelier: {
-      email: formData.get('hotelierEmail') as string,
+      email: hotelierEmail,
       password: formData.get('hotelierPassword') as string,
     },
 
@@ -65,7 +91,8 @@ export async function createHotelAction(prevState: any, formData: FormData) {
   } catch (error) {
     console.error('Error creating hotel:', error);
     return {
-      message: 'Hotel could not be created.',
+      message: 'Hotel konnte nicht erstellt werden.',
+      success: false,
     };
   }
 
