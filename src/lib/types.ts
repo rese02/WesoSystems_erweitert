@@ -1,23 +1,21 @@
+import { Timestamp } from 'firebase/firestore';
+
 export type Hotel = {
   id: string;
   hotelName: string;
   domain: string;
-  logoUrl?: string; // Optional, da nicht immer ein Logo hochgeladen wird
-  createdAt: string; // Changed from 'any' to 'string' to support serialization
+  logoUrl?: string; 
+  createdAt: string; 
 
-  // NEU: Die E-Mail für den Hotelier-Login
   hotelier: {
     email: string;
-    // Wichtig: Das Passwort wird NICHT hier gespeichert. Es lebt nur in Firebase Auth.
   };
 
-  // NEU: Öffentliche Kontaktdaten
   contact: {
     email: string;
     phone: string;
   };
 
-  // NEU: Bankverbindung für die Gäste
   bankDetails: {
     accountHolder: string;
     iban: string;
@@ -25,18 +23,16 @@ export type Hotel = {
     bankName: string;
   };
 
-  // NEU: SMTP-Einstellungen für den E-Mail-Versand
   smtp: {
     host: string;
     port: number;
     user: string;
-    appPass: string; // Wichtig: App-Passwort, nicht das normale E-Mail-Passwort
+    appPass: string; 
   };
 
-  // NEU: Die Buchungskonfiguration
   bookingConfig: {
-    mealTypes: string[]; // z.B. ['Frühstück', 'Halbpension']
-    roomCategories: string[]; // z.B. ['Einzelzimmer', 'Suite']
+    mealTypes: string[]; 
+    roomCategories: string[];
   };
 };
 
@@ -55,18 +51,19 @@ export type Room = {
 };
 
 export type Booking = {
-  id: string; // Document ID in Firestore
+  id: string; 
   hotelId: string;
-  guestName: string; // Vor- und Nachname des Hauptgastes
-  checkIn: string; // ISO Date String
-  checkOut: string; // ISO Date String
+  guestName: string; 
+  checkIn: Timestamp; 
+  checkOut: Timestamp; 
   status: BookingStatus;
   price: number;
   mealType: string;
   language: string;
   rooms: Room[];
   internalNotes?: string;
-  createdAt: any; // Firestore Timestamp
+  createdAt: Timestamp; 
+  guestDetails?: GuestData;
 };
 
 export type GuestData = {
@@ -81,6 +78,7 @@ export type GuestData = {
 };
 
 export type GuestLinkData = {
-  id: string; // Document ID in Firestore, der `linkId`
+  id: string; 
   booking: Booking;
+  hotel: Hotel;
 };

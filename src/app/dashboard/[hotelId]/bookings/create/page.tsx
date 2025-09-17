@@ -24,21 +24,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Room } from '@/lib/types';
+import { createBookingAction } from '@/actions/hotel-actions';
+import { useParams } from 'next/navigation';
 
-type Room = { id: number; type: string; adults: number; children: number };
+type RoomState = Room & { id: number };
 
 export default function CreateBookingPage() {
+  const params = useParams<{ hotelId: string }>();
   const [date, setDate] = useState<DateRange | undefined>();
-  const [rooms, setRooms] = useState<Room[]>([
+  const [rooms, setRooms] = useState<RoomState[]>([
     { id: 1, type: 'Doppelzimmer', adults: 2, children: 0 },
   ]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const addRoom = () => {
@@ -52,12 +57,24 @@ export default function CreateBookingPage() {
     setRooms(rooms.filter((room) => room.id !== id));
   };
   
-  const createBookingLink = () => {
-    toast({
-        title: 'Buchungslink erstellt!',
-        description: 'Der Link wurde in die Zwischenablage kopiert und kann an den Gast gesendet werden.'
-    });
-    navigator.clipboard.writeText('https://weso.systems/guest/link-placeholder');
+  const handleCreateBooking = async (formData: FormData) => {
+    setLoading(true);
+    const result = await createBookingAction(params.hotelId, formData, rooms, date);
+    setLoading(false);
+
+    if (result.success) {
+      toast({
+          title: 'Buchungslink erstellt!',
+          description: 'Der Link wurde in die Zwischenablage kopiert und kann an den Gast gesendet werden.'
+      });
+      navigator.clipboard.writeText(result.link || '');
+    } else {
+      toast({
+        title: 'Fehler',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -70,19 +87,15 @@ export default function CreateBookingPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        <form className="grid gap-8 lg:col-span-2">
+        <form action={handleCreateBooking} className="grid gap-8 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Gastdaten</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="firstName">Vorname</Label>
-                <Input id="firstName" required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Nachname</Label>
-                <Input id="lastName" required />
+                <Label htmlFor="guestName">Vor- und Nachname</Label>
+                <Input id="guestName" name="guestName" required />
               </div>
             </CardContent>
           </Card>
@@ -126,31 +139,32 @@ export default function CreateBookingPage() {
                       onSelect={setDate}
                       numberOfMonths={2}
                       locale={de}
+                      required
                     />
                   </PopoverContent>
                 </Popover>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="price">Preis (€)</Label>
-                <Input id="price" type="number" step="0.01" required />
+                <Input id="price" name="price" type="number" step="0.01" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="mealType">Verpflegung</Label>
-                <Select>
+                <Select name="mealType" required>
                   <SelectTrigger>
                     <SelectValue placeholder="Verpflegung auswählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="breakfast">Frühstück</SelectItem>
-                    <SelectItem value="half-board">Halbpension</SelectItem>
-                    <SelectItem value="full-board">Vollpension</SelectItem>
-                    <SelectItem value="none">Keine</SelectItem>
+                    <SelectItem value="Frühstück">Frühstück</SelectItem>
+                    <SelectItem value="Halbpension">Halbpension</SelectItem>
+                    <SelectItem value="Vollpension">Vollpension</SelectItem>
+                    <SelectItem value="Keine">Keine</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="language">Sprache für Gast</Label>
-                <Select defaultValue="de">
+                <Select name="language" defaultValue="de">
                   <SelectTrigger>
                     <SelectValue placeholder="Sprache auswählen" />
                   </SelectTrigger>
@@ -174,7 +188,14 @@ export default function CreateBookingPage() {
                   <div className="col-span-11 grid gap-4 sm:grid-cols-3">
                     <div className="grid gap-2">
                       <Label>Zimmertyp</Label>
-                      <Select defaultValue={room.type}>
+                      <Select 
+                        defaultValue={room.type} 
+                        onValueChange={(value) => {
+                          const newRooms = [...rooms];
+                          newRooms[index].type = value;
+                          setRooms(newRooms);
+                        }}
+                      >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Einzelzimmer">Einzelzimmer</SelectItem>
@@ -185,11 +206,19 @@ export default function CreateBookingPage() {
                     </div>
                     <div className="grid gap-2">
                       <Label>Erwachsene</Label>
-                      <Input type="number" min="1" defaultValue={room.adults} />
+                      <Input type="number" min="1" defaultValue={room.adults} onChange={(e) => {
+                          const newRooms = [...rooms];
+                          newRooms[index].adults = parseInt(e.target.value);
+                          setRooms(newRooms);
+                        }}/>
                     </div>
                     <div className="grid gap-2">
                       <Label>Kinder</Label>
-                      <Input type="number" min="0" defaultValue={room.children} />
+                      <Input type="number" min="0" defaultValue={room.children} onChange={(e) => {
+                          const newRooms = [...rooms];
+                          newRooms[index].children = parseInt(e.target.value);
+                          setRooms(newRooms);
+                        }}/>
                     </div>
                   </div>
                   <div className="col-span-1 flex items-center justify-end">
@@ -213,23 +242,25 @@ export default function CreateBookingPage() {
                 <CardTitle>Interne Bemerkungen</CardTitle>
             </CardHeader>
             <CardContent>
-                <Textarea placeholder="z.B. VIP-Gast, besondere Wünsche vermerken..." />
+                <Textarea name="internalNotes" placeholder="z.B. VIP-Gast, besondere Wünsche vermerken..." />
             </CardContent>
           </Card>
+          
+           <div className="lg:col-span-2">
+                <Card className="sticky top-20">
+                    <CardHeader>
+                    <CardTitle>Aktionen</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                    <Button type="submit" disabled={loading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Buchung mit Link erstellen
+                    </Button>
+                    </CardContent>
+                </Card>
+            </div>
         </form>
 
-        <div className="lg:col-span-1">
-          <Card className="sticky top-20">
-            <CardHeader>
-              <CardTitle>Aktionen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button type="button" onClick={createBookingLink} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Buchung mit Link erstellen
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

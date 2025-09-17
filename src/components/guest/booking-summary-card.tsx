@@ -1,8 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, BedDouble, Euro, Users } from 'lucide-react';
+import { Booking } from '@/lib/types';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
-export function BookingSummaryCard() {
+type BookingSummaryCardProps = {
+    booking: Booking;
+};
+
+export function BookingSummaryCard({ booking }: BookingSummaryCardProps) {
+  const totalAdults = booking.rooms.reduce((sum, room) => sum + room.adults, 0);
+  const totalChildren = booking.rooms.reduce((sum, room) => sum + room.children, 0);
+
   return (
     <Card className="sticky top-24">
       <CardHeader>
@@ -14,7 +24,9 @@ export function BookingSummaryCard() {
             <Calendar className="h-4 w-4" />
             <span>Zeitraum</span>
           </div>
-          <span className="font-medium">01.08. - 07.08.2024</span>
+          <span className="font-medium">
+            {format(booking.checkIn.toDate(), 'dd.MM.yy', { locale: de })} - {format(booking.checkOut.toDate(), 'dd.MM.yy', { locale: de })}
+          </span>
         </div>
         <Separator />
         <div className="flex items-start justify-between">
@@ -23,8 +35,9 @@ export function BookingSummaryCard() {
             <span>Zimmer</span>
           </div>
           <div className="text-right font-medium">
-            <p>1x Doppelzimmer</p>
-            <p>1x Einzelzimmer</p>
+            {booking.rooms.map((room, index) => (
+              <p key={index}>1x {room.type}</p>
+            ))}
           </div>
         </div>
         <div className="flex items-start justify-between">
@@ -33,8 +46,8 @@ export function BookingSummaryCard() {
             <span>Gäste</span>
           </div>
           <div className="text-right font-medium">
-            <p>3 Erwachsene</p>
-            <p>1 Kind</p>
+            <p>{totalAdults} Erwachsene</p>
+            {totalChildren > 0 && <p>{totalChildren} Kind(er)</p>}
           </div>
         </div>
         <Separator />
@@ -43,7 +56,12 @@ export function BookingSummaryCard() {
             <Euro className="h-5 w-5" />
             <span>Gesamtpreis</span>
           </div>
-          <span className="font-bold">€ 1.200,00</span>
+          <span className="font-bold">
+             {new Intl.NumberFormat('de-DE', {
+                style: 'currency',
+                currency: 'EUR',
+              }).format(booking.price)}
+          </span>
         </div>
       </CardContent>
     </Card>

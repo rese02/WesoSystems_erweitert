@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react-dom';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ export function BookingWizard({ linkId }: { linkId: string }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [fellowTravelers, setFellowTravelers] = useState([{ id: 1, name: '' }]);
 
-  const [formState, formAction] = useFormState(
+  const [formState, formAction] = useActionState(
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
@@ -33,18 +33,6 @@ export function BookingWizard({ linkId }: { linkId: string }) {
     setFellowTravelers(fellowTravelers.filter((t) => t.id !== id));
   };
   
-  function SubmitButton() {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const { pending } = useFormStatus();
-    return (
-      <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={pending}>
-        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        Daten absenden & Buchung abschließen
-      </Button>
-    )
-  }
-
   const StepContent = () => {
     switch (currentStep) {
       case 0: // Gast
@@ -180,7 +168,9 @@ export function BookingWizard({ linkId }: { linkId: string }) {
                     </AlertDescription>
                     </Alert>
                 )}
-                <SubmitButton />
+                <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  Daten absenden & Buchung abschließen
+              </Button>
               </CardContent>
             </Card>
           </form>

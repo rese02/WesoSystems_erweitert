@@ -4,8 +4,11 @@ import {
   validateGuestData,
   ValidateGuestDataInput,
 } from '@/ai/flows/validate-guest-data';
+import { db } from '@/lib/firebase/client';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { Booking } from '@/lib/types';
 
 type FormState = {
   message: string;
@@ -20,22 +23,32 @@ export async function finalizeBookingAction(
 ): Promise<FormState> {
   const rawData = Object.fromEntries(formData.entries());
 
-  // This is a placeholder. In a real app, you'd get this from the booking link data.
-  const bookingDetails = {
-    checkInDate: '2024-08-01',
-    checkOutDate: '2024-08-07',
-    roomType: 'Doppelzimmer',
-  };
+  const bookingRef = doc(db, 'bookingLinks', linkId);
+  const bookingSnap = await getDoc(bookingRef);
+
+  if (!bookingSnap.exists()) {
+    return {
+      message: 'Ungültiger Buchungslink.',
+      errors: ['Dieser Link ist nicht gültig oder abgelaufen.'],
+      isValid: false,
+    };
+  }
+
+  const bookingDetails = bookingSnap.data().booking as Booking;
+  const hotelId = bookingDetails.hotelId;
+
+  const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
+  const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
   const guestData: ValidateGuestDataInput = {
     guestName: `${rawData.firstName} ${rawData.lastName}`,
     email: rawData.email as string,
     address: `${rawData.street}, ${rawData.zip} ${rawData.city}`,
-    checkInDate: bookingDetails.checkInDate,
-    checkOutDate: bookingDetails.checkOutDate,
-    numberOfAdults: 2, // Placeholder
-    numberOfChildren: 1, // Placeholder
-    roomType: bookingDetails.roomType,
+    checkInDate: bookingDetails.checkIn.toDate().toISOString(),
+    checkOutDate: bookingDetails.checkOut.toDate().toISOString(),
+    numberOfAdults: totalAdults, 
+    numberOfChildren: totalChildren,
+    roomType: bookingDetails.rooms.map(r => r.type).join(', '),
     specialRequests: (rawData.specialRequests as string) || '',
   };
 
@@ -50,16 +63,32 @@ export async function finalizeBookingAction(
       };
     }
 
-    // --- In a real app, you would now: ---
-    // 1. Securely upload payment proof and ID documents to Firebase Storage.
-    // 2. Get the download URLs.
-    // 3. Update the booking document in Firestore with all guest data and file URLs.
-    // 4. Set the booking status to 'Partial Payment' or 'Confirmed'.
-    // 5. Deactivate the booking link.
-    // 6. Trigger a confirmation email via Resend.
+    const finalGuestData = {
+        firstName: rawData.firstName as string,
+        lastName: rawData.lastName as string,
+        email: rawData.email as string,
+        street: rawData.street as string,
+        zip: rawData.zip as string,
+        city: rawData.city as string,
+        specialRequests: (rawData.specialRequests as string) || '',
+        // fellowTravelers would be collected here
+    }
 
-    // Revalidate the path to reflect updated data if needed
+    const hotelBookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingDetails.id);
+    
+    await updateDoc(hotelBookingRef, {
+        status: 'Data Provided',
+        guestDetails: finalGuestData
+    });
+
+    // Deactivate the booking link
+    await updateDoc(bookingRef, {
+        status: 'used'
+    })
+
     revalidatePath(`/guest/${linkId}`);
+    revalidatePath(`/dashboard/${hotelId}/bookings`);
+
   } catch (error) {
     console.error('Error finalizing booking:', error);
     return {
@@ -69,6 +98,5 @@ export async function finalizeBookingAction(
     };
   }
 
-  // Redirect to the thank you page on success
   redirect(`/guest/${linkId}/thank-you`);
 }

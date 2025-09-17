@@ -1,12 +1,19 @@
 'use server';
 
-import { db } from '@/lib/firebase/client';
-import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import {db} from '@/lib/firebase/client';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  Timestamp,
+} from 'firebase/firestore';
+import {revalidatePath} from 'next/cache';
+import {redirect} from 'next/navigation';
+import {Booking, Room} from '@/lib/types';
+import {DateRange} from 'react-day-picker';
 
 export async function createHotelAction(prevState: any, formData: FormData) {
-
   const mealTypes = formData.getAll('mealTypes') as string[];
   const roomCategories = formData.getAll('roomCategories') as string[];
 
@@ -23,7 +30,7 @@ export async function createHotelAction(prevState: any, formData: FormData) {
       email: formData.get('contactEmail') as string,
       phone: formData.get('contactPhone') as string,
     },
-    
+
     bankDetails: {
       accountHolder: formData.get('accountHolder') as string,
       iban: formData.get('iban') as string,
@@ -32,27 +39,19 @@ export async function createHotelAction(prevState: any, formData: FormData) {
     },
 
     smtp: {
-        host: formData.get('smtpHost') as string,
-        port: Number(formData.get('smtpPort')),
-        user: formData.get('smtpUser') as string,
-        appPass: formData.get('smtpPass') as string,
+      host: formData.get('smtpHost') as string,
+      port: Number(formData.get('smtpPort')),
+      user: formData.get('smtpUser') as string,
+      appPass: formData.get('smtpPass') as string,
     },
 
     bookingConfig: {
-        mealTypes: mealTypes,
-        roomCategories: roomCategories,
-    }
+      mealTypes: mealTypes,
+      roomCategories: roomCategories,
+    },
   };
 
   try {
-    // In einer echten Anwendung mit Firebase Admin SDK würde hier der Benutzer erstellt
-    // const hotelierEmail = formData.get('hotelierEmail') as string;
-    // const hotelierPassword = formData.get('hotelierPassword') as string;
-    // const userRecord = await auth.createUser({ email: hotelierEmail, password: hotelierPassword });
-    // await auth.setCustomUserClaims(userRecord.uid, { role: 'hotelier', hotelId: docRef.id });
-    
-    // Da wir clientseitig sind, können wir den Benutzer nicht direkt erstellen.
-    // Wir speichern die Daten in Firestore. Die Benutzererstellung wäre ein nächster Schritt.
     const docRef = await addDoc(collection(db, 'hotels'), hotelData);
 
     console.log('Hotel created with ID: ', docRef.id);
@@ -81,5 +80,56 @@ export async function deleteHotelAction(hotelId: string) {
       message: 'Fehler beim Löschen des Hotels.',
       success: false,
     };
+  }
+}
+
+export async function createBookingAction(
+  hotelId: string,
+  formData: FormData,
+  rooms: Room[],
+  date?: DateRange
+) {
+  if (!date?.from || !date?.to) {
+    return {success: false, message: 'An- und Abreisedatum sind erforderlich.'};
+  }
+
+  const bookingData: Omit<Booking, 'id' | 'hotelId'> = {
+    guestName: formData.get('guestName') as string,
+    checkIn: Timestamp.fromDate(date.from),
+    checkOut: Timestamp.fromDate(date.to),
+    price: parseFloat(formData.get('price') as string),
+    mealType: formData.get('mealType') as string,
+    language: formData.get('language') as string,
+    internalNotes: (formData.get('internalNotes') as string) || '',
+    rooms: rooms,
+    status: 'Sent',
+    createdAt: Timestamp.now(),
+  };
+
+  try {
+    const bookingCollection = collection(db, 'hotels', hotelId, 'bookings');
+    const docRef = await addDoc(bookingCollection, bookingData);
+
+    const linkRef = await addDoc(collection(db, 'bookingLinks'), {
+      hotelId: hotelId,
+      bookingId: docRef.id,
+      createdAt: Timestamp.now(),
+      status: 'active',
+      booking: {
+        ...bookingData,
+        id: docRef.id,
+        hotelId: hotelId,
+      },
+    });
+
+    revalidatePath(`/dashboard/${hotelId}/bookings`);
+
+    const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const bookingLink = `${domain}/guest/${linkRef.id}`;
+
+    return {success: true, link: bookingLink};
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    return {success: false, message: 'Buchung konnte nicht erstellt werden.'};
   }
 }

@@ -1,42 +1,55 @@
-import { Button } from '@/components/ui/button';
+'use client';
+
+import {Button} from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
-import { hotelColumns } from '@/components/data-table/columns';
-import { DataTable } from '@/components/data-table/data-table';
-import { db } from '@/lib/firebase/client';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { Hotel } from '@/lib/types';
+import {PlusCircle} from 'lucide-react';
+import {hotelColumns} from '@/components/data-table/columns';
+import {DataTable} from '@/components/data-table/data-table';
+import {db} from '@/lib/firebase/client';
+import {collection, getDocs, orderBy, query, onSnapshot} from 'firebase/firestore';
+import {Hotel} from '@/lib/types';
+import {useEffect, useState} from 'react';
 
-async function getHotels(): Promise<Hotel[]> {
-  const hotelsCollection = collection(db, 'hotels');
-  const q = query(hotelsCollection, orderBy('createdAt', 'desc'));
-  const hotelsSnapshot = await getDocs(q);
-  const hotelsList = hotelsSnapshot.docs.map((doc) => {
-    const data = doc.data();
-    
-    // Handle both Firestore Timestamps and JS Date objects
-    let createdAt: string;
-    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-      // It's a Firestore Timestamp
-      createdAt = data.createdAt.toDate().toISOString();
-    } else if (data.createdAt) {
-      // It's likely already a JS Date or a string, convert to ISO string
-      createdAt = new Date(data.createdAt).toISOString();
-    } else {
-        createdAt = new Date().toISOString();
-    }
+export default function AgencyDashboardPage() {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: createdAt,
-    } as Hotel;
-  });
-  return hotelsList;
-}
+  useEffect(() => {
+    const hotelsCollection = collection(db, 'hotels');
+    const q = query(hotelsCollection, orderBy('createdAt', 'desc'));
 
-export default async function AgencyDashboardPage() {
-  const hotels = await getHotels();
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const hotelsList = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          let createdAt: string;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAt = data.createdAt.toDate().toISOString();
+          } else if (data.createdAt) {
+            createdAt = new Date(data.createdAt).toISOString();
+          } else {
+            createdAt = new Date().toISOString();
+          }
+
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: createdAt,
+          } as Hotel;
+        });
+        setHotels(hotelsList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching hotels:', error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -59,6 +72,7 @@ export default async function AgencyDashboardPage() {
         data={hotels}
         filterColumnId="hotelName"
         filterPlaceholder="Hotels filtern..."
+        loading={loading}
       />
     </div>
   );

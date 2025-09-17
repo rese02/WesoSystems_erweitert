@@ -19,12 +19,77 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { collection, onSnapshot, query, where, getCountFromServer, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
+import { Booking } from '@/lib/types';
+import { format } from 'date-fns';
 
 export default function HotelierDashboardPage() {
   const params = useParams<{ hotelId: string }>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
+  
+  const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [totalBookings, setTotalBookings] = React.useState(0);
+  const [todaysArrivals, setTodaysArrivals] = React.useState(0);
+  const [pendingActions, setPendingActions] = React.useState(0);
+  const [latestBookings, setLatestBookings] = React.useState<Booking[]>([]);
 
-  const totalRevenue = 12345.67; // Mock data
+
+  React.useEffect(() => {
+    if (!params.hotelId) return;
+
+    const bookingsCol = collection(db, 'hotels', params.hotelId, 'bookings');
+    
+    // --- Kennzahlen berechnen ---
+    const confirmedQuery = query(bookingsCol, where('status', '==', 'Confirmed'));
+    const allQuery = query(bookingsCol);
+    
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const arrivalsQuery = query(bookingsCol, 
+        where('checkIn', '>=', Timestamp.fromDate(todayStart)),
+        where('checkIn', '<=', Timestamp.fromDate(todayEnd)),
+    );
+
+    const pendingQuery = query(bookingsCol, where('status', '==', 'Data Provided'));
+
+
+    const unsubRevenue = onSnapshot(confirmedQuery, (snap) => {
+        const revenue = snap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
+        setTotalRevenue(revenue);
+    });
+
+    const unsubArrivals = onSnapshot(arrivalsQuery, (snap) => {
+        setTodaysArrivals(snap.size);
+    });
+
+    const unsubPending = onSnapshot(pendingQuery, (snap) => {
+        setPendingActions(snap.size);
+    });
+
+    const unsubTotal = onSnapshot(allQuery, (snap) => {
+        setTotalBookings(snap.size);
+        
+        // Letzte Aktivitäten (die 5 neusten Buchungen)
+        const latest = snap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as Booking))
+          .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+          .slice(0, 5);
+        setLatestBookings(latest);
+    });
+
+
+    return () => {
+        unsubRevenue();
+        unsubArrivals();
+        unsubPending();
+        unsubTotal();
+    }
+  }, [params.hotelId]);
+
 
   return (
     <div className="space-y-6">
@@ -66,7 +131,7 @@ export default function HotelierDashboardPage() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{totalBookings}</div>
             <p className="text-xs text-muted-foreground">
               Inkl. stornierte
             </p>
@@ -80,7 +145,7 @@ export default function HotelierDashboardPage() {
             <LogIn className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{todaysArrivals}</div>
             <p className="text-xs text-muted-foreground">Geplante Check-ins</p>
           </CardContent>
         </Card>
@@ -92,7 +157,7 @@ export default function HotelierDashboardPage() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{pendingActions}</div>
             <p className="text-xs text-muted-foreground">
               z.B. fehlende Dokumente
             </p>
@@ -133,7 +198,17 @@ export default function HotelierDashboardPage() {
                 </p>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground text-center">Noch keine Aktivitäten vorhanden.</p>
+              {latestBookings.length > 0 ? (
+                  <ul className="space-y-3">
+                      {latestBookings.map(b => (
+                          <li key={b.id} className="text-sm text-muted-foreground">
+                              Buchung für <span className="font-medium text-foreground">{b.guestName}</span> wurde aktualisiert. Status: <span className="font-medium text-foreground">{b.status}</span>
+                          </li>
+                      ))}
+                  </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center">Noch keine Aktivitäten vorhanden.</p>
+              )}
             </CardContent>
           </Card>
         </div>
