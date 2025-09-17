@@ -81,7 +81,7 @@ export default function CreateHotelPage() {
                 <Input
                   id="hotelName"
                   name="hotelName"
-                  placeholder="z.B. Hotel Hatzis"
+                  placeholder="z.B. Ihr Hotel"
                   required
                 />
               </div>
@@ -90,7 +90,7 @@ export default function CreateHotelPage() {
                 <Input
                   id="domain"
                   name="domain"
-                  placeholder="z.B. hatzis.com"
+                  placeholder="z.B. ihr-hotel.de"
                   required
                 />
               </div>
@@ -100,7 +100,7 @@ export default function CreateHotelPage() {
                   id="contactEmail"
                   name="contactEmail"
                   type="email"
-                  placeholder="info@hotel.com"
+                  placeholder="info@ihr-hotel.de"
                   required
                 />
               </div>
@@ -213,7 +213,7 @@ export default function CreateHotelPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpUser">E-Mail-Benutzer</Label>
-                    <Input id="smtpUser" name="smtpUser" placeholder="z.B. info@hotel-sonne.com" required/>
+                    <Input id="smtpUser" name="smtpUser" placeholder="z.B. info@ihr-hotel.de" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPass">App-Passwort</Label>

@@ -36,15 +36,15 @@ export default function HotelSettingsPage() {
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="hotelName">Hotelname</Label>
-              <Input id="hotelName" name="hotelName" placeholder="z.B. Hotel Hatzis" />
+              <Input id="hotelName" name="hotelName" placeholder="z.B. Ihr Hotel" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="domain">Domain</Label>
-              <Input id="domain" name="domain" placeholder="z.B. hatzis.com" />
+              <Input id="domain" name="domain" placeholder="z.B. ihr-hotel.de" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@hotel.com" />
+              <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@ihr-hotel.de" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactPhone">Kontakt Telefon</Label>

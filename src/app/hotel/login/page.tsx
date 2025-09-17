@@ -35,7 +35,7 @@ export default function HotelLoginPage() {
             <Input
                 id="email"
                 type="email"
-                placeholder="name@hotel.com"
+                placeholder="name@ihr-hotel.de"
                 required
                 className="h-12 text-base"
             />
@@ -46,7 +46,7 @@ export default function HotelLoginPage() {
             </div>
             <div className="grid gap-3 pt-4">
                 <Button asChild size="lg" className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95">
-                <Link href="/dashboard/hetzis">Anmelden</Link>
+                <Link href="/dashboard/hotel-id">Anmelden</Link>
                 </Button>
                 <Button asChild variant="link" size="sm" className="text-muted-foreground hover:text-primary font-normal">
                 <Link href="/">Zurück zur Auswahl</Link>
