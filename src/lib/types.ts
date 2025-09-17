@@ -3,7 +3,7 @@ export type Hotel = {
   hotelName: string;
   domain: string;
   logoUrl?: string; // Optional, da nicht immer ein Logo hochgeladen wird
-  createdAt: any; // Firestore Timestamp
+  createdAt: string; // Changed from 'any' to 'string' to support serialization
 
   // NEU: Die E-Mail für den Hotelier-Login
   hotelier: {

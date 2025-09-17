@@ -11,10 +11,17 @@ async function getHotels(): Promise<Hotel[]> {
   const hotelsCollection = collection(db, 'hotels');
   const q = query(hotelsCollection, orderBy('createdAt', 'desc'));
   const hotelsSnapshot = await getDocs(q);
-  const hotelsList = hotelsSnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Hotel[];
+  const hotelsList = hotelsSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    // Convert Firestore Timestamp to a simple string or number.
+    // Here, we'll convert it to an ISO string.
+    const createdAt = data.createdAt.toDate().toISOString();
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: createdAt,
+    } as Hotel;
+  });
   return hotelsList;
 }
 
