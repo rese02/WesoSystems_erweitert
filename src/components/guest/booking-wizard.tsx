@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -19,11 +19,25 @@ const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
 export function BookingWizard({ linkId }: { linkId: string }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [fellowTravelers, setFellowTravelers] = useState([{ id: 1, name: '' }]);
-
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    street: '',
+    zip: '',
+    city: '',
+    specialRequests: ''
+  });
+  
   const [formState, formAction] = useActionState(
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const addTraveler = () => {
     setFellowTravelers([...fellowTravelers, { id: Date.now(), name: '' }]);
@@ -44,27 +58,27 @@ export function BookingWizard({ linkId }: { linkId: string }) {
             <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="firstName">Vorname</Label>
-                <Input id="firstName" name="firstName" defaultValue="Max" required />
+                <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="lastName">Nachname</Label>
-                <Input id="lastName" name="lastName" defaultValue="Mustermann" required />
+                <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="email">E-Mail</Label>
-                <Input id="email" name="email" type="email" defaultValue="max@example.com" required />
+                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="street">Straße und Hausnummer</Label>
-                <Input id="street" name="street" defaultValue="Musterstraße 1" required />
+                <Input id="street" name="street" value={formData.street} onChange={handleInputChange} required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="zip">Postleitzahl</Label>
-                <Input id="zip" name="zip" defaultValue="12345" required />
+                <Input id="zip" name="zip" value={formData.zip} onChange={handleInputChange} required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="city">Stadt</Label>
-                <Input id="city" name="city" defaultValue="Musterstadt" required />
+                <Input id="city" name="city" value={formData.city} onChange={handleInputChange} required />
               </div>
               <div className="flex items-center space-x-2 sm:col-span-2">
                 <Checkbox id="upload-ids" />
@@ -141,14 +155,14 @@ export function BookingWizard({ linkId }: { linkId: string }) {
                   Daten schließen Sie Ihre Buchung verbindlich ab.
                 </p>
                 {/* Hidden fields for data submission */}
-                <input type="hidden" name="firstName" value="Max" />
-                <input type="hidden" name="lastName" value="Mustermann" />
-                <input type="hidden" name="email" value="max@example.com" />
-                <input type="hidden" name="street" value="Musterstraße 1" />
-                <input type="hidden" name="zip" value="12345" />
-                <input type="hidden" name="city" value="Musterstadt" />
+                <input type="hidden" name="firstName" value={formData.firstName} />
+                <input type="hidden" name="lastName" value={formData.lastName} />
+                <input type="hidden" name="email" value={formData.email} />
+                <input type="hidden" name="street" value={formData.street} />
+                <input type="hidden" name="zip" value={formData.zip} />
+                <input type="hidden" name="city" value={formData.city} />
 
-                <Textarea name="specialRequests" placeholder="Haben Sie besondere Wünsche oder Anmerkungen?" />
+                <Textarea name="specialRequests" placeholder="Haben Sie besondere Wünsche oder Anmerkungen?" value={formData.specialRequests} onChange={handleInputChange} />
                 <div className="flex items-center space-x-2">
                   <Checkbox id="agb" required />
                   <label htmlFor="agb" className="text-sm">
@@ -202,4 +216,3 @@ export function BookingWizard({ linkId }: { linkId: string }) {
       )}
     </div>
   );
-}

@@ -1,19 +1,15 @@
 import { Building } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
+import { notFound } from 'next/navigation';
 
 async function getHotelName(linkId: string): Promise<string> {
-    try {
-        const linkRef = doc(db, 'bookingLinks', linkId);
-        const linkSnap = await getDoc(linkRef);
-        if (linkSnap.exists()) {
-            return linkSnap.data().hotel.hotelName || 'Ihr Hotel';
-        }
-        return 'Ihr Hotel';
-    } catch (error) {
-        console.error("Failed to fetch hotel name:", error);
-        return 'Ihr Hotel';
+    const linkRef = doc(db, 'bookingLinks', linkId);
+    const linkSnap = await getDoc(linkRef);
+    if (!linkSnap.exists() || linkSnap.data().status === 'used') {
+        notFound();
     }
+    return linkSnap.data().booking.hotelName || 'Ihr Hotel';
 }
 
 export default async function GuestLayout({
@@ -34,8 +30,4 @@ export default async function GuestLayout({
       </header>
       <main className="bg-muted/40 p-4 sm:p-8">{children}</main>
       <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} WesoSystems
-      </footer>
-    </div>
-  );
-}
+        © {new Date().getFullYear()} W

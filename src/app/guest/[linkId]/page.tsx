@@ -20,6 +20,20 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
 
     // The booking data is nested inside the link document.
     const booking = data.booking;
+
+    if (booking.status !== 'Pending') {
+         return (
+            <div className="mx-auto max-w-2xl py-12">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Buchung bereits bearbeitet</AlertTitle>
+                  <AlertDescription>
+                    Die Daten für diese Buchung wurden bereits übermittelt.
+                  </AlertDescription>
+                </Alert>
+            </div>
+         )
+    }
     
     // We also need some hotel info, which is also nested.
     const hotel = data.hotel;
@@ -44,22 +58,4 @@ export default async function GuestBookingPage({
               <AlertTitle>Buchungslink ungültig</AlertTitle>
               <AlertDescription>
                 Dieser Link ist entweder abgelaufen oder existiert nicht. Bitte kontaktieren Sie das Hotel.
-              </AlertDescription>
-            </Alert>
-        </div>
-     )
-  }
-
-  return (
-    <div className="mx-auto max-w-6xl">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <BookingWizard linkId={params.linkId} />
-        </div>
-        <div className="lg:col-span-1">
-          <BookingSummaryCard booking={linkData.booking} />
-        </div>
-      </div>
-    </div>
-  );
-}
+              </Aler

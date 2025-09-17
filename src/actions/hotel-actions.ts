@@ -109,7 +109,7 @@ export async function createBookingAction(
     language: formData.get('language') as string,
     internalNotes: (formData.get('internalNotes') as string) || '',
     rooms: rooms,
-    status: 'Sent',
+    status: 'Pending',
     createdAt: Timestamp.now(),
   };
 

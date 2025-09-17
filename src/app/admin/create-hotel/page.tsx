@@ -31,17 +31,6 @@ export default function CreateHotelPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [state, action] = useActionState(createHotelAction, { message: '' });
-
-  const handleFormSubmit = (formData: FormData) => {
-    // Append dynamic data to formData before submitting
-    roomCategories.forEach(cat => formData.append('roomCategories', cat));
-    Object.entries(mealTypes).forEach(([key, value]) => {
-      if (value) {
-        formData.append('mealTypes', key);
-      }
-    });
-    action(formData);
-  };
   
   const generatePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -66,7 +55,7 @@ export default function CreateHotelPage() {
         </p>
       </div>
 
-      <form action={handleFormSubmit} className="grid gap-8 lg:grid-cols-3">
+      <form action={action} className="grid gap-8 lg:grid-cols-3">
         <div className="grid gap-8 lg:col-span-2">
           <Card>
             <CardHeader>
@@ -231,19 +220,19 @@ export default function CreateHotelPage() {
                     <Label>Verpflegungsarten</Label>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="fruehstueck" checked={mealTypes.fruehstueck} onCheckedChange={(checked) => setMealTypes(prev => ({...prev, fruehstueck: !!checked}))} />
+                            <Checkbox id="fruehstueck" name="mealTypes" value="fruehstueck" defaultChecked/>
                             <Label htmlFor="fruehstueck">Frühstück</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="halbpension" checked={mealTypes.halbpension} onCheckedChange={(checked) => setMealTypes(prev => ({...prev, halbpension: !!checked}))} />
+                            <Checkbox id="halbpension" name="mealTypes" value="halbpension"/>
                             <Label htmlFor="halbpension">Halbpension</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="vollpension" checked={mealTypes.vollpension} onCheckedChange={(checked) => setMealTypes(prev => ({...prev, vollpension: !!checked}))} />
+                            <Checkbox id="vollpension" name="mealTypes" value="vollpension"/>
                             <Label htmlFor="vollpension">Vollpension</Label>
                         </div>
                          <div className="flex items-center space-x-2">
-                            <Checkbox id="ohne" checked={mealTypes.ohne} onCheckedChange={(checked) => setMealTypes(prev => ({...prev, ohne: !!checked}))} />
+                            <Checkbox id="ohne" name="mealTypes" value="ohne"/>
                             <Label htmlFor="ohne">Ohne Verpflegung</Label>
                         </div>
                     </div>
@@ -253,8 +242,9 @@ export default function CreateHotelPage() {
                     <Label>Zimmerkategorien</Label>
                     {roomCategories.map((category, index) => (
                         <div key={index} className="flex items-center gap-2">
-                        <Input 
-                            value={category}
+                        <Input
+                            name="roomCategories"
+                            defaultValue={category}
                             onChange={(e) => {
                                 const newCategories = [...roomCategories];
                                 newCategories[index] = e.target.value;
