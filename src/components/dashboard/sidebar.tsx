@@ -23,9 +23,10 @@ import { usePathname } from 'next/navigation';
 type DashboardSidebarProps = {
   role: 'agency' | 'hotelier';
   hotelId?: string;
+  hotelName?: string;
 };
 
-export function DashboardSidebar({ role, hotelId }: DashboardSidebarProps) {
+export function DashboardSidebar({ role, hotelId, hotelName }: DashboardSidebarProps) {
   const pathname = usePathname();
 
   const agencyLinks = [
@@ -80,7 +81,7 @@ export function DashboardSidebar({ role, hotelId }: DashboardSidebarProps) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-200">
                 <MountainIcon className="h-6 w-6 text-gray-600" />
             </div>
-          <h1 className="text-lg font-headline font-semibold capitalize">{role === 'agency' ? 'WesoSystems' : hotelId}</h1>
+          <h1 className="text-lg font-headline font-semibold capitalize">{role === 'agency' ? 'WesoSystems' : hotelName}</h1>
         </div>
       </SidebarHeader>
       <SidebarContent>
