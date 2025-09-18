@@ -8,7 +8,8 @@ import { db } from '@/lib/firebase/client';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Booking } from '@/lib/types';
+import { Booking, Hotel } from '@/lib/types';
+import { sendBookingConfirmation } from '@/lib/email';
 
 type FormState = {
   message: string;
@@ -23,10 +24,10 @@ export async function finalizeBookingAction(
 ): Promise<FormState> {
   const rawData = Object.fromEntries(formData.entries());
 
-  const bookingRef = doc(db, 'bookingLinks', linkId);
-  const bookingSnap = await getDoc(bookingRef);
+  const bookingLinkRef = doc(db, 'bookingLinks', linkId);
+  const bookingLinkSnap = await getDoc(bookingLinkRef);
 
-  if (!bookingSnap.exists()) {
+  if (!bookingLinkSnap.exists()) {
     return {
       message: 'Ungültiger Buchungslink.',
       errors: ['Dieser Link ist nicht gültig oder abgelaufen.'],
@@ -34,8 +35,20 @@ export async function finalizeBookingAction(
     };
   }
 
-  const bookingDetails = bookingSnap.data().booking as Booking;
+  const bookingDetails = bookingLinkSnap.data().booking as Booking;
   const hotelId = bookingDetails.hotelId;
+
+  const hotelRef = doc(db, 'hotels', hotelId);
+  const hotelSnap = await getDoc(hotelRef);
+
+  if (!hotelSnap.exists()) {
+     return {
+      message: 'Hotel nicht gefunden.',
+      errors: ['Das zugehörige Hotel konnte nicht gefunden werden.'],
+      isValid: false,
+    };
+  }
+  const hotelData = hotelSnap.data() as Hotel;
 
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
@@ -84,9 +97,22 @@ export async function finalizeBookingAction(
     });
 
     // Deactivate the booking link
-    await updateDoc(bookingRef, {
+    await updateDoc(bookingLinkRef, {
         status: 'used'
-    })
+    });
+
+    // Send confirmation email
+    try {
+        await sendBookingConfirmation({
+            booking: { ...bookingDetails, guestDetails: finalGuestData },
+            hotel: hotelData,
+        });
+    } catch(emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // We don't fail the whole transaction if the email fails,
+        // but we should log it for monitoring.
+    }
+
 
     revalidatePath(`/guest/${linkId}`);
     revalidatePath(`/dashboard/${hotelId}/bookings`);
