@@ -1,3 +1,5 @@
+'use client';
+
 import { AuthLayout } from '@/components/auth-layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,10 +11,34 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MountainIcon } from 'lucide-react';
+import { AlertCircle, MountainIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useActionState, useEffect } from 'react';
+import { loginHotelAction } from '@/actions/auth-actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+
+
+const initialState = {
+  message: '',
+  success: false,
+};
 
 export default function HotelLoginPage() {
+  const [state, formAction] = useActionState(loginHotelAction, initialState);
+  const { toast } = useToast();
+
+   useEffect(() => {
+    if (state?.message && !state.success) {
+      toast({
+        title: 'Anmeldefehler',
+        description: state.message,
+        variant: 'destructive',
+      });
+    }
+  }, [state, toast]);
+
+
   return (
     <AuthLayout>
       <Card className="w-full max-w-sm rounded-2xl border-none bg-white/80 p-8 shadow-lg backdrop-blur-sm">
@@ -21,7 +47,7 @@ export default function HotelLoginPage() {
             <MountainIcon className="h-6 w-6 text-gray-600" />
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 p-0">
+        <CardContent as="form" action={formAction} className="grid gap-4 p-0">
             <div className="text-center mb-4">
             <CardTitle className="font-headline text-2xl font-bold">
                 Hotel-Login
@@ -34,6 +60,7 @@ export default function HotelLoginPage() {
             <Label htmlFor="email">E-Mail</Label>
             <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="name@ihr-hotel.de"
                 required
@@ -43,11 +70,20 @@ export default function HotelLoginPage() {
             </div>
             <div className="grid gap-2">
             <Label htmlFor="password">Passwort</Label>
-            <Input id="password" type="password" required className="h-12 text-base" autoComplete="off"/>
+            <Input id="password" name="password" type="password" required className="h-12 text-base" autoComplete="off"/>
             </div>
+
+            {state?.message && !state.success && (
+                 <Alert variant="destructive" className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Fehler</AlertTitle>
+                    <AlertDescription>{state.message}</AlertDescription>
+                </Alert>
+            )}
+
             <div className="grid gap-3 pt-4">
-                <Button asChild size="lg" className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95">
-                <Link href="/dashboard/hotel-id">Anmelden</Link>
+                <Button type="submit" size="lg" className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95">
+                    Anmelden
                 </Button>
                 <Button asChild variant="link" size="sm" className="text-muted-foreground hover:text-primary font-normal">
                 <Link href="/">Zurück zur Auswahl</Link>

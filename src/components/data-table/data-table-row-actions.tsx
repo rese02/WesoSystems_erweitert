@@ -37,31 +37,6 @@ export function HotelDataTableRowActions<TData>({
   const { toast } = useToast();
   const hotel = row.original as Hotel;
 
-  const copyLoginLink = () => {
-    const loginLink = `${window.location.origin}/hotel/login`;
-    navigator.clipboard.writeText(loginLink);
-    toast({
-      title: 'Link kopiert!',
-      description: 'Der Hotel-Login-Link wurde in die Zwischenablage kopiert.',
-    });
-  };
-
-  const copyLoginCredentials = () => {
-    if (!hotel.hotelier || !hotel.hotelier.email || !hotel.hotelier.password) {
-       toast({
-        title: 'Fehler',
-        description: 'Login-Daten für dieses Hotel nicht vollständig.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    const credentials = `E-Mail: ${hotel.hotelier.email}\nPasswort: ${hotel.hotelier.password}`;
-    navigator.clipboard.writeText(credentials);
-    toast({
-      title: 'Zugangsdaten kopiert!',
-      description: 'Sie können die Daten nun an den Hotelier senden.',
-    });
-  };
 
   const handleDelete = async () => {
     const result = await deleteHotelAction(hotel.id);
@@ -97,12 +72,6 @@ export function HotelDataTableRowActions<TData>({
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
              <Link href={`/dashboard/${hotel.id}/settings`}>Einstellungen</Link>
-          </DropdownMenuItem>
-           <DropdownMenuItem onClick={copyLoginCredentials}>
-            Login-Daten kopieren
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={copyLoginLink}>
-            Login-Link kopieren
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
