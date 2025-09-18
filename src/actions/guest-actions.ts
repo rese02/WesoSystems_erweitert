@@ -67,6 +67,8 @@ export async function finalizeBookingAction(
         firstName: rawData.firstName as string,
         lastName: rawData.lastName as string,
         email: rawData.email as string,
+        phone: rawData.phone as string,
+        birthDate: rawData.birthDate as string,
         street: rawData.street as string,
         zip: rawData.zip as string,
         city: rawData.city as string,

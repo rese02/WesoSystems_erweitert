@@ -71,6 +71,8 @@ export type GuestData = {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
+  birthDate: string;
   street: string;
   zip: string;
   city: string;
