@@ -16,15 +16,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
     className={cn('capitalize', {
       'bg-green-100 text-green-800 border-green-200': status === 'Confirmed',
       'bg-yellow-100 text-yellow-800 border-yellow-200': status === 'Partial Payment',
-      'bg-blue-100 text-blue-800 border-blue-200': status === 'Sent',
+      'bg-blue-100 text-blue-800 border-blue-200': status === 'Data Provided',
+      'bg-orange-100 text-orange-800 border-orange-200': status === 'Pending',
       'bg-red-100 text-red-800 border-red-200': status === 'Cancelled',
     })}
     variant="outline"
@@ -32,6 +36,12 @@ const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
     {status}
   </Badge>
 );
+
+const formatDate = (timestamp: Timestamp | Date) => {
+    if (!timestamp) return 'N/A';
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+    return format(date, 'dd.MM.yyyy', { locale: de });
+};
 
 
 export default function BookingsPage() {
@@ -58,8 +68,16 @@ export default function BookingsPage() {
 
   const bookingColumns: ColumnDef<Booking>[] = [
     { accessorKey: 'guestName', header: 'Gast' },
-    { accessorKey: 'checkIn', header: 'Check-in' },
-    { accessorKey: 'checkOut', header: 'Check-out' },
+    { 
+        accessorKey: 'checkIn', 
+        header: 'Check-in',
+        cell: ({ row }) => formatDate(row.getValue('checkIn'))
+    },
+    { 
+        accessorKey: 'checkOut', 
+        header: 'Check-out',
+        cell: ({ row }) => formatDate(row.getValue('checkOut'))
+    },
     {
       accessorKey: 'status',
       header: 'Status',

@@ -4,9 +4,16 @@ import { Calendar, BedDouble, Euro, Users } from 'lucide-react';
 import { Booking } from '@/lib/types';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { Timestamp } from 'firebase/firestore';
 
 type BookingSummaryCardProps = {
     booking: Booking;
+};
+
+const formatDate = (timestamp: Timestamp | Date) => {
+    if (!timestamp) return 'N/A';
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+    return format(date, 'dd.MM.yy', { locale: de });
 };
 
 export function BookingSummaryCard({ booking }: BookingSummaryCardProps) {
@@ -25,7 +32,7 @@ export function BookingSummaryCard({ booking }: BookingSummaryCardProps) {
             <span>Zeitraum</span>
           </div>
           <span className="font-medium">
-            {format(booking.checkIn.toDate(), 'dd.MM.yy', { locale: de })} - {format(booking.checkOut.toDate(), 'dd.MM.yy', { locale: de })}
+            {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}
           </span>
         </div>
         <Separator />

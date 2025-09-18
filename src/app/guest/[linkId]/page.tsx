@@ -19,6 +19,10 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const data = linkSnap.data();
     const booking = data.booking;
 
+    if (!booking) {
+        return null;
+    }
+
     const hotelRef = doc(db, 'hotels', booking.hotelId);
     const hotelSnap = await getDoc(hotelRef);
 

@@ -144,16 +144,18 @@ export async function createBookingAction(
     const bookingCollection = collection(db, 'hotels', hotelId, 'bookings');
     const docRef = await addDoc(bookingCollection, bookingData);
 
+    const fullBookingData = {
+        ...bookingData,
+        id: docRef.id,
+        hotelId: hotelId,
+    }
+
     const linkRef = await addDoc(collection(db, 'bookingLinks'), {
       hotelId: hotelId,
       bookingId: docRef.id,
       createdAt: Timestamp.now(),
       status: 'active',
-      booking: {
-        ...bookingData,
-        id: docRef.id,
-        hotelId: hotelId,
-      },
+      booking: fullBookingData
     });
 
     revalidatePath(`/dashboard/${hotelId}/bookings`);
