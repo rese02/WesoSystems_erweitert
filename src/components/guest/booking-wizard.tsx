@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useActionState } from 'react-dom';
+import { useFormState } from 'react-dom';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export function BookingWizard({ linkId }: { linkId: string }) {
     specialRequests: ''
   });
   
-  const [formState, formAction] = useActionState(
+  const [formState, formAction] = useFormState(
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
