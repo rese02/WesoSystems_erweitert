@@ -12,14 +12,16 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
+    // First, check if the link itself is valid and not used
     if (!linkSnap.exists() || linkSnap.data().status === 'used') {
-        return null;
+        return null; // This will trigger a notFound() in the page component
     }
     
     const data = linkSnap.data();
-    const booking = data.booking;
+    const booking = data.booking; // The booking data is now directly embedded here
 
-    if (!booking) {
+    if (!booking || !booking.hotelId) {
+        console.error('Booking data integrity issue for linkId:', linkId);
         return null;
     }
 
@@ -27,15 +29,16 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const hotelSnap = await getDoc(hotelRef);
 
     if (!hotelSnap.exists()) {
+        console.error('Hotel not found for booking:', booking.id);
         return null;
     }
     const hotel = hotelSnap.data();
 
-
+    // Reconstruct the full object to pass to the components
     return { 
         id: linkSnap.id, 
-        booking, 
-        hotel: { id: hotelSnap.id, ...hotel } as any // Type assertion for simplicity
+        booking, // The complete booking object
+        hotel: { id: hotelSnap.id, ...hotel } as any
     };
 }
 
@@ -48,10 +51,12 @@ export default async function GuestBookingPage({
 
   const linkData = await getBookingLinkData(params.linkId);
 
+  // If the link is invalid or data is inconsistent, show a 404 page
   if (!linkData) {
      notFound();
   }
 
+  // The guest form should only be accessible if the booking is 'Pending'
   if (linkData.booking.status !== 'Pending') {
     return (
         <div className="mx-auto max-w-2xl py-12">
@@ -66,6 +71,7 @@ export default async function GuestBookingPage({
      )
   }
 
+  // If status is 'Pending', show the wizard to the guest
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">

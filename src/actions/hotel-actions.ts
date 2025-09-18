@@ -144,23 +144,26 @@ export async function createBookingAction(
     const bookingCollection = collection(db, 'hotels', hotelId, 'bookings');
     const docRef = await addDoc(bookingCollection, bookingData);
 
-    const fullBookingData = {
+    // This is the crucial part: create the full booking object to store in the link
+    const fullBookingData: Booking = {
         ...bookingData,
-        id: docRef.id,
+        id: docRef.id, // The ID of the booking document itself
         hotelId: hotelId,
     }
 
+    // Now, create the booking link document with ALL the necessary data
     const linkRef = await addDoc(collection(db, 'bookingLinks'), {
       hotelId: hotelId,
       bookingId: docRef.id,
       createdAt: Timestamp.now(),
-      status: 'active',
-      booking: fullBookingData
+      status: 'active', // 'active' means the link can be used
+      booking: fullBookingData // Embed the full booking data
     });
 
     revalidatePath(`/dashboard/${hotelId}/bookings`);
 
-    const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Use NEXT_PUBLIC_APP_URL for the domain to ensure it works in all environments
+    const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const bookingLink = `${domain}/guest/${linkRef.id}`;
 
     return {success: true, link: bookingLink};
