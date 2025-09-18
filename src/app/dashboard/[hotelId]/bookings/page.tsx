@@ -2,24 +2,19 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Booking } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, Timestamp, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { BookingDataTableRowActions } from '@/components/data-table/booking-data-table-row-actions';
 
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
@@ -43,10 +38,11 @@ const formatDate = (timestamp: Timestamp | Date) => {
     return format(date, 'dd.MM.yyyy', { locale: de });
 };
 
+type EnrichedBooking = Booking & { linkId?: string };
 
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<EnrichedBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,19 +50,33 @@ export default function BookingsPage() {
     const bookingsCollection = collection(db, 'hotels', params.hotelId, 'bookings');
     const q = query(bookingsCollection, orderBy('checkIn', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const bookingsList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Booking[];
-      setBookings(bookingsList);
+
+      const enrichedBookings: EnrichedBooking[] = await Promise.all(
+        bookingsList.map(async (booking) => {
+          const linksCollection = collection(db, 'bookingLinks');
+          const linkQuery = query(linksCollection, where('bookingId', '==', booking.id));
+          const linkSnapshot = await getDocs(linkQuery);
+          if (!linkSnapshot.empty) {
+            const linkId = linkSnapshot.docs[0].id;
+            return { ...booking, linkId };
+          }
+          return booking;
+        })
+      );
+      
+      setBookings(enrichedBookings);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [params.hotelId]);
 
-  const bookingColumns: ColumnDef<Booking>[] = [
+  const bookingColumns: ColumnDef<EnrichedBooking>[] = [
     { accessorKey: 'guestName', header: 'Gast' },
     { 
         accessorKey: 'checkIn', 
@@ -97,22 +107,7 @@ export default function BookingsPage() {
     },
     {
       id: 'actions',
-      cell: () => (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Menü öffnen</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Buchung ansehen</DropdownMenuItem>
-              <DropdownMenuItem>Status ändern</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+      cell: ({ row }) => <BookingDataTableRowActions row={row} />,
     },
   ];
 
