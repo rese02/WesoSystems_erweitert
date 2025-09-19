@@ -79,14 +79,7 @@ export async function createHotelAction(
   };
 
   try {
-    // TODO: Create user in Firebase Auth
-    console.log(
-      'Would create user with:',
-      hotelData.hotelier.email,
-      hotelData.hotelier.password
-    );
     const docRef = await addDoc(collection(db, 'hotels'), hotelData);
-
     console.log('Hotel created with ID: ', docRef.id);
   } catch (error) {
     console.error('Error creating hotel:', error);

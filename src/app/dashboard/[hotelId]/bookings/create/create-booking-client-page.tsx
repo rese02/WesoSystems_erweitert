@@ -168,7 +168,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="mealType">Verpflegung</Label>
-                <Select name="mealType" required defaultValue={config.mealTypes[0] || 'Keine'}>
+                <Select name="mealType" required defaultValue={config.mealTypes[0]}>
                   <SelectTrigger>
                     <SelectValue placeholder="Verpflegung auswählen" />
                   </SelectTrigger>

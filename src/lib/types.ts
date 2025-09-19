@@ -5,7 +5,7 @@ export type Hotel = {
   hotelName: string;
   domain: string;
   logoUrl?: string; 
-  createdAt: string; 
+  createdAt: string | Date; 
 
   hotelier: {
     email: string;
