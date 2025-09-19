@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState } from 'react';
+import { useState, useActionState, useEffect } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,19 +18,25 @@ import { de } from 'date-fns/locale';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
+import { Booking } from '@/lib/types';
 
 
 const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
 
-export function BookingWizard({ linkId }: { linkId: string }) {
+type BookingWizardProps = {
+  linkId: string;
+  initialData: Booking;
+};
+
+export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [fellowTravelers, setFellowTravelers] = useState([{ id: 1, name: '' }]);
   const [uploadChoice, setUploadChoice] = useState('later');
   const [birthDate, setBirthDate] = useState<Date>();
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    firstName: initialData.guestName.split(' ')[0] || '',
+    lastName: initialData.guestName.split(' ')[1] || '',
     email: '',
     phone: '',
     street: '',
@@ -259,6 +265,13 @@ export function BookingWizard({ linkId }: { linkId: string }) {
                         ))}
                         </ul>
                     </AlertDescription>
+                    </Alert>
+                )}
+                 {formState.message && !formState.isValid && (
+                    <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Fehler</AlertTitle>
+                    <AlertDescription>{formState.message}</AlertDescription>
                     </Alert>
                 )}
                 <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
