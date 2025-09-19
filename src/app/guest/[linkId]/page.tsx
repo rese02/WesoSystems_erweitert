@@ -32,7 +32,7 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
         console.error('Hotel not found for booking:', bookingData.id);
         return null;
     }
-    const hotel = hotelSnap.data();
+    const hotelData = hotelSnap.data();
     
     // Convert Timestamps to serializable Date objects
     const booking: Booking = {
@@ -41,13 +41,20 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
       checkOut: bookingData.checkOut.toDate(),
       createdAt: bookingData.createdAt.toDate(),
     };
+    
+    // Also convert hotel timestamp to be serializable
+    const hotel: Hotel = {
+        id: hotelSnap.id,
+        ...hotelData,
+        createdAt: hotelData.createdAt.toDate().toISOString(),
+    } as Hotel;
 
 
     // Reconstruct the full object to pass to the components
     return { 
         id: linkSnap.id, 
         booking, // The complete booking object with serializable dates
-        hotel: { id: hotelSnap.id, ...hotel } as Hotel
+        hotel,
     };
 }
 
