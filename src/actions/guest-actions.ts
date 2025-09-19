@@ -38,7 +38,7 @@ export async function finalizeBookingAction(
   const bookingDetails = bookingLinkSnap.data().booking as Booking;
   const hotelId = bookingDetails.hotelId;
 
-  // This is the fix: Fetch the full hotel document to get all data, including SMTP config.
+  // Lade das vollständige Hotel-Dokument, um auf alle Daten (z. B. SMTP) zugreifen zu können
   const hotelRef = doc(db, 'hotels', hotelId);
   const hotelSnap = await getDoc(hotelRef);
 
@@ -54,7 +54,7 @@ export async function finalizeBookingAction(
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
-  // Firestore Timestamps are not serializable for the AI flow. Convert them to ISO strings.
+  // Konvertiere Firestore Timestamps in ISO-Strings für die AI-Flow-Validierung
   const checkInDate = bookingDetails.checkIn instanceof Timestamp 
     ? bookingDetails.checkIn.toDate().toISOString() 
     : new Date(bookingDetails.checkIn as any).toISOString();
@@ -96,37 +96,37 @@ export async function finalizeBookingAction(
         zip: rawData.zip as string,
         city: rawData.city as string,
         specialRequests: (rawData.specialRequests as string) || '',
-        fellowTravelers: [], // This would be collected from the form if implemented
+        fellowTravelers: [], // Dies würde aus dem Formular gesammelt, wenn implementiert
     }
 
     const hotelBookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingDetails.id);
     
+    // Aktualisiere die Buchung in der 'bookings' Subkollektion des Hotels
     await updateDoc(hotelBookingRef, {
         status: 'Data Provided',
         guestDetails: finalGuestData
     });
 
-    // Deactivate the booking link
+    // Deaktiviere den Buchungslink
     await updateDoc(bookingLinkRef, {
         status: 'used'
     });
 
-    // Send confirmation email
+    // Sende die Bestätigungs-E-Mail
     try {
-        // Pass the full hotelData object which includes the SMTP configuration
+        // Übergib das vollständige hotelData-Objekt, das die SMTP-Konfiguration enthält
         await sendBookingConfirmation({
             booking: { ...bookingDetails, guestDetails: finalGuestData },
             hotel: hotelData,
         });
     } catch(emailError) {
         console.error("Failed to send confirmation email:", emailError);
-        // We don't fail the whole transaction if the email fails,
-        // but we should log it for monitoring.
+        // Fail the transaction if the email fails, but log it for monitoring.
         // For debugging, we can return an error to the user
          return {
-          message: 'Ihre Daten wurden gespeichert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden.',
+          message: 'Ihre Daten wurden gespeichert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Überprüfen Sie die SMTP-Einstellungen des Hotels.',
           errors: ['Bitte kontaktieren Sie das Hotel direkt, um die Bestätigung sicherzustellen.'],
-          isValid: false, // Set to false to show the error on the page
+          isValid: false, // Auf false setzen, um den Fehler auf der Seite anzuzeigen
         };
     }
 
@@ -137,7 +137,7 @@ export async function finalizeBookingAction(
   } catch (error) {
     console.error('Error finalizing booking:', error);
     return {
-      message: 'Ein unerwarteter Fehler ist aufgetreten.',
+      message: 'Ein unerwarteter Server-Fehler ist aufgetreten.',
       errors: ['Der Server konnte die Anfrage nicht verarbeiten.'],
       isValid: false,
     };

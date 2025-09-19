@@ -12,16 +12,16 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
-    // First, check if the link itself is valid and not used
+    // Zuerst prüfen, ob der Link selbst gültig und nicht verwendet ist
     if (!linkSnap.exists() || linkSnap.data().status === 'used') {
-        return null; // This will trigger a notFound() in the page component
+        return null; // Dies löst ein notFound() in der Seitenkomponente aus
     }
     
     const data = linkSnap.data();
-    const bookingData = data.booking; // The booking data is now directly embedded here
+    const bookingData = data.booking; // Die Buchungsdaten sind hier direkt eingebettet
 
     if (!bookingData || !bookingData.hotelId) {
-        console.error('Booking data integrity issue for linkId:', linkId);
+        console.error('Integritätsproblem der Buchungsdaten für linkId:', linkId);
         return null;
     }
 
@@ -29,12 +29,12 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const hotelSnap = await getDoc(hotelRef);
 
     if (!hotelSnap.exists()) {
-        console.error('Hotel not found for booking:', bookingData.id);
+        console.error('Hotel für Buchung nicht gefunden:', bookingData.id);
         return null;
     }
     const hotelData = hotelSnap.data();
     
-    // Convert Timestamps to serializable Date objects
+    // Konvertiere Timestamps in serialisierbare Date-Objekte
     const booking: Booking = {
       ...bookingData,
       checkIn: bookingData.checkIn.toDate(),
@@ -42,7 +42,7 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
       createdAt: bookingData.createdAt.toDate(),
     };
     
-    // Also convert hotel timestamp to be serializable
+    // Konvertiere auch den Hotel-Timestamp, um ihn serialisierbar zu machen
     const hotel: Hotel = {
         id: hotelSnap.id,
         ...hotelData,
@@ -50,10 +50,10 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     } as Hotel;
 
 
-    // Reconstruct the full object to pass to the components
+    // Rekonstruiere das vollständige Objekt zur Übergabe an die Komponenten
     return { 
         id: linkSnap.id, 
-        booking, // The complete booking object with serializable dates
+        booking, // Das vollständige Buchungsobjekt mit serialisierbaren Daten
         hotel,
     };
 }
@@ -67,12 +67,12 @@ export default async function GuestBookingPage({
 
   const linkData = await getBookingLinkData(params.linkId);
 
-  // If the link is invalid or data is inconsistent, show a 404 page
+  // Wenn der Link ungültig oder die Daten inkonsistent sind, zeige eine 404-Seite
   if (!linkData) {
      notFound();
   }
 
-  // The guest form should only be accessible if the booking is 'Pending'
+  // Das Gast-Formular sollte nur zugänglich sein, wenn die Buchung 'Pending' ist
   if (linkData.booking.status !== 'Pending') {
     return (
         <div className="mx-auto max-w-2xl py-12">
@@ -87,7 +87,7 @@ export default async function GuestBookingPage({
      )
   }
 
-  // If status is 'Pending', show the wizard to the guest
+  // Wenn der Status 'Pending' ist, zeige dem Gast den Wizard
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
