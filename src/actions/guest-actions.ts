@@ -54,9 +54,13 @@ export async function finalizeBookingAction(
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
-  // Firestore Timestamps are not serializable, convert them to ISO strings for the AI flow.
-  const checkInDate = bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate().toISOString() : new Date(bookingDetails.checkIn).toISOString();
-  const checkOutDate = bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate().toISOString() : new Date(bookingDetails.checkOut).toISOString();
+  // Firestore Timestamps are not serializable for the AI flow. Convert them to ISO strings.
+  const checkInDate = bookingDetails.checkIn instanceof Timestamp 
+    ? bookingDetails.checkIn.toDate().toISOString() 
+    : new Date(bookingDetails.checkIn as any).toISOString();
+  const checkOutDate = bookingDetails.checkOut instanceof Timestamp 
+    ? bookingDetails.checkOut.toDate().toISOString() 
+    : new Date(bookingDetails.checkOut as any).toISOString();
 
 
   const guestData: ValidateGuestDataInput = {
