@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { MoreHorizontal } from 'lucide-react';
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { Booking } from '@/lib/types';
+import { useParams } from 'next/navigation';
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -38,6 +40,7 @@ export function BookingDataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const { toast } = useToast();
+  const params = useParams<{ hotelId: string }>();
   const booking = row.original as EnrichedBooking;
 
   const copyBookingLink = () => {
@@ -70,8 +73,8 @@ export function BookingDataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[180px]">
-          <DropdownMenuItem>
-             Buchung ansehen
+          <DropdownMenuItem asChild>
+             <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}`}>Buchung ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
             Buchung bearbeiten

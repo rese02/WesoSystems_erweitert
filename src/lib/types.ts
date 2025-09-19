@@ -55,15 +55,15 @@ export type Booking = {
   id: string; 
   hotelId: string;
   guestName: string; 
-  checkIn: Timestamp; 
-  checkOut: Timestamp; 
+  checkIn: Timestamp | Date; 
+  checkOut: Timestamp | Date; 
   status: BookingStatus;
   price: number;
   mealType: string;
   language: string;
   rooms: Room[];
   internalNotes?: string;
-  createdAt: Timestamp; 
+  createdAt: Timestamp | Date; 
   guestDetails?: GuestData;
 };
 
