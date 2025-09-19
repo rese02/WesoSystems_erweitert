@@ -47,7 +47,7 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     return { 
         id: linkSnap.id, 
         booking, // The complete booking object with serializable dates
-        hotel: { id: hotelSnap.id, ...hotel } as any
+        hotel: { id: hotelSnap.id, ...hotel } as Hotel
     };
 }
 
@@ -84,7 +84,7 @@ export default async function GuestBookingPage({
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <BookingWizard linkId={params.linkId} initialData={linkData.booking} />
+        <BookingWizard linkId={params.linkId} initialData={linkData} />
       </div>
       <div className="lg:col-span-1">
         <BookingSummaryCard booking={linkData.booking} />

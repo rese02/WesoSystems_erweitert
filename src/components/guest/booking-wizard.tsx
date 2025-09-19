@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, useEffect } from 'react';
+import { useState, useActionState } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,14 +18,14 @@ import { de } from 'date-fns/locale';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
-import { Booking } from '@/lib/types';
+import { GuestLinkData } from '@/lib/types';
 
 
 const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
 
 type BookingWizardProps = {
   linkId: string;
-  initialData: Booking;
+  initialData: GuestLinkData;
 };
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
@@ -33,10 +33,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [fellowTravelers, setFellowTravelers] = useState([{ id: 1, name: '' }]);
   const [uploadChoice, setUploadChoice] = useState('later');
   const [birthDate, setBirthDate] = useState<Date>();
-
+  
   const [formData, setFormData] = useState({
-    firstName: initialData.guestName.split(' ')[0] || '',
-    lastName: initialData.guestName.split(' ')[1] || '',
+    firstName: initialData.booking.guestName.split(' ')[0] || '',
+    lastName: initialData.booking.guestName.split(' ').slice(1).join(' ') || '',
     email: '',
     phone: '',
     street: '',
@@ -211,9 +211,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <Card className="bg-muted/50">
                     <CardHeader><CardTitle className="text-base">Bankdaten des Hotels</CardTitle></CardHeader>
                     <CardContent className="space-y-2">
-                        <p><strong>IBAN:</strong> DE89 3704 0044 0532 0130 00</p>
-                        <p><strong>BIC:</strong> COBADEFFXXX</p>
-                        <p><strong>Bank:</strong> Commerzbank</p>
+                        <p><strong>Inhaber:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
+                        <p><strong>IBAN:</strong> {initialData.hotel.bankDetails.iban}</p>
+                        <p><strong>BIC:</strong> {initialData.hotel.bankDetails.bic}</p>
+                        <p><strong>Bank:</strong> {initialData.hotel.bankDetails.bankName}</p>
                     </CardContent>
                 </Card>
               <div>
