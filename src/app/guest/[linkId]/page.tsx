@@ -1,7 +1,7 @@
 import { BookingSummaryCard } from '@/components/guest/booking-summary-card';
 import { BookingWizard } from '@/components/guest/booking-wizard';
 import { db } from '@/lib/firebase/client';
-import { GuestLinkData } from '@/lib/types';
+import { GuestLinkData, Hotel, Booking } from '@/lib/types';
 import { doc, getDoc } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -18,26 +18,35 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     }
     
     const data = linkSnap.data();
-    const booking = data.booking; // The booking data is now directly embedded here
+    const bookingData = data.booking; // The booking data is now directly embedded here
 
-    if (!booking || !booking.hotelId) {
+    if (!bookingData || !bookingData.hotelId) {
         console.error('Booking data integrity issue for linkId:', linkId);
         return null;
     }
 
-    const hotelRef = doc(db, 'hotels', booking.hotelId);
+    const hotelRef = doc(db, 'hotels', bookingData.hotelId);
     const hotelSnap = await getDoc(hotelRef);
 
     if (!hotelSnap.exists()) {
-        console.error('Hotel not found for booking:', booking.id);
+        console.error('Hotel not found for booking:', bookingData.id);
         return null;
     }
     const hotel = hotelSnap.data();
+    
+    // Convert Timestamps to serializable Date objects
+    const booking: Booking = {
+      ...bookingData,
+      checkIn: bookingData.checkIn.toDate(),
+      checkOut: bookingData.checkOut.toDate(),
+      createdAt: bookingData.createdAt.toDate(),
+    };
+
 
     // Reconstruct the full object to pass to the components
     return { 
         id: linkSnap.id, 
-        booking, // The complete booking object
+        booking, // The complete booking object with serializable dates
         hotel: { id: hotelSnap.id, ...hotel } as any
     };
 }

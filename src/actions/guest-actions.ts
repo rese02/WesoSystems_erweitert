@@ -5,7 +5,7 @@ import {
   ValidateGuestDataInput,
 } from '@/ai/flows/validate-guest-data';
 import { db } from '@/lib/firebase/client';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { Booking, Hotel } from '@/lib/types';
@@ -54,12 +54,17 @@ export async function finalizeBookingAction(
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
+  // Firestore Timestamps are not serializable, convert them to ISO strings for the AI flow.
+  const checkInDate = bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate().toISOString() : new Date(bookingDetails.checkIn).toISOString();
+  const checkOutDate = bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate().toISOString() : new Date(bookingDetails.checkOut).toISOString();
+
+
   const guestData: ValidateGuestDataInput = {
     guestName: `${rawData.firstName} ${rawData.lastName}`,
     email: rawData.email as string,
     address: `${rawData.street}, ${rawData.zip} ${rawData.city}`,
-    checkInDate: bookingDetails.checkIn.toDate().toISOString(),
-    checkOutDate: bookingDetails.checkOut.toDate().toISOString(),
+    checkInDate: checkInDate,
+    checkOutDate: checkOutDate,
     numberOfAdults: totalAdults, 
     numberOfChildren: totalChildren,
     roomType: bookingDetails.rooms.map(r => r.type).join(', '),
