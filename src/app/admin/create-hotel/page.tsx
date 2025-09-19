@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle, Trash2, KeyRound, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 const initialState = {
   message: '',
@@ -31,7 +31,9 @@ export default function CreateHotelPage() {
   const [state, action] = useActionState(createHotelAction, initialState);
   
   useEffect(() => {
-    if (state.message && !state.success) {
+    // Show a toast for general errors, but not for the duplicate email case
+    // as it's handled inline now.
+    if (state.message && !state.success && state.message !== 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.') {
       toast({
         title: 'Fehler bei der Erstellung',
         description: state.message,
@@ -130,7 +132,14 @@ export default function CreateHotelPage() {
                   type="email"
                   placeholder="hotelier@example.com"
                   required
+                  className={cn({ 'border-destructive': state.message && !state.success && state.message.includes('E-Mail') })}
                 />
+                 {state.message && !state.success && state.message.includes('E-Mail') && (
+                    <p className="flex items-center text-sm text-destructive">
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        {state.message}
+                    </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="hotelierPassword">Passwort</Label>
@@ -151,14 +160,6 @@ export default function CreateHotelPage() {
               </div>
             </CardContent>
           </Card>
-          
-          {state.message && !state.success && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Fehler</AlertTitle>
-                <AlertDescription>{state.message}</AlertDescription>
-              </Alert>
-            )}
 
           <Card>
             <CardHeader>
