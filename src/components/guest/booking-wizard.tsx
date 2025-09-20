@@ -14,15 +14,171 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
-import { de } from 'date-fns/locale';
+import { de, enUS, it } from 'date-fns/locale';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { GuestLinkData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+const locales = {
+  de: de,
+  en: enUS,
+  it: it,
+};
 
-const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
+const t = (lang: 'de' | 'en' | 'it', key: string): string => {
+  const translations = {
+    de: {
+        steps: ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'],
+        mainGuestTitle: "Ihre Kontaktdaten (Hauptbucher)",
+        firstNameLabel: "Vorname",
+        lastNameLabel: "Nachname",
+        emailLabel: "E-Mail",
+        phoneLabel: "Telefon",
+        streetLabel: "Straße und Hausnummer",
+        zipLabel: "Postleitzahl",
+        cityLabel: "Stadt",
+        birthDateLabel: "Geburtsdatum (optional, mind. 18)",
+        selectDate: "Datum auswählen",
+        idDocsLabel: "Ausweisdokumente",
+        idDocsDescription: "Bitte wählen Sie, wie Sie die Ausweisdokumente bereitstellen möchten.",
+        uploadNow: "Jetzt hochladen",
+        uploadLater: "Vor Ort vorzeigen",
+        idFrontLabel: "Ausweisdokument (Vorderseite)",
+        idBackLabel: "Ausweisdokument (Rückseite)",
+        fileTypeHint: "JPG, PNG, PDF (max 5MB).",
+        notesLabel: "Ihre Anmerkungen (optional)",
+        notesPlaceholder: "Haben Sie besondere Wünsche oder Anmerkungen?",
+        fellowTravelersTitle: "Mitreisende Personen",
+        fellowTravelersDescription: (count: number) => `Tragen Sie hier die Namen aller ${count} Mitreisenden ein. Alle Felder sind Pflichtfelder.`,
+        fellowTravelerLabel: (index: number) => `Mitreisender ${index + 1}: Vor- und Nachname`,
+        fellowTravelerPlaceholder: "Erika Mustermann",
+        noFellowTravelers: "Keine Mitreisenden für diese Buchung.",
+        addPerson: "Weitere Person hinzufügen",
+        paymentInfoTitle: "Zahlungsinformationen",
+        paymentInfoDescription: "Hier finden Sie die Bankdaten für die Überweisung. Bitte laden Sie anschließend eine Bestätigung hoch, um fortzufahren.",
+        hotelBankDetails: "Bankdaten des Hotels",
+        accountHolder: "Inhaber",
+        iban: "IBAN",
+        bic: "BIC",
+        bank: "Bank",
+        uploadProofLabel: "Zahlungsbeleg hochladen",
+        uploadProofDescription: "Ein Zahlungsnachweis ist erforderlich, um fortzufahren.",
+        reviewTitle: "Prüfung und Abschluss",
+        reviewDescription: "Bitte überprüfen Sie alle Ihre Angaben. Mit dem Absenden der Daten schließen Sie Ihre Buchung verbindlich ab.",
+        agb: "Ich stimme den Allgemeinen Geschäftsbedingungen zu.",
+        agbHint: "Mit dem Klick bestätigen Sie die Richtigkeit Ihrer Angaben.",
+        validationErrorTitle: "Fehler bei der Validierung",
+        serverErrorTitle: "Fehler",
+        submitButton: "Daten absenden & Buchung abschließen",
+        backButton: "Zurück",
+        nextButton: "Weiter",
+        uploading: "Lädt hoch...",
+        requiredField: "Pflichtfeld",
+        copyToastTitle: (field: string) => `${field} kopiert!`,
+    },
+    en: {
+        steps: ['Guest', 'Companions', 'Payment', 'Review'],
+        mainGuestTitle: "Your Contact Details (Main Booker)",
+        firstNameLabel: "First Name",
+        lastNameLabel: "Last Name",
+        emailLabel: "Email",
+        phoneLabel: "Phone",
+        streetLabel: "Street and House Number",
+        zipLabel: "Postal Code",
+        cityLabel: "City",
+        birthDateLabel: "Date of Birth (optional, min. 18)",
+        selectDate: "Select date",
+        idDocsLabel: "ID Documents",
+        idDocsDescription: "Please choose how you would like to provide your ID documents.",
+        uploadNow: "Upload now",
+        uploadLater: "Show on site",
+        idFrontLabel: "ID Document (Front)",
+        idBackLabel: "ID Document (Back)",
+        fileTypeHint: "JPG, PNG, PDF (max 5MB).",
+        notesLabel: "Your Remarks (optional)",
+        notesPlaceholder: "Do you have any special requests or remarks?",
+        fellowTravelersTitle: "Fellow Travelers",
+        fellowTravelersDescription: (count: number) => `Please enter the names of all ${count} fellow travelers here. All fields are mandatory.`,
+        fellowTravelerLabel: (index: number) => `Fellow Traveler ${index + 1}: First and Last Name`,
+        fellowTravelerPlaceholder: "Jane Doe",
+        noFellowTravelers: "No fellow travelers for this booking.",
+        addPerson: "Add another person",
+        paymentInfoTitle: "Payment Information",
+        paymentInfoDescription: "Here you will find the bank details for the transfer. Please upload a confirmation afterwards to proceed.",
+        hotelBankDetails: "Hotel Bank Details",
+        accountHolder: "Account Holder",
+        iban: "IBAN",
+        bic: "BIC",
+        bank: "Bank",
+        uploadProofLabel: "Upload Proof of Payment",
+        uploadProofDescription: "A proof of payment is required to proceed.",
+        reviewTitle: "Review and Finalize",
+        reviewDescription: "Please check all your details. By submitting the data, you are bindingly finalizing your booking.",
+        agb: "I agree to the terms and conditions.",
+        agbHint: "By clicking, you confirm the accuracy of your information.",
+        validationErrorTitle: "Validation Error",
+        serverErrorTitle: "Error",
+        submitButton: "Submit Data & Finalize Booking",
+        backButton: "Back",
+        nextButton: "Next",
+        uploading: "Uploading...",
+        requiredField: "Required",
+        copyToastTitle: (field: string) => `${field} copied!`,
+    },
+    it: {
+        steps: ['Ospite', 'Accompagnatori', 'Pagamento', 'Verifica'],
+        mainGuestTitle: "I Suoi Dati di Contatto (Prenotante Principale)",
+        firstNameLabel: "Nome",
+        lastNameLabel: "Cognome",
+        emailLabel: "E-mail",
+        phoneLabel: "Telefono",
+        streetLabel: "Via e Numero Civico",
+        zipLabel: "Codice Postale",
+        cityLabel: "Città",
+        birthDateLabel: "Data di Nascita (opzionale, min. 18 anni)",
+        selectDate: "Seleziona data",
+        idDocsLabel: "Documenti d'Identità",
+        idDocsDescription: "Si prega di scegliere come fornire i documenti d'identità.",
+        uploadNow: "Carica ora",
+        uploadLater: "Mostra in loco",
+        idFrontLabel: "Documento d'Identità (Fronte)",
+        idBackLabel: "Documento d'Identità (Retro)",
+        fileTypeHint: "JPG, PNG, PDF (max 5MB).",
+        notesLabel: "Le Sue Note (opzionale)",
+        notesPlaceholder: "Ha richieste o note particolari?",
+        fellowTravelersTitle: "Accompagnatori",
+        fellowTravelersDescription: (count: number) => `Inserisca qui i nomi di tutti gli ${count} accompagnatori. Tutti i campi sono obbligatori.`,
+        fellowTravelerLabel: (index: number) => `Accompagnatore ${index + 1}: Nome e Cognome`,
+        fellowTravelerPlaceholder: "Mario Rossi",
+        noFellowTravelers: "Nessun accompagnatore per questa prenotazione.",
+        addPerson: "Aggiungi un'altra persona",
+        paymentInfoTitle: "Informazioni sul Pagamento",
+        paymentInfoDescription: "Qui troverà i dati bancari per il bonifico. Si prega di caricare una conferma per procedere.",
+        hotelBankDetails: "Dati Bancari dell'Hotel",
+        accountHolder: "Titolare del Conto",
+        iban: "IBAN",
+        bic: "BIC",
+        bank: "Banca",
+        uploadProofLabel: "Carica Prova di Pagamento",
+        uploadProofDescription: "È richiesta una prova di pagamento per procedere.",
+        reviewTitle: "Verifica e Conclusione",
+        reviewDescription: "Si prega di verificare tutti i dati. Inviando i dati, si conclude la prenotazione in modo vincolante.",
+        agb: "Accetto i termini e le condizioni generali.",
+        agbHint: "Cliccando, si conferma la correttezza dei propri dati.",
+        validationErrorTitle: "Errore di Validazione",
+        serverErrorTitle: "Errore",
+        submitButton: "Invia Dati e Concludi Prenotazione",
+        backButton: "Indietro",
+        nextButton: "Avanti",
+        uploading: "Caricamento...",
+        requiredField: "Obbligatorio",
+        copyToastTitle: (field: string) => `${field} copiato!`,
+    },
+  };
+  return translations[lang][key] || key;
+};
 
 type BookingWizardProps = {
   linkId: string;
@@ -35,6 +191,17 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+
+  const lang = initialData.booking.language || 'de';
+  const T = (key: string, ...args: any[]) => {
+    const value = t(lang, key);
+    if (typeof value === 'function') {
+      return value(...args);
+    }
+    return value;
+  };
+  const steps = T('steps') as unknown as string[];
+  const locale = locales[lang];
   
   const [formData, setFormData] = useState({
     firstName: initialData.booking.guestName.split(' ')[0] || '',
@@ -135,7 +302,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     const handleCopy = () => {
       navigator.clipboard.writeText(textToCopy);
       setCopied(true);
-      toast({ title: `${fieldName} kopiert!`, description: `${textToCopy}` });
+      toast({ title: T('copyToastTitle', fieldName), description: textToCopy });
       setTimeout(() => setCopied(false), 2000);
     };
 
@@ -153,40 +320,40 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Ihre Kontaktdaten (Hauptbucher)</CardTitle>
+              <CardTitle>{T('mainGuestTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
-                        <Label htmlFor="firstName">Vorname <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="firstName">{T('firstNameLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="lastName">Nachname <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="lastName">{T('lastNameLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="email">E-Mail <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="email">{T('emailLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                     </div>
                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Telefon <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="phone">{T('phoneLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2 sm:col-span-2">
-                        <Label htmlFor="street">Straße und Hausnummer <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="street">{T('streetLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="street" name="street" value={formData.street} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="zip">Postleitzahl <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="zip">{T('zipLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="zip" name="zip" value={formData.zip} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="city">Stadt <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="city">{T('cityLabel')} <span className="text-destructive">*</span></Label>
                         <Input id="city" name="city" value={formData.city} onChange={handleInputChange} required />
                     </div>
                      <div className="grid gap-2">
-                        <Label htmlFor="birthDate">Geburtsdatum (optional, mind. 18)</Label>
+                        <Label htmlFor="birthDate">{T('birthDateLabel')}</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -197,7 +364,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                                 )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.birthDate ? format(new Date(formData.birthDate), 'dd.MM.yyyy') : <span>Datum auswählen</span>}
+                                {formData.birthDate ? format(new Date(formData.birthDate), 'dd.MM.yyyy', { locale: locale }) : <span>{T('selectDate')}</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -209,7 +376,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                                 fromYear={1920}
                                 toYear={new Date().getFullYear() - 18}
                                 initialFocus
-                                locale={de}
+                                locale={locale}
                                 />
                             </PopoverContent>
                         </Popover>
@@ -217,16 +384,16 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Ausweisdokumente</Label>
-                    <p className="text-sm text-muted-foreground">Bitte wählen Sie, wie Sie die Ausweisdokumente bereitstellen möchten.</p>
+                    <Label>{T('idDocsLabel')}</Label>
+                    <p className="text-sm text-muted-foreground">{T('idDocsDescription')}</p>
                     <RadioGroup defaultValue="later" onValueChange={setUploadChoice} className="flex gap-4 pt-2">
                         <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                             <RadioGroupItem value="now" id="upload-now" />
-                            Jetzt hochladen
+                            {T('uploadNow')}
                         </Label>
                         <Label htmlFor="upload-later" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                             <RadioGroupItem value="later" id="upload-later" />
-                            Vor Ort vorzeigen
+                            {T('uploadLater')}
                         </Label>
                     </RadioGroup>
                 </div>
@@ -234,30 +401,30 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 {uploadChoice === 'now' && (
                     <div className="space-y-4 rounded-md border p-4 animate-fade-in">
                         <div className="grid gap-2">
-                            <Label>Ausweisdokument (Vorderseite) <span className="text-destructive">*</span></Label>
+                            <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
                             <FileUpload
                                 bookingId={linkId}
                                 fileType="idFront"
                                 onUploadComplete={handleUploadComplete}
                                 onUploadStart={handleUploadStart}
                             />
-                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
+                             <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
                         </div>
                          <div className="grid gap-2">
-                            <Label>Ausweisdokument (Rückseite) <span className="text-destructive">*</span></Label>
+                            <Label>{T('idBackLabel')} <span className="text-destructive">*</span></Label>
                              <FileUpload
                                 bookingId={linkId}
                                 fileType="idBack"
                                 onUploadComplete={handleUploadComplete}
                                 onUploadStart={handleUploadStart}
                             />
-                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
+                             <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
                         </div>
                     </div>
                 )}
                 <div className="grid gap-2">
-                    <Label htmlFor="specialRequests">Ihre Anmerkungen (optional)</Label>
-                    <Textarea name="specialRequests" id="specialRequests" placeholder="Haben Sie besondere Wünsche oder Anmerkungen?" value={formData.specialRequests} onChange={handleInputChange} />
+                    <Label htmlFor="specialRequests">{T('notesLabel')}</Label>
+                    <Textarea name="specialRequests" id="specialRequests" placeholder={T('notesPlaceholder')} value={formData.specialRequests} onChange={handleInputChange} />
                 </div>
             </CardContent>
           </Card>
@@ -266,19 +433,19 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Mitreisende Personen</CardTitle>
+              <CardTitle>{T('fellowTravelersTitle')}</CardTitle>
                <CardDescription>
-                Tragen Sie hier die Namen aller {numberOfFellowTravelers} Mitreisenden ein. Alle Felder sind Pflichtfelder.
+                {T('fellowTravelersDescription', numberOfFellowTravelers)}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {fellowTravelers.length > 0 ? fellowTravelers.map((traveler, index) => (
                 <div key={traveler.id} className="flex items-end gap-2">
                   <div className="flex-grow">
-                    <Label htmlFor={`traveler-${traveler.id}`}>Mitreisender {index + 1}: Vor- und Nachname <span className="text-destructive">*</span></Label>
+                    <Label htmlFor={`traveler-${traveler.id}`}>{T('fellowTravelerLabel', index)} <span className="text-destructive">*</span></Label>
                     <Input 
                         id={`traveler-${traveler.id}`}
-                        placeholder="Erika Mustermann" 
+                        placeholder={T('fellowTravelerPlaceholder')} 
                         value={traveler.name}
                         onChange={(e) => handleTravelerNameChange(traveler.id, e.target.value)}
                         required
@@ -294,10 +461,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </Button>
                   )}
                 </div>
-              )) : <p className="text-muted-foreground">Keine Mitreisenden für diese Buchung.</p>}
+              )) : <p className="text-muted-foreground">{T('noFellowTravelers')}</p>}
               <Button type="button" variant="outline" onClick={addTraveler}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Weitere Person hinzufügen
+                {T('addPerson')}
               </Button>
             </CardContent>
           </Card>
@@ -306,40 +473,40 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Zahlungsinformationen</CardTitle>
-               <CardDescription>Hier finden Sie die Bankdaten für die Überweisung. Bitte laden Sie anschließend eine Bestätigung hoch, um fortzufahren.</CardDescription>
+              <CardTitle>{T('paymentInfoTitle')}</CardTitle>
+               <CardDescription>{T('paymentInfoDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <Card className="bg-muted/50">
-                    <CardHeader><CardTitle className="text-base">Bankdaten des Hotels</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">{T('hotelBankDetails')}</CardTitle></CardHeader>
                     <CardContent className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <p><strong>Inhaber:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
-                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.accountHolder} fieldName="Kontoinhaber" />
+                            <p><strong>{T('accountHolder')}:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.accountHolder} fieldName={T('accountHolder')} />
                         </div>
                         <div className="flex items-center justify-between">
-                             <p><strong>IBAN:</strong> {initialData.hotel.bankDetails.iban}</p>
-                             <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.iban} fieldName="IBAN" />
+                             <p><strong>{T('iban')}:</strong> {initialData.hotel.bankDetails.iban}</p>
+                             <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.iban} fieldName={T('iban')} />
                         </div>
                          <div className="flex items-center justify-between">
-                            <p><strong>BIC:</strong> {initialData.hotel.bankDetails.bic}</p>
-                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bic} fieldName="BIC" />
+                            <p><strong>{T('bic')}:</strong> {initialData.hotel.bankDetails.bic}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bic} fieldName={T('bic')} />
                         </div>
                          <div className="flex items-center justify-between">
-                            <p><strong>Bank:</strong> {initialData.hotel.bankDetails.bankName}</p>
-                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bankName} fieldName="Bank" />
+                            <p><strong>{T('bank')}:</strong> {initialData.hotel.bankDetails.bankName}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bankName} fieldName={T('bank')} />
                         </div>
                     </CardContent>
                 </Card>
               <div>
-                <Label className="mb-2 block font-medium">Zahlungsbeleg hochladen <span className="text-destructive">*</span></Label>
+                <Label className="mb-2 block font-medium">{T('uploadProofLabel')} <span className="text-destructive">*</span></Label>
                 <FileUpload
                     bookingId={linkId}
                     fileType="paymentProof"
                     onUploadComplete={handleUploadComplete}
                     onUploadStart={handleUploadStart}
                 />
-                <p className="text-xs text-muted-foreground mt-2">Ein Zahlungsnachweis ist erforderlich, um fortzufahren.</p>
+                <p className="text-xs text-muted-foreground mt-2">{T('uploadProofDescription')}</p>
               </div>
             </CardContent>
           </Card>
@@ -349,10 +516,9 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
           <form action={formAction}>
             <Card>
               <CardHeader>
-                <CardTitle>Prüfung und Abschluss</CardTitle>
+                <CardTitle>{T('reviewTitle')}</CardTitle>
                 <CardDescription>
-                  Bitte überprüfen Sie alle Ihre Angaben. Mit dem Absenden der
-                  Daten schließen Sie Ihre Buchung verbindlich ab.
+                  {T('reviewDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -379,17 +545,17 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                   <Checkbox id="agb" required />
                   <div className="grid gap-1.5 leading-none">
                     <label htmlFor="agb" className="text-sm font-medium">
-                      Ich stimme den Allgemeinen Geschäftsbedingungen zu.
+                      {T('agb')}
                     </label>
                      <p className="text-sm text-muted-foreground">
-                      Mit dem Klick bestätigen Sie die Richtigkeit Ihrer Angaben.
+                      {T('agbHint')}
                     </p>
                   </div>
                 </div>
                  {formState?.errors && (
                     <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Fehler bei der Validierung</AlertTitle>
+                    <AlertTitle>{T('validationErrorTitle')}</AlertTitle>
                     <AlertDescription>
                         <ul className="list-disc pl-5">
                         {formState.errors.map((error, i) => (
@@ -402,13 +568,13 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                  {formState?.message && !formState.isValid && (
                     <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Fehler</AlertTitle>
+                    <AlertTitle>{T('serverErrorTitle')}</AlertTitle>
                     <AlertDescription>{formState.message}</AlertDescription>
                     </Alert>
                 )}
                 <Button type="submit" disabled={isPending || isUploading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                   {(isPending || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Daten absenden & Buchung abschließen
+                  {T('submitButton')}
               </Button>
               </CardContent>
             </Card>
@@ -434,7 +600,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 onClick={() => setCurrentStep(currentStep - 1)}
                 className={cn(currentStep === 0 && 'invisible')}
             >
-              Zurück
+              {T('backButton')}
             </Button>
           
           <Button 
@@ -443,12 +609,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             disabled={isNextButtonDisabled()}
             >
             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isUploading ? 'Lädt hoch...' : 'Weiter'}
+            {isUploading ? T('uploading') : T('nextButton')}
           </Button>
         </div>
       )}
     </div>
   );
 }
-
-    

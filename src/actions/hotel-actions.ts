@@ -126,7 +126,7 @@ export async function createBookingAction(
     checkOut: Timestamp.fromDate(date.to),
     price: parseFloat(formData.get('price') as string),
     mealType: formData.get('mealType') as string,
-    language: formData.get('language') as string,
+    language: formData.get('language') as 'de' | 'en' | 'it' || 'de',
     internalNotes: (formData.get('internalNotes') as string) || '',
     rooms: rooms,
     status: 'Pending',

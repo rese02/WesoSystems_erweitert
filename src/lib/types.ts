@@ -60,7 +60,7 @@ export type Booking = {
   status: BookingStatus;
   price: number;
   mealType: string;
-  language: string;
+  language: 'de' | 'en' | 'it';
   rooms: Room[];
   internalNotes?: string;
   createdAt: Timestamp | Date; 
@@ -91,5 +91,3 @@ export type GuestLinkData = {
   booking: Booking;
   hotel: Hotel;
 };
-
-    
