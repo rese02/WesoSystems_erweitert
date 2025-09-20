@@ -94,7 +94,7 @@ export async function finalizeBookingAction(
       };
     }
 
-    const finalGuestData = {
+    const finalGuestData: Omit<GuestData, 'documentUrls'> & { documentUrls: { idFront: string, idBack: string, paymentProof: string } } = {
         firstName: rawData.firstName as string,
         lastName: rawData.lastName as string,
         email: rawData.email as string,
@@ -128,9 +128,15 @@ export async function finalizeBookingAction(
     // Sende die Bestätigungs-E-Mail
     try {
         // Übergib das vollständige hotelData-Objekt, das die SMTP-Konfiguration enthält
+        const fullHotelData: Hotel = {
+            id: hotelSnap.id,
+            ...hotelData,
+            createdAt: hotelData.createdAt.toDate().toISOString(),
+        } as Hotel;
+        
         await sendBookingConfirmation({
             booking: { ...bookingDetails, guestDetails: finalGuestData },
-            hotel: hotelData,
+            hotel: fullHotelData,
         });
     } catch(emailError) {
         console.error("Failed to send confirmation email:", emailError);

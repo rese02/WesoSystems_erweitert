@@ -12,37 +12,13 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
-    // Zuerst prüfen, ob der Link selbst gültig und nicht verwendet ist
+    // Zuerst prüfen, ob der Link selbst gültig ist
     if (!linkSnap.exists()) {
         return null;
     }
     
-    const data = linkSnap.data();
-    
-    // Prüfen, ob der Link bereits als "used" markiert ist
-    if (data.status === 'used') {
-        const hotelId = data.booking?.hotelId;
-        if(hotelId){
-            const hotelRef = doc(db, 'hotels', hotelId);
-            const hotelSnap = await getDoc(hotelRef);
-            if(hotelSnap.exists()){
-                 // Rekonstruiere nur genug Daten, um die "schon bearbeitet"-Seite anzuzeigen
-                 return {
-                    id: linkSnap.id,
-                    booking: { status: 'Data Provided' } as Booking,
-                    hotel: hotelSnap.data() as Hotel,
-                 }
-            }
-        }
-        // Fallback, wenn keine Hotel-Daten gefunden werden
-        return {
-            id: linkSnap.id,
-            booking: { status: 'Data Provided' } as Booking,
-            hotel: {} as Hotel,
-        }
-    }
-    
-    const bookingData = data.booking;
+    const linkData = linkSnap.data();
+    const bookingData = linkData.booking;
 
     if (!bookingData || !bookingData.hotelId) {
         console.error('Integritätsproblem der Buchungsdaten für linkId:', linkId);
@@ -66,13 +42,24 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
       createdAt: bookingData.createdAt.toDate(),
     };
     
+    // Konvertiere Timestamps auch im Hotel-Objekt
     const hotel: Hotel = {
         id: hotelSnap.id,
         ...hotelData,
-        createdAt: hotelData.createdAt.toDate().toISOString(),
+        createdAt: hotelData.createdAt.toDate(), // Wichtig: Konvertierung hier
     } as Hotel;
 
 
+    // Prüfen, ob der Link bereits als "used" markiert ist
+    if (linkData.status === 'used') {
+        // Rekonstruiere nur genug Daten, um die "schon bearbeitet"-Seite anzuzeigen
+         return {
+            id: linkSnap.id,
+            booking, // Gib die konvertierte Buchung weiter
+            hotel,   // Gib das konvertierte Hotel weiter
+         }
+    }
+    
     // Rekonstruiere das vollständige Objekt zur Übergabe an die Komponenten
     return { 
         id: linkSnap.id, 

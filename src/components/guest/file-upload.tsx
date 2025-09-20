@@ -32,9 +32,9 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return;
 
+    onUploadStart();
     setFile(selectedFile);
     setUploadProgress(0);
-    onUploadStart();
 
     // Der Pfad in Firebase Storage, z.B. "bookings/aBcDeFg123/payment_proof.pdf"
     const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${selectedFile.name}`);
@@ -57,8 +57,8 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
         // Upload erfolgreich!
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           toast({ title: 'Datei erfolgreich hochgeladen!' });
-          onUploadEnd();
           onUploadComplete(fileType, downloadURL); // Gibt die URL an die Eltern-Komponente weiter
+          onUploadEnd();
         });
       }
     );
