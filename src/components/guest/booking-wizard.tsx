@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, useEffect } from 'react';
+import { useState, useActionState, useEffect, useTransition } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2 } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
+import { uploadFileAction } from '@/actions/file-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -19,6 +20,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { GuestLinkData } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 
 const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
@@ -31,6 +33,8 @@ type BookingWizardProps = {
 type FellowTraveler = { id: number; name: string };
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
+  const { toast } = useToast();
+  const [isUploading, startUploading] = useTransition();
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadChoice, setUploadChoice] = useState('later');
   const [birthDate, setBirthDate] = useState<Date>();
@@ -46,9 +50,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     specialRequests: '',
   });
 
-  const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
-  const [idBackFile, setIdBackFile] = useState<File | null>(null);
-  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [documentUrls, setDocumentUrls] = useState({
+    idFront: '',
+    idBack: '',
+    paymentProof: '',
+  });
 
   const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
   const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
@@ -61,6 +67,28 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
+
+  const handleFileUpload = (file: File | null, type: 'idFront' | 'idBack' | 'paymentProof') => {
+    if (!file) {
+      setDocumentUrls(prev => ({...prev, [type]: ''}));
+      return;
+    };
+
+    startUploading(async () => {
+      try {
+        const result = await uploadFileAction(initialData.booking.id, file);
+        if (result.success && result.url) {
+          setDocumentUrls(prev => ({...prev, [type]: result.url!}));
+          toast({ title: 'Upload erfolgreich!', description: `${file.name} wurde hochgeladen.` });
+        } else {
+           toast({ title: 'Upload-Fehler', description: result.message, variant: 'destructive' });
+        }
+      } catch (error) {
+        toast({ title: 'Upload-Fehler', description: 'Ein unerwarteter Fehler ist aufgetreten.', variant: 'destructive' });
+      }
+    });
+  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -80,12 +108,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     setFellowTravelers(fellowTravelers.filter((t) => t.id !== id));
   };
   
-  // --- Validation Logic ---
   const isStep1Valid = () => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.street || !formData.zip || !formData.city) {
       return false;
     }
-    if (uploadChoice === 'now' && (!idFrontFile || !idBackFile)) {
+    if (uploadChoice === 'now' && (!documentUrls.idFront || !documentUrls.idBack)) {
       return false;
     }
     return true;
@@ -99,12 +126,12 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   };
 
   const isStep3Valid = () => {
-    // Assuming payment proof is mandatory
-    return !!paymentProofFile;
+    return !!documentUrls.paymentProof;
   };
 
 
   const isNextButtonDisabled = () => {
+    if (isUploading) return true;
     switch (currentStep) {
       case 0:
         return !isStep1Valid();
@@ -129,31 +156,31 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
-                        <Label htmlFor="firstName">Vorname</Label>
+                        <Label htmlFor="firstName">Vorname <span className="text-destructive">*</span></Label>
                         <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="lastName">Nachname</Label>
+                        <Label htmlFor="lastName">Nachname <span className="text-destructive">*</span></Label>
                         <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="email">E-Mail</Label>
+                        <Label htmlFor="email">E-Mail <span className="text-destructive">*</span></Label>
                         <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
                     </div>
                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Telefon</Label>
+                        <Label htmlFor="phone">Telefon <span className="text-destructive">*</span></Label>
                         <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2 sm:col-span-2">
-                        <Label htmlFor="street">Straße und Hausnummer</Label>
+                        <Label htmlFor="street">Straße und Hausnummer <span className="text-destructive">*</span></Label>
                         <Input id="street" name="street" value={formData.street} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="zip">Postleitzahl</Label>
+                        <Label htmlFor="zip">Postleitzahl <span className="text-destructive">*</span></Label>
                         <Input id="zip" name="zip" value={formData.zip} onChange={handleInputChange} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="city">Stadt</Label>
+                        <Label htmlFor="city">Stadt <span className="text-destructive">*</span></Label>
                         <Input id="city" name="city" value={formData.city} onChange={handleInputChange} required />
                     </div>
                      <div className="grid gap-2">
@@ -206,12 +233,12 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     <div className="space-y-4 rounded-md border p-4 animate-fade-in">
                         <div className="grid gap-2">
                             <Label>Ausweisdokument (Vorderseite) <span className="text-destructive">*</span></Label>
-                            <FileUpload onFileSelect={setIdFrontFile} />
+                            <FileUpload onFileSelect={(file) => handleFileUpload(file, 'idFront')} isUploading={isUploading} />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                          <div className="grid gap-2">
                             <Label>Ausweisdokument (Rückseite) <span className="text-destructive">*</span></Label>
-                            <FileUpload onFileSelect={setIdBackFile}/>
+                            <FileUpload onFileSelect={(file) => handleFileUpload(file, 'idBack')} isUploading={isUploading} />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                     </div>
@@ -236,7 +263,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
               {fellowTravelers.length > 0 ? fellowTravelers.map((traveler, index) => (
                 <div key={traveler.id} className="flex items-end gap-2">
                   <div className="flex-grow">
-                    <Label htmlFor={`traveler-${traveler.id}`}>Mitreisender {index + 1}: Vor- und Nachname</Label>
+                    <Label htmlFor={`traveler-${traveler.id}`}>Mitreisender {index + 1}: Vor- und Nachname <span className="text-destructive">*</span></Label>
                     <Input 
                         id={`traveler-${traveler.id}`}
                         placeholder="Erika Mustermann" 
@@ -282,7 +309,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 </Card>
               <div>
                 <Label className="mb-2 block font-medium">Zahlungsbeleg hochladen <span className="text-destructive">*</span></Label>
-                <FileUpload onFileSelect={setPaymentProofFile} />
+                <FileUpload onFileSelect={(file) => handleFileUpload(file, 'paymentProof')} isUploading={isUploading} />
                 <p className="text-xs text-muted-foreground mt-2">Ein Zahlungsnachweis ist erforderlich, um fortzufahren.</p>
               </div>
             </CardContent>
@@ -314,6 +341,9 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 {fellowTravelers.map((t, i) => (
                      <input key={t.id} type="hidden" name={`fellowTraveler_${i}`} value={t.name} />
                 ))}
+                 <input type="hidden" name="idFrontUrl" value={documentUrls.idFront} />
+                 <input type="hidden" name="idBackUrl" value={documentUrls.idBack} />
+                 <input type="hidden" name="paymentProofUrl" value={documentUrls.paymentProof} />
 
 
                 <div className="flex items-start space-x-2">
@@ -347,8 +377,8 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     <AlertDescription>{formState.message}</AlertDescription>
                     </Alert>
                 )}
-                <Button type="submit" disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isPending || isUploading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  {(isPending || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Daten absenden & Buchung abschließen
               </Button>
               </CardContent>
@@ -383,6 +413,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             className="bg-primary hover:bg-primary/90"
             disabled={isNextButtonDisabled()}
             >
+            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Weiter
           </Button>
         </div>
@@ -390,5 +421,3 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     </div>
   );
 }
-
-    

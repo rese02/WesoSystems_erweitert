@@ -8,38 +8,42 @@ import { Progress } from '../ui/progress';
 
 type FileUploadProps = {
   onFileSelect: (file: File | null) => void;
+  isUploading?: boolean;
 };
 
-export function FileUpload({ onFileSelect }: FileUploadProps) {
+export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const resetState = useCallback(() => {
       setFile(null);
-      setIsUploading(false);
       setUploadProgress(0);
       onFileSelect(null);
   }, [onFileSelect]);
 
+  React.useEffect(() => {
+    if (isUploading) {
+        setUploadProgress(0);
+        const interval = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 90) {
+                    clearInterval(interval);
+                    return 90; // Stop at 90 to indicate processing
+                }
+                return prev + 10;
+            });
+        }, 100);
+        return () => clearInterval(interval);
+    } else if (file) {
+        setUploadProgress(100);
+    }
+  }, [isUploading, file]);
+
+
   const handleFileChange = (selectedFile: File | null) => {
     if (selectedFile) {
       setFile(selectedFile);
-      onFileSelect(selectedFile); // Inform parent component
-      
-      // Simulate upload for visual feedback
-      setIsUploading(true);
-      setUploadProgress(0);
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsUploading(false);
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 200);
+      onFileSelect(selectedFile);
     }
   };
 
@@ -69,11 +73,13 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={resetState}>
-            <X className="h-5 w-5" />
-          </Button>
+           {uploadProgress < 100 && !isUploading ? (
+               <Button variant="ghost" size="icon" onClick={resetState}>
+                 <X className="h-5 w-5" />
+               </Button>
+           ) : null }
         </div>
-        {(isUploading || uploadProgress === 100) && (
+        {(isUploading || uploadProgress > 0) && (
           <Progress value={uploadProgress} className="mt-2 h-2" />
         )}
       </div>
@@ -105,5 +111,3 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
     </div>
   );
 }
-
-    

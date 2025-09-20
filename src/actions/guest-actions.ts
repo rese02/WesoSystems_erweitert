@@ -105,6 +105,11 @@ export async function finalizeBookingAction(
         city: rawData.city as string,
         specialRequests: (rawData.specialRequests as string) || '',
         fellowTravelers: fellowTravelers,
+        documentUrls: {
+            idFront: rawData.idFrontUrl as string || '',
+            idBack: rawData.idBackUrl as string || '',
+            paymentProof: rawData.paymentProofUrl as string || '',
+        }
     }
 
     const hotelBookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingDetails.id);
@@ -153,5 +158,3 @@ export async function finalizeBookingAction(
 
   redirect(`/guest/${linkId}/thank-you`);
 }
-
-    

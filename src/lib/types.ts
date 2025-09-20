@@ -78,6 +78,11 @@ export type GuestData = {
   city: string;
   fellowTravelers: { name: string }[];
   specialRequests?: string;
+  documentUrls?: {
+    idFront?: string;
+    idBack?: string;
+    paymentProof?: string;
+  }
 };
 
 export type GuestLinkData = {
