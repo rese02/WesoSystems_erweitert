@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal } from 'lucide-react';
+import { Copy, KeyRound, MoreHorizontal } from 'lucide-react';
 import { type Row } from '@tanstack/react-table';
 
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,33 @@ export function HotelDataTableRowActions<TData>({
     }
   };
 
+  const copyLoginLink = () => {
+    const link = `${window.location.origin}/hotel/login`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: 'Login-Link kopiert!',
+      description: 'Der Link zur Hotel-Login-Seite wurde kopiert.',
+    });
+  };
+
+  const copyCredentials = () => {
+    if (!hotel.hotelier?.email || !hotel.hotelier?.password) {
+      toast({
+        title: 'Fehler',
+        description: 'Zugangsdaten unvollständig oder nicht vorhanden.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const credentials = `E-Mail: ${hotel.hotelier.email}\nPasswort: ${hotel.hotelier.password}`;
+    navigator.clipboard.writeText(credentials);
+    toast({
+      title: 'Zugangsdaten kopiert!',
+      description: 'E-Mail und Passwort wurden in die Zwischenablage kopiert.',
+    });
+  };
+
+
   return (
     <AlertDialog>
       <DropdownMenu>
@@ -66,12 +93,21 @@ export function HotelDataTableRowActions<TData>({
             <span className="sr-only">Menü öffnen</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[180px]">
+        <DropdownMenuContent align="end" className="w-[220px]">
           <DropdownMenuItem asChild>
             <Link href={`/dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
              <Link href={`/dashboard/${hotel.id}/settings`}>Einstellungen</Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+           <DropdownMenuItem onClick={copyLoginLink}>
+            <Copy className="mr-2 h-4 w-4" />
+            <span>Login-Link kopieren</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={copyCredentials}>
+             <KeyRound className="mr-2 h-4 w-4" />
+            <span>Zugangsdaten kopieren</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
