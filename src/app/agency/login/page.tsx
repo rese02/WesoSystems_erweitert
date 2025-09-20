@@ -45,65 +45,67 @@ export default function AgencyLoginPage() {
             <MountainIcon className="h-6 w-6 text-gray-600" />
           </div>
         </CardHeader>
-        <CardContent as="form" action={formAction} className="grid gap-4 p-0">
-          <div className="mb-4 text-center">
-            <CardTitle className="font-headline text-2xl font-bold">
-              Agentur-Login
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Melden Sie sich an, um Ihre Hotels zu verwalten.
-            </CardDescription>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">E-Mail</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="name@agentur.de"
-              required
-              className="h-12 text-base"
-              autoComplete="off"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Passwort</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="h-12 text-base"
-              autoComplete="off"
-            />
-          </div>
-          
-           {state?.message && !state.success && (
-                 <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Fehler</AlertTitle>
-                    <AlertDescription>{state.message}</AlertDescription>
-                </Alert>
-            )}
+        <CardContent className="p-0">
+          <form action={formAction} className="grid gap-4">
+            <div className="mb-4 text-center">
+              <CardTitle className="font-headline text-2xl font-bold">
+                Agentur-Login
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Melden Sie sich an, um Ihre Hotels zu verwalten.
+              </CardDescription>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">E-Mail</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="name@agentur.de"
+                required
+                className="h-12 text-base"
+                autoComplete="off"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Passwort</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="h-12 text-base"
+                autoComplete="off"
+              />
+            </div>
+            
+             {state?.message && !state.success && (
+                   <Alert variant="destructive" className="mt-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Fehler</AlertTitle>
+                      <AlertDescription>{state.message}</AlertDescription>
+                  </Alert>
+              )}
 
-          <div className="grid gap-3 pt-4">
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
-              disabled={isPending}
-            >
-              Anmelden
-            </Button>
-            <Button
-              asChild
-              variant="link"
-              size="sm"
-              className="font-normal text-muted-foreground hover:text-primary"
-            >
-              <Link href="/">Zurück zur Auswahl</Link>
-            </Button>
-          </div>
+            <div className="grid gap-3 pt-4">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full h-12 bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
+                disabled={isPending}
+              >
+                Anmelden
+              </Button>
+              <Button
+                asChild
+                variant="link"
+                size="sm"
+                className="font-normal text-muted-foreground hover:text-primary"
+              >
+                <Link href="/">Zurück zur Auswahl</Link>
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </AuthLayout>
