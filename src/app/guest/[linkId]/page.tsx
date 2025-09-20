@@ -2,7 +2,7 @@ import { BookingSummaryCard } from '@/components/guest/booking-summary-card';
 import { BookingWizard } from '@/components/guest/booking-wizard';
 import { db } from '@/lib/firebase/client';
 import { GuestLinkData, Hotel, Booking } from '@/lib/types';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react';
@@ -37,16 +37,20 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     // Konvertiere Timestamps in serialisierbare Date-Objekte
     const booking: Booking = {
       ...bookingData,
-      checkIn: bookingData.checkIn.toDate(),
-      checkOut: bookingData.checkOut.toDate(),
-      createdAt: bookingData.createdAt.toDate(),
+      checkIn: bookingData.checkIn instanceof Timestamp ? bookingData.checkIn.toDate() : new Date(bookingData.checkIn),
+      checkOut: bookingData.checkOut instanceof Timestamp ? bookingData.checkOut.toDate() : new Date(bookingData.checkOut),
+      createdAt: bookingData.createdAt instanceof Timestamp ? bookingData.createdAt.toDate() : new Date(bookingData.createdAt),
     };
     
     // Konvertiere Timestamps auch im Hotel-Objekt
+     const hotelCreatedAt = hotelData.createdAt instanceof Timestamp 
+        ? hotelData.createdAt.toDate() 
+        : new Date(hotelData.createdAt);
+
     const hotel: Hotel = {
         id: hotelSnap.id,
         ...hotelData,
-        createdAt: hotelData.createdAt.toDate(), // Wichtig: Konvertierung hier
+        createdAt: hotelCreatedAt,
     } as Hotel;
 
 

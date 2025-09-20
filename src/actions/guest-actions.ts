@@ -122,14 +122,21 @@ export async function finalizeBookingAction(
     });
 
     try {
+        const hotelCreatedAt = hotelData.createdAt instanceof Timestamp 
+            ? hotelData.createdAt.toDate() 
+            : new Date(hotelData.createdAt);
+
         const fullHotelData: Hotel = {
             id: hotelSnap.id,
             ...hotelData,
-            createdAt: (hotelData.createdAt as any).toDate().toISOString(),
+            createdAt: hotelCreatedAt.toISOString(),
         } as Hotel;
         
         const updatedBooking: Booking = { 
             ...bookingDetails, 
+            checkIn: bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate() : bookingDetails.checkIn,
+            checkOut: bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate() : bookingDetails.checkOut,
+            createdAt: bookingDetails.createdAt instanceof Timestamp ? bookingDetails.createdAt.toDate() : bookingDetails.createdAt,
             guestDetails: finalGuestData,
             status: 'Data Provided',
             paymentOption: rawData.paymentOption as 'deposit' | 'full',
