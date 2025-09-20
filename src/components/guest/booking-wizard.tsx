@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, AlertCircle, CalendarIcon } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2 } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -45,7 +45,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     specialRequests: ''
   });
   
-  const [formState, formAction] = useActionState(
+  const [formState, formAction, isPending] = useActionState(
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
@@ -255,7 +255,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     Ich stimme den Allgemeinen Geschäftsbedingungen zu.
                   </label>
                 </div>
-                 {formState.errors && (
+                 {formState?.errors && (
                     <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Fehler bei der Validierung</AlertTitle>
@@ -268,14 +268,15 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </AlertDescription>
                     </Alert>
                 )}
-                 {formState.message && !formState.isValid && (
+                 {formState?.message && !formState.isValid && (
                     <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Fehler</AlertTitle>
                     <AlertDescription>{formState.message}</AlertDescription>
                     </Alert>
                 )}
-                <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button type="submit" disabled={isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Daten absenden & Buchung abschließen
               </Button>
               </CardContent>
