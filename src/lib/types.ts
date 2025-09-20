@@ -85,3 +85,5 @@ export type GuestLinkData = {
   booking: Booking;
   hotel: Hotel;
 };
+
+    

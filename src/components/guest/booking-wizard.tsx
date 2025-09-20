@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState } from 'react';
+import { useState, useActionState, useEffect } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,9 +28,10 @@ type BookingWizardProps = {
   initialData: GuestLinkData;
 };
 
+type FellowTraveler = { id: number; name: string };
+
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [fellowTravelers, setFellowTravelers] = useState([{ id: 1, name: '' }]);
   const [uploadChoice, setUploadChoice] = useState('later');
   const [birthDate, setBirthDate] = useState<Date>();
   
@@ -42,8 +43,19 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     street: '',
     zip: '',
     city: '',
-    specialRequests: ''
+    specialRequests: '',
   });
+
+  const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
+  const [idBackFile, setIdBackFile] = useState<File | null>(null);
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+
+  const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
+  const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
+
+  const [fellowTravelers, setFellowTravelers] = useState<FellowTraveler[]>(
+    Array.from({ length: numberOfFellowTravelers }, (_, i) => ({ id: i + 1, name: '' }))
+  );
   
   const [formState, formAction, isPending] = useActionState(
     finalizeBookingAction.bind(null, linkId),
@@ -55,6 +67,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleTravelerNameChange = (id: number, name: string) => {
+    setFellowTravelers(prev => prev.map(t => t.id === id ? { ...t, name } : t));
+  };
+
+
   const addTraveler = () => {
     setFellowTravelers([...fellowTravelers, { id: Date.now(), name: '' }]);
   };
@@ -63,6 +80,44 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     setFellowTravelers(fellowTravelers.filter((t) => t.id !== id));
   };
   
+  // --- Validation Logic ---
+  const isStep1Valid = () => {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.street || !formData.zip || !formData.city) {
+      return false;
+    }
+    if (uploadChoice === 'now' && (!idFrontFile || !idBackFile)) {
+      return false;
+    }
+    return true;
+  };
+
+  const isStep2Valid = () => {
+    if (fellowTravelers.length > 0 && fellowTravelers.some(t => !t.name.trim())) {
+      return false;
+    }
+    return true;
+  };
+
+  const isStep3Valid = () => {
+    // Assuming payment proof is mandatory
+    return !!paymentProofFile;
+  };
+
+
+  const isNextButtonDisabled = () => {
+    switch (currentStep) {
+      case 0:
+        return !isStep1Valid();
+      case 1:
+        return !isStep2Valid();
+      case 2:
+        return !isStep3Valid();
+      default:
+        return false;
+    }
+  }
+
+
   const StepContent = () => {
     switch (currentStep) {
       case 0: // Gast
@@ -150,14 +205,14 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 {uploadChoice === 'now' && (
                     <div className="space-y-4 rounded-md border p-4 animate-fade-in">
                         <div className="grid gap-2">
-                            <Label>Ausweisdokument (Vorderseite)</Label>
-                            <FileUpload />
-                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB). Bilder werden komprimiert.</p>
+                            <Label>Ausweisdokument (Vorderseite) <span className="text-destructive">*</span></Label>
+                            <FileUpload onFileSelect={setIdFrontFile} />
+                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                          <div className="grid gap-2">
-                            <Label>Ausweisdokument (Rückseite)</Label>
-                            <FileUpload />
-                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB). Bilder werden komprimiert.</p>
+                            <Label>Ausweisdokument (Rückseite) <span className="text-destructive">*</span></Label>
+                            <FileUpload onFileSelect={setIdBackFile}/>
+                             <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                     </div>
                 )}
@@ -173,16 +228,24 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
           <Card>
             <CardHeader>
               <CardTitle>Mitreisende Personen</CardTitle>
-               <CardDescription>Tragen Sie hier die Namen aller Mitreisenden ein.</CardDescription>
+               <CardDescription>
+                Tragen Sie hier die Namen aller {numberOfFellowTravelers} Mitreisenden ein. Alle Felder sind Pflichtfelder.
+                </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {fellowTravelers.map((traveler) => (
+              {fellowTravelers.length > 0 ? fellowTravelers.map((traveler, index) => (
                 <div key={traveler.id} className="flex items-end gap-2">
                   <div className="flex-grow">
-                    <Label>Vor- und Nachname</Label>
-                    <Input placeholder="Erika Mustermann" />
+                    <Label htmlFor={`traveler-${traveler.id}`}>Mitreisender {index + 1}: Vor- und Nachname</Label>
+                    <Input 
+                        id={`traveler-${traveler.id}`}
+                        placeholder="Erika Mustermann" 
+                        value={traveler.name}
+                        onChange={(e) => handleTravelerNameChange(traveler.id, e.target.value)}
+                        required
+                    />
                   </div>
-                  {fellowTravelers.length > 0 && (
+                  {fellowTravelers.length > numberOfFellowTravelers && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -192,7 +255,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </Button>
                   )}
                 </div>
-              ))}
+              )) : <p className="text-muted-foreground">Keine Mitreisenden für diese Buchung.</p>}
               <Button type="button" variant="outline" onClick={addTraveler}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Weitere Person hinzufügen
@@ -205,7 +268,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
           <Card>
             <CardHeader>
               <CardTitle>Zahlungsinformationen</CardTitle>
-               <CardDescription>Hier finden Sie die Bankdaten für die Überweisung. Laden Sie anschließend eine Bestätigung hoch.</CardDescription>
+               <CardDescription>Hier finden Sie die Bankdaten für die Überweisung. Bitte laden Sie anschließend eine Bestätigung hoch, um fortzufahren.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <Card className="bg-muted/50">
@@ -218,8 +281,9 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </CardContent>
                 </Card>
               <div>
-                <Label className="mb-2 block font-medium">Zahlungsbeleg hochladen</Label>
-                <FileUpload />
+                <Label className="mb-2 block font-medium">Zahlungsbeleg hochladen <span className="text-destructive">*</span></Label>
+                <FileUpload onFileSelect={setPaymentProofFile} />
+                <p className="text-xs text-muted-foreground mt-2">Ein Zahlungsnachweis ist erforderlich, um fortzufahren.</p>
               </div>
             </CardContent>
           </Card>
@@ -247,13 +311,21 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <input type="hidden" name="zip" value={formData.zip} />
                 <input type="hidden" name="city" value={formData.city} />
                 <input type="hidden" name="specialRequests" value={formData.specialRequests} />
+                {fellowTravelers.map((t, i) => (
+                     <input key={t.id} type="hidden" name={`fellowTraveler_${i}`} value={t.name} />
+                ))}
 
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <Checkbox id="agb" required />
-                  <label htmlFor="agb" className="text-sm">
-                    Ich stimme den Allgemeinen Geschäftsbedingungen zu.
-                  </label>
+                  <div className="grid gap-1.5 leading-none">
+                    <label htmlFor="agb" className="text-sm font-medium">
+                      Ich stimme den Allgemeinen Geschäftsbedingungen zu.
+                    </label>
+                     <p className="text-sm text-muted-foreground">
+                      Mit dem Klick bestätigen Sie die Richtigkeit Ihrer Angaben.
+                    </p>
+                  </div>
                 </div>
                  {formState?.errors && (
                     <Alert variant="destructive">
@@ -301,12 +373,16 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             <Button 
                 variant="outline" 
                 onClick={() => setCurrentStep(currentStep - 1)}
-                className={currentStep === 0 ? 'invisible' : ''}
+                className={cn(currentStep === 0 && 'invisible')}
             >
               Zurück
             </Button>
           
-          <Button onClick={() => setCurrentStep(currentStep + 1)} className="bg-primary hover:bg-primary/90">
+          <Button 
+            onClick={() => setCurrentStep(currentStep + 1)} 
+            className="bg-primary hover:bg-primary/90"
+            disabled={isNextButtonDisabled()}
+            >
             Weiter
           </Button>
         </div>
@@ -314,3 +390,5 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     </div>
   );
 }
+
+    

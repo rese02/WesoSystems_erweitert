@@ -62,6 +62,14 @@ export async function finalizeBookingAction(
     ? bookingDetails.checkOut.toDate().toISOString() 
     : new Date(bookingDetails.checkOut as any).toISOString();
 
+  // Sammle Mitreisende aus dem Formular
+  const fellowTravelers = [];
+  for (const [key, value] of formData.entries()) {
+      if (key.startsWith('fellowTraveler_') && typeof value === 'string' && value.trim() !== '') {
+          fellowTravelers.push({ name: value });
+      }
+  }
+
 
   const guestData: ValidateGuestDataInput = {
     guestName: `${rawData.firstName} ${rawData.lastName}`,
@@ -96,7 +104,7 @@ export async function finalizeBookingAction(
         zip: rawData.zip as string,
         city: rawData.city as string,
         specialRequests: (rawData.specialRequests as string) || '',
-        fellowTravelers: [], // Dies würde aus dem Formular gesammelt, wenn implementiert
+        fellowTravelers: fellowTravelers,
     }
 
     const hotelBookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingDetails.id);
@@ -145,3 +153,5 @@ export async function finalizeBookingAction(
 
   redirect(`/guest/${linkId}/thank-you`);
 }
+
+    
