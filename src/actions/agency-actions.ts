@@ -8,7 +8,7 @@ type LoginState = {
 };
 
 // Diese Server-Action wird sicher auf dem Server ausgeführt.
-// Die Anmeldedaten sind hier hartcodiert und nicht im Client-Code sichtbar.
+// Die Anmeldedaten werden aus den Umgebungsvariablen geladen und sind nicht im Code sichtbar.
 export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
@@ -16,8 +16,9 @@ export async function loginAgencyAction(
   const email = formData.get('email');
   const password = formData.get('password');
 
-  const AGENCY_EMAIL = 'hallo@agentur-weso.it';
-  const AGENCY_PASSWORD = 'Hallo-weso.2025!';
+  // Lade die sicheren Anmeldedaten aus den Umgebungsvariablen
+  const AGENCY_EMAIL = process.env.AGENCY_EMAIL;
+  const AGENCY_PASSWORD = process.env.AGENCY_PASSWORD;
 
   // Strikte Validierung der Eingabe-Typen und des Inhalts.
   // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
