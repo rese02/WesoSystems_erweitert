@@ -66,6 +66,8 @@ export type Booking = {
   createdAt: Timestamp | Date; 
   guestDetails?: GuestData;
   paymentProofUrl?: string | null;
+  paymentOption?: 'deposit' | 'full';
+  amountPaid?: number;
 };
 
 export type GuestData = {
@@ -91,3 +93,5 @@ export type GuestLinkData = {
   booking: Booking;
   hotel: Hotel;
 };
+
+    

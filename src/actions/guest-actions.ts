@@ -38,7 +38,6 @@ export async function finalizeBookingAction(
   const bookingDetails = bookingLinkSnap.data().booking as Booking;
   const hotelId = bookingDetails.hotelId;
 
-  // Lade das vollständige Hotel-Dokument, um auf alle Daten (z. B. SMTP) zugreifen zu können
   const hotelRef = doc(db, 'hotels', hotelId);
   const hotelSnap = await getDoc(hotelRef);
 
@@ -54,7 +53,6 @@ export async function finalizeBookingAction(
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
-  // Konvertiere Firestore Timestamps in ISO-Strings für die AI-Flow-Validierung
   const checkInDate = bookingDetails.checkIn instanceof Timestamp 
     ? bookingDetails.checkIn.toDate().toISOString() 
     : new Date(bookingDetails.checkIn as any).toISOString();
@@ -62,7 +60,6 @@ export async function finalizeBookingAction(
     ? bookingDetails.checkOut.toDate().toISOString() 
     : new Date(bookingDetails.checkOut as any).toISOString();
 
-  // Sammle Mitreisende aus dem Formular
   const fellowTravelers = [];
   for (const [key, value] of formData.entries()) {
       if (key.startsWith('fellowTraveler_') && typeof value === 'string' && value.trim() !== '') {
@@ -114,38 +111,36 @@ export async function finalizeBookingAction(
 
     const hotelBookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingDetails.id);
     
-    // Aktualisiere die Buchung in der 'bookings' Subkollektion des Hotels
     await updateDoc(hotelBookingRef, {
         status: 'Data Provided',
-        guestDetails: finalGuestData
+        guestDetails: finalGuestData,
+        paymentOption: rawData.paymentOption as 'deposit' | 'full',
+        amountPaid: parseFloat(rawData.amountPaid as string),
     });
 
-    // Deaktiviere den Buchungslink
     await updateDoc(bookingLinkRef, {
         status: 'used'
     });
 
-    // Sende die Bestätigungs-E-Mail
     try {
-        // Übergib das vollständige hotelData-Objekt, das die SMTP-Konfiguration enthält
         const fullHotelData: Hotel = {
             id: hotelSnap.id,
             ...hotelData,
             createdAt: hotelData.createdAt.toDate().toISOString(),
         } as Hotel;
         
+        const updatedBooking = { ...bookingDetails, guestDetails: finalGuestData };
+
         await sendBookingConfirmation({
-            booking: { ...bookingDetails, guestDetails: finalGuestData },
+            booking: updatedBooking,
             hotel: fullHotelData,
         });
     } catch(emailError) {
         console.error("Failed to send confirmation email:", emailError);
-        // Fail the transaction if the email fails, but log it for monitoring.
-        // For debugging, we can return an error to the user
          return {
           message: 'Ihre Daten wurden gespeichert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Überprüfen Sie die SMTP-Einstellungen des Hotels.',
           errors: ['Bitte kontaktieren Sie das Hotel direkt, um die Bestätigung sicherzustellen.'],
-          isValid: false, // Auf false setzen, um den Fehler auf der Seite anzuzeigen
+          isValid: false, 
         };
     }
 
@@ -164,3 +159,5 @@ export async function finalizeBookingAction(
 
   redirect(`/guest/${linkId}/thank-you`);
 }
+
+    

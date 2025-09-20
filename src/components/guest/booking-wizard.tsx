@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState } from 'react';
+import { useState, useActionState, useMemo } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +30,7 @@ const locales = {
 const t = (lang: 'de' | 'en' | 'it', key: string): string => {
   const translations = {
     de: {
-        steps: ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'],
+        steps: ['Gast', 'Mitreiser', 'Zahlungsoption', 'Zahlungsdetails', 'Prüfung'],
         mainGuestTitle: "Ihre Kontaktdaten (Hauptbucher)",
         firstNameLabel: "Vorname",
         lastNameLabel: "Nachname",
@@ -56,9 +56,14 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         fellowTravelerPlaceholder: "Erika Mustermann",
         noFellowTravelers: "Keine Mitreisenden für diese Buchung.",
         addPerson: "Weitere Person hinzufügen",
-        paymentInfoTitle: "Zahlungsinformationen",
-        paymentInfoDescription: "Hier finden Sie die Bankdaten für die Überweisung. Bitte laden Sie anschließend eine Bestätigung hoch, um fortzufahren.",
+        paymentOptionTitle: "Zahlungsoption wählen",
+        paymentOptionDescription: "Sie haben die Wahl, eine Anzahlung zu leisten oder den Gesamtbetrag sofort zu begleichen.",
+        depositLabel: "30% Anzahlung leisten",
+        fullPaymentLabel: "100% Vorauszahlung",
+        paymentDetailsTitle: "Zahlungsdetails",
+        paymentDetailsDescription: "Hier finden Sie die Bankdaten für die Überweisung. Bitte laden Sie anschließend eine Bestätigung hoch, um fortzufahren.",
         hotelBankDetails: "Bankdaten des Hotels",
+        amountToPay: "Zu zahlender Betrag",
         accountHolder: "Inhaber",
         iban: "IBAN",
         bic: "BIC",
@@ -79,7 +84,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         copyToastTitle: (field: string) => `${field} kopiert!`,
     },
     en: {
-        steps: ['Guest', 'Companions', 'Payment', 'Review'],
+        steps: ['Guest', 'Companions', 'Payment Option', 'Payment Details', 'Review'],
         mainGuestTitle: "Your Contact Details (Main Booker)",
         firstNameLabel: "First Name",
         lastNameLabel: "Last Name",
@@ -98,16 +103,21 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         idBackLabel: "ID Document (Back)",
         fileTypeHint: "JPG, PNG, PDF (max 5MB).",
         notesLabel: "Your Remarks (optional)",
-        notesPlaceholder: "Do you have any special requests or remarks?",
+notesPlaceholder: "Do you have any special requests or remarks?",
         fellowTravelersTitle: "Fellow Travelers",
         fellowTravelersDescription: (count: number) => `Please enter the names of all ${count} fellow travelers here. All fields are mandatory.`,
         fellowTravelerLabel: (index: number) => `Fellow Traveler ${index + 1}: First and Last Name`,
         fellowTravelerPlaceholder: "Jane Doe",
         noFellowTravelers: "No fellow travelers for this booking.",
         addPerson: "Add another person",
-        paymentInfoTitle: "Payment Information",
-        paymentInfoDescription: "Here you will find the bank details for the transfer. Please upload a confirmation afterwards to proceed.",
+        paymentOptionTitle: "Choose Payment Option",
+        paymentOptionDescription: "You can choose to make a down payment or pay the full amount immediately.",
+        depositLabel: "Pay 30% deposit",
+        fullPaymentLabel: "100% prepayment",
+        paymentDetailsTitle: "Payment Details",
+        paymentDetailsDescription: "Here you will find the bank details for the transfer. Please upload a confirmation afterwards to proceed.",
         hotelBankDetails: "Hotel Bank Details",
+        amountToPay: "Amount to pay",
         accountHolder: "Account Holder",
         iban: "IBAN",
         bic: "BIC",
@@ -128,7 +138,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         copyToastTitle: (field: string) => `${field} copied!`,
     },
     it: {
-        steps: ['Ospite', 'Accompagnatori', 'Pagamento', 'Verifica'],
+        steps: ['Ospite', 'Accompagnatori', 'Opzione di Pagamento', 'Dettagli Pagamento', 'Verifica'],
         mainGuestTitle: "I Suoi Dati di Contatto (Prenotante Principale)",
         firstNameLabel: "Nome",
         lastNameLabel: "Cognome",
@@ -154,9 +164,14 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         fellowTravelerPlaceholder: "Mario Rossi",
         noFellowTravelers: "Nessun accompagnatore per questa prenotazione.",
         addPerson: "Aggiungi un'altra persona",
-        paymentInfoTitle: "Informazioni sul Pagamento",
-        paymentInfoDescription: "Qui troverà i dati bancari per il bonifico. Si prega di caricare una conferma per procedere.",
+        paymentOptionTitle: "Scegli Opzione di Pagamento",
+        paymentOptionDescription: "Puoi scegliere se versare un acconto o saldare subito l'intero importo.",
+        depositLabel: "Paga il 30% di acconto",
+        fullPaymentLabel: "Pagamento anticipato del 100%",
+        paymentDetailsTitle: "Dettagli Pagamento",
+        paymentDetailsDescription: "Qui troverà i dati bancari per il bonifico. Si prega di caricare una conferma per procedere.",
         hotelBankDetails: "Dati Bancari dell'Hotel",
+        amountToPay: "Importo da pagare",
         accountHolder: "Titolare del Conto",
         iban: "IBAN",
         bic: "BIC",
@@ -186,6 +201,7 @@ type BookingWizardProps = {
 };
 
 type FellowTraveler = { id: number; name: string };
+type PaymentOption = 'deposit' | 'full';
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -222,6 +238,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   });
   
   const [uploadChoice, setUploadChoice] = useState('later');
+  const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
 
   const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
   const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
@@ -234,6 +251,13 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
   );
+  
+  const amountToPay = useMemo(() => {
+      if (paymentOption === 'deposit') {
+          return initialData.booking.price * 0.3;
+      }
+      return initialData.booking.price;
+  }, [paymentOption, initialData.booking.price]);
 
   const handleUploadComplete = (fileType: keyof typeof documentUrls, url: string) => {
     setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
@@ -268,7 +292,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     if (requiredFields.some(field => field.trim() === '')) return false;
 
     if (uploadChoice === 'now' && (!documentUrls.idFront || !documentUrls.idBack)) {
-      return false; // Wenn Upload gewählt, müssen die Dokumente hochgeladen sein
+      return false;
     }
     return true;
   };
@@ -278,6 +302,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   };
 
   const isStep3Valid = () => {
+    return !!paymentOption;
+  };
+
+  const isStep4Valid = () => {
     return !!documentUrls.paymentProof;
   };
 
@@ -285,14 +313,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const isNextButtonDisabled = () => {
     if (isUploading) return true;
     switch (currentStep) {
-      case 0:
-        return !isStep1Valid();
-      case 1:
-        return !isStep2Valid();
-      case 2:
-        return !isStep3Valid();
-      default:
-        return false;
+      case 0: return !isStep1Valid();
+      case 1: return !isStep2Valid();
+      case 2: return !isStep3Valid();
+      case 3: return !isStep4Valid();
+      default: return false;
     }
   }
 
@@ -386,7 +411,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <div className="space-y-2">
                     <Label>{T('idDocsLabel')}</Label>
                     <p className="text-sm text-muted-foreground">{T('idDocsDescription')}</p>
-                    <RadioGroup defaultValue="later" onValueChange={setUploadChoice} className="flex gap-4 pt-2">
+                    <RadioGroup defaultValue="later" value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
                         <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                             <RadioGroupItem value="now" id="upload-now" />
                             {T('uploadNow')}
@@ -405,7 +430,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                             <FileUpload
                                 bookingId={linkId}
                                 fileType="idFront"
-                                onUploadComplete={handleUploadComplete}
+                                onUploadComplete={(url) => handleUploadComplete('idFront', url)}
                                 onUploadStart={handleUploadStart}
                             />
                              <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
@@ -415,7 +440,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                              <FileUpload
                                 bookingId={linkId}
                                 fileType="idBack"
-                                onUploadComplete={handleUploadComplete}
+                                onUploadComplete={(url) => handleUploadComplete('idBack', url)}
                                 onUploadStart={handleUploadStart}
                             />
                              <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
@@ -469,17 +494,48 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             </CardContent>
           </Card>
         );
-      case 2: // Zahlung
+      case 2: // Zahlungsoption
+         return (
+          <Card>
+            <CardHeader>
+              <CardTitle>{T('paymentOptionTitle')}</CardTitle>
+              <CardDescription>{T('paymentOptionDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={paymentOption} onValueChange={(val: PaymentOption) => setPaymentOption(val)} className="gap-4">
+                 <Label htmlFor="payment-full" className="flex flex-1 cursor-pointer items-center gap-4 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                    <RadioGroupItem value="full" id="payment-full" />
+                    <div>
+                        <p className="font-semibold">{T('fullPaymentLabel')}</p>
+                        <p className="text-sm text-muted-foreground">{new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(initialData.booking.price)}</p>
+                    </div>
+                </Label>
+                <Label htmlFor="payment-deposit" className="flex flex-1 cursor-pointer items-center gap-4 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                    <RadioGroupItem value="deposit" id="payment-deposit" />
+                    <div>
+                        <p className="font-semibold">{T('depositLabel')}</p>
+                        <p className="text-sm text-muted-foreground">{new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(initialData.booking.price * 0.3)}</p>
+                    </div>
+                </Label>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        );
+      case 3: // Zahlungsdetails
         return (
           <Card>
             <CardHeader>
-              <CardTitle>{T('paymentInfoTitle')}</CardTitle>
-               <CardDescription>{T('paymentInfoDescription')}</CardDescription>
+              <CardTitle>{T('paymentDetailsTitle')}</CardTitle>
+               <CardDescription>{T('paymentDetailsDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <Card className="bg-muted/50">
                     <CardHeader><CardTitle className="text-base">{T('hotelBankDetails')}</CardTitle></CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-3">
+                         <div className="flex items-center justify-between font-semibold text-lg text-primary">
+                            <p>{T('amountToPay')}:</p>
+                            <p>{new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(amountToPay)}</p>
+                        </div>
                         <div className="flex items-center justify-between">
                             <p><strong>{T('accountHolder')}:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
                             <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.accountHolder} fieldName={T('accountHolder')} />
@@ -503,7 +559,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <FileUpload
                     bookingId={linkId}
                     fileType="paymentProof"
-                    onUploadComplete={handleUploadComplete}
+                    onUploadComplete={(url) => handleUploadComplete('paymentProof', url)}
                     onUploadStart={handleUploadStart}
                 />
                 <p className="text-xs text-muted-foreground mt-2">{T('uploadProofDescription')}</p>
@@ -511,7 +567,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             </CardContent>
           </Card>
         );
-      case 3: // Prüfung
+      case 4: // Prüfung
         return (
           <form action={formAction}>
             <Card>
@@ -539,6 +595,8 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                  <input type="hidden" name="idFrontUrl" value={documentUrls.idFront} />
                  <input type="hidden" name="idBackUrl" value={documentUrls.idBack} />
                  <input type="hidden" name="paymentProofUrl" value={documentUrls.paymentProof} />
+                 <input type="hidden" name="paymentOption" value={paymentOption} />
+                 <input type="hidden" name="amountPaid" value={amountToPay} />
 
 
                 <div className="flex items-start space-x-2">
@@ -593,7 +651,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
 
       <div className="animate-fade-in">{StepContent()}</div>
 
-      {currentStep < 3 && (
+      {currentStep < 4 && (
         <div className="flex justify-between gap-4">
             <Button 
                 variant="outline" 
@@ -616,3 +674,5 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     </div>
   );
 }
+
+    
