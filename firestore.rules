@@ -1,47 +1,28 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow admins to read/write all data
-    // This is a placeholder for actual admin authentication logic
-    function isAdmin() {
-      // In a real app, you'd check for an admin claim on the user's token.
-      // For now, we'll keep it simple and assume no specific admin access via rules.
-      return false; 
-    }
-
-    // Allow hotel owners to read/write their own hotel data
-    function isHotelOwner(hotelId) {
-      // This is a simplified check. A real implementation would involve checking
-      // custom claims on the authenticated user's token.
-      return request.auth != null;
-    }
-
-    // Default deny all
+    
+    // Globale Regel: Standardmäßig alles blockieren, außer es wird explizit erlaubt.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Rules for hotels collection
-    match /hotels/{hotelId} {
-      allow read: if true; // Allow public read for hotel details if needed
-      allow write: if isHotelOwner(hotelId) || isAdmin();
+    // Regeln für Hotels (bleiben sicher, nur für eingeloggte Benutzer)
+    match /hotels/{hotelId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
 
-      // Rules for bookings subcollection
-      match /bookings/{bookingId} {
-        allow read: if isHotelOwner(hotelId) || isAdmin();
-        // ALLOW GUEST TO UPDATE a booking (to add their details)
-        allow update: if true; 
-        allow create: if isHotelOwner(hotelId) || isAdmin();
-      }
-    }
-    
-    // Rules for booking links
+    // Regeln für Buchungslinks
     match /bookingLinks/{linkId} {
+      // ERLAUBT: Jeder darf einen spezifischen Link lesen, um die Daten zu laden.
       allow read: if true;
-      // ALLOW GUEST TO UPDATE a link (to mark it as used)
-      allow update: if true;
-      allow create: if isHotelOwner(request.resource.data.hotelId) || isAdmin();
+      // ERLAUBT: Jeder darf einen Link aktualisieren (um ihn als 'used' zu markieren).
+      allow update: if request.auth == null;
     }
+
+    // Regeln für die Agentur
+    // (Hier können spezifische Regeln für die Agentur-Sammlung hinzugefügt werden, falls vorhanden)
+    // z.B. match /agency/{docId} { allow read, write: if request.auth != null; }
   }
 }
