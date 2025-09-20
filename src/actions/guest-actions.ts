@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase/client';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Booking, Hotel } from '@/lib/types';
+import { Booking, GuestData, Hotel } from '@/lib/types';
 import { sendBookingConfirmation } from '@/lib/email';
 
 type FormState = {
@@ -67,8 +67,7 @@ export async function finalizeBookingAction(
       }
   }
 
-
-  const guestData: ValidateGuestDataInput = {
+  const guestDataForValidation: ValidateGuestDataInput = {
     guestName: `${rawData.firstName} ${rawData.lastName}`,
     email: rawData.email as string,
     address: `${rawData.street}, ${rawData.zip} ${rawData.city}`,
@@ -81,7 +80,7 @@ export async function finalizeBookingAction(
   };
 
   try {
-    const validationResult = await validateGuestData(guestData);
+    const validationResult = await validateGuestData(guestDataForValidation);
 
     if (!validationResult.isValid) {
       return {
@@ -91,7 +90,7 @@ export async function finalizeBookingAction(
       };
     }
 
-    const finalGuestData: Omit<GuestData, 'documentUrls'> & { documentUrls: { idFront: string, idBack: string, paymentProof: string } } = {
+    const finalGuestData: GuestData = {
         firstName: rawData.firstName as string,
         lastName: rawData.lastName as string,
         email: rawData.email as string,
@@ -126,10 +125,16 @@ export async function finalizeBookingAction(
         const fullHotelData: Hotel = {
             id: hotelSnap.id,
             ...hotelData,
-            createdAt: hotelData.createdAt.toDate().toISOString(),
+            createdAt: (hotelData.createdAt as any).toDate().toISOString(),
         } as Hotel;
         
-        const updatedBooking = { ...bookingDetails, guestDetails: finalGuestData };
+        const updatedBooking: Booking = { 
+            ...bookingDetails, 
+            guestDetails: finalGuestData,
+            status: 'Data Provided',
+            paymentOption: rawData.paymentOption as 'deposit' | 'full',
+            amountPaid: parseFloat(rawData.amountPaid as string),
+        };
 
         await sendBookingConfirmation({
             booking: updatedBooking,
@@ -159,5 +164,3 @@ export async function finalizeBookingAction(
 
   redirect(`/guest/${linkId}/thank-you`);
 }
-
-    

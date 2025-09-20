@@ -54,6 +54,34 @@ const formatDate = (date: any) => {
     return format(d, 'dd. MMMM yyyy', { locale: de });
 };
 
+const DocumentLink = ({ url, label }: { url?: string; label: string }) => {
+    if (!url) {
+        return (
+             <div className="flex items-center justify-between rounded-md border p-3 opacity-50">
+                <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-muted-foreground"/>
+                    <span className="font-medium">{label}</span>
+                </div>
+                <Button variant="outline" size="sm" disabled>Nicht vorhanden</Button>
+            </div>
+        )
+    }
+
+    return (
+         <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground"/>
+                <span className="font-medium">{label}</span>
+            </div>
+            <Button asChild variant="outline" size="sm">
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                    <Download className="mr-2 h-4 w-4"/> Herunterladen
+                </a>
+            </Button>
+        </div>
+    )
+}
+
 export default async function BookingDetailsPage({ params }: { params: { hotelId: string, bookingId: string } }) {
   
   const booking = await getBooking(params.hotelId, params.bookingId);
@@ -174,20 +202,9 @@ export default async function BookingDetailsPage({ params }: { params: { hotelId
             <Card>
                 <CardHeader><CardTitle>Dokumente</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between rounded-md border p-3">
-                        <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground"/>
-                            <span className="font-medium">Zahlungsbeleg</span>
-                        </div>
-                        <Button variant="outline" size="sm"><Download className="mr-2 h-4 w-4"/> Herunterladen</Button>
-                    </div>
-                     <div className="flex items-center justify-between rounded-md border p-3">
-                        <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground"/>
-                            <span className="font-medium">Ausweisdokument</span>
-                        </div>
-                        <Button variant="outline" size="sm"><Download className="mr-2 h-4 w-4"/> Herunterladen</Button>
-                    </div>
+                    <DocumentLink url={guest?.documentUrls?.paymentProof} label="Zahlungsbeleg" />
+                    <DocumentLink url={guest?.documentUrls?.idFront} label="Ausweis (Vorderseite)" />
+                    <DocumentLink url={guest?.documentUrls?.idBack} label="Ausweis (Rückseite)" />
                 </CardContent>
             </Card>
 

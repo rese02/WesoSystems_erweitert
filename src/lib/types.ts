@@ -65,7 +65,6 @@ export type Booking = {
   internalNotes?: string;
   createdAt: Timestamp | Date; 
   guestDetails?: GuestData;
-  paymentProofUrl?: string | null;
   paymentOption?: 'deposit' | 'full';
   amountPaid?: number;
 };
@@ -81,10 +80,10 @@ export type GuestData = {
   city: string;
   fellowTravelers: { name: string }[];
   specialRequests?: string;
-  documentUrls?: {
-    idFront?: string;
-    idBack?: string;
-    paymentProof?: string;
+  documentUrls: {
+    idFront: string;
+    idBack: string;
+    paymentProof: string;
   }
 };
 
