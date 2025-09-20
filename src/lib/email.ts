@@ -1,9 +1,8 @@
 'use server';
 
-import { render } from '@react-email/render';
 import nodemailer from 'nodemailer';
 import { Booking, Hotel } from './types';
-import BookingConfirmationEmail from '@/components/email/booking-confirmation-email';
+import { bookingConfirmationEmailTemplate } from '@/components/email/booking-confirmation-email';
 
 interface EmailPayload {
     booking: Booking;
@@ -25,7 +24,7 @@ export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) 
         },
     });
 
-    const emailHtml = render(BookingConfirmationEmail({ booking, hotel }));
+    const emailHtml = bookingConfirmationEmailTemplate({ booking, hotel });
 
     const options = {
         from: `"${hotel.hotelName}" <${hotel.smtp.user}>`,

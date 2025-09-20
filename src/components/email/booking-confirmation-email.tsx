@@ -1,19 +1,6 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-  Tailwind,
-} from '@react-email/components';
 import { format } from 'date-fns';
 import { de, enUS, it } from 'date-fns/locale';
 import { Booking, Hotel } from '@/lib/types';
-import * as React from 'react';
 
 const locales = {
   de: de,
@@ -54,7 +41,6 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Herzliche Grüße,",
       team: "Das Team vom",
       contact: "Kontakt",
-      preview: "Buchungsbestätigung für"
     },
     en: {
       title: "Your Booking Confirmation",
@@ -87,7 +73,6 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Kind regards,",
       team: "The team at",
       contact: "Contact",
-      preview: "Booking confirmation for"
     },
     it: {
       title: "La Sua Conferma di Prenotazione",
@@ -120,7 +105,6 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Cordiali saluti,",
       team: "Il team dell'Hotel",
       contact: "Contatto",
-      preview: "Conferma di prenotazione per"
     },
   };
   return translations[lang][key] || key;
@@ -131,10 +115,10 @@ interface BookingConfirmationEmailProps {
   hotel: Hotel;
 }
 
-export const BookingConfirmationEmail = ({
+export const bookingConfirmationEmailTemplate = ({
   booking,
   hotel,
-}: BookingConfirmationEmailProps) => {
+}: BookingConfirmationEmailProps): string => {
 
   const lang = booking.language || 'de';
   const T = (key: string) => t(lang, key);
@@ -142,101 +126,89 @@ export const BookingConfirmationEmail = ({
 
   const formatDate = (date: any) => {
     if (!date) return '';
-    const d = date instanceof Date ? date : date.toDate();
+    const d = date instanceof Date ? date : new Date(date);
     return format(d, 'EEEE, dd. MMMM yyyy', { locale });
   };
   const formatTime = (date: any) => {
       if (!date) return '';
-      const d = date instanceof Date ? date : date.toDate();
+      const d = date instanceof Date ? date : new Date(date);
       return format(d, 'HH:mm', { locale });
   }
 
   const totalAdults = booking.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = booking.rooms.reduce((sum, room) => sum + room.children, 0);
   const guestName = booking.guestDetails?.firstName ? `${booking.guestDetails.firstName} ${booking.guestDetails.lastName}` : booking.guestName;
-  const previewText = `${T('preview')} ${hotel.hotelName}`;
+  const roomsText = booking.rooms.map(r => r.type).join(', ');
 
-  return (
-    <Html>
-      <Head />
-      <Preview>{previewText}</Preview>
-      <Tailwind>
-        <Body className="bg-gray-100 font-sans">
-          <Container className="bg-white mx-auto my-10 p-8 rounded-lg shadow-md max-w-2xl">
-            
-            <Section className="bg-green-100 p-8 rounded-t-lg text-center">
-              <Heading className="text-2xl font-bold text-gray-800 m-0">
-                {T('title')}
-              </Heading>
-              <Text className="text-gray-700 text-lg m-0 pt-2">{hotel.hotelName}</Text>
-            </Section>
+  const formatCurrency = (amount: number) => new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(amount);
 
-            <Section className="p-8">
-              <Text className="text-base">
-                {T('dear')} {guestName},
-              </Text>
-              <Text className="text-base">
-                {T('intro')}
-              </Text>
-              
-              <Hr className="border-gray-300 my-6" />
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+            .container { background-color: #ffffff; margin: 40px auto; padding: 20px; border-radius: 8px; max-width: 600px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+            .header { background-color: #e6f4ea; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .header h1 { font-size: 24px; color: #333; margin: 0; }
+            .header p { font-size: 18px; color: #555; margin: 5px 0 0; }
+            .content { padding: 20px; }
+            .content p { line-height: 1.6; }
+            .content h2 { font-size: 20px; color: #444; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px; }
+            .details, .payment { margin-top: 20px; }
+            .details p, .payment p { margin: 10px 0; }
+            .info-box { margin-top: 30px; background-color: #f9f9f9; padding: 15px; border-radius: 5px; }
+            .info-box h3 { font-size: 16px; margin: 0 0 10px; }
+            .footer { text-align: center; font-size: 12px; color: #888; padding-top: 20px; border-top: 1px solid #eee; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>${T('title')}</h1>
+                <p>${hotel.hotelName}</p>
+            </div>
+            <div class="content">
+                <p>${T('dear')} ${guestName},</p>
+                <p>${T('intro')}</p>
 
-              <Heading as="h2" className="text-xl font-semibold text-gray-700">
-                {T('details')}
-              </Heading>
+                <h2>${T('details')}</h2>
+                <div class="details">
+                    <p><strong>${T('bookingNumber')}:</strong> ${booking.id.substring(0, 8).toUpperCase()}</p>
+                    <p><strong>${T('name')}:</strong> ${guestName}</p>
+                    <p><strong>${T('checkIn')}:</strong> ${formatDate(booking.checkIn)} (${T('checkInTime')} ${formatTime(booking.checkIn)} ${T('timeSuffix')})</p>
+                    <p><strong>${T('checkOut')}:</strong> ${formatDate(booking.checkOut)} (${T('checkOutTime')} ${formatTime(booking.checkOut)} ${T('timeSuffix')})</p>
+                    <p><strong>${T('room')}:</strong> ${roomsText}</p>
+                    <p><strong>${T('guests')}:</strong> ${totalAdults} ${T('adults')}, ${totalChildren} ${T('children')}</p>
+                    <p><strong>${T('meal')}:</strong> ${booking.mealType}</p>
+                </div>
 
-              <Section className="mt-4 text-base">
-                <p><strong>{T('bookingNumber')}:</strong> {booking.id.substring(0, 8).toUpperCase()}</p>
-                <p><strong>{T('name')}:</strong> {guestName}</p>
-                <p><strong>{T('checkIn')}:</strong> {formatDate(booking.checkIn)} ({T('checkInTime')} {formatTime(booking.checkIn)} {T('timeSuffix')})</p>
-                <p><strong>{T('checkOut')}:</strong> {formatDate(booking.checkOut)} ({T('checkOutTime')} {formatTime(booking.checkOut)} {T('timeSuffix')})</p>
-                <p><strong>{T('room')}:</strong> {booking.rooms.map(r => r.type).join(', ')}</p>
-                <p><strong>{T('guests')}:</strong> {totalAdults} {T('adults')}, {totalChildren} {T('children')}</p>
-                <p><strong>{T('meal')}:</strong> {booking.mealType}</p>
-              </Section>
-              
-              <Hr className="border-gray-300 my-6" />
+                <h2>${T('payment')}</h2>
+                <div class="payment">
+                    <p><strong>${T('totalPrice')}:</strong> ${formatCurrency(booking.price)}</p>
+                    <p style="color: green; font-weight: bold;">${T('balance')}: 0,00 € (${T('balancePaid')})</p>
+                </div>
 
-              <Heading as="h2" className="text-xl font-semibold text-gray-700">
-                {T('payment')}
-              </Heading>
-              <Section className="mt-4 text-base">
-                 <p><strong>{T('totalPrice')}:</strong> {new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(booking.price)}</p>
-                 <p className="text-green-600 font-semibold">{T('balance')}: 0,00 € ({T('balancePaid')})</p>
-              </Section>
+                <div class="info-box">
+                    <h3>${T('importantInfo')}</h3>
+                    <p>${T('infoText1')}</p>
+                    <p>${T('infoText2')}</p>
+                    <p><strong>${T('phone')}:</strong> ${hotel.contact.phone}</p>
+                    <p><strong>${T('email')}:</strong> ${hotel.contact.email}</p>
+                </div>
 
-              <Section className="mt-8 bg-gray-50 p-6 rounded-lg">
-                <Heading as="h3" className="text-lg font-semibold text-gray-800">
-                    {T('importantInfo')}
-                </Heading>
-                <Text className="text-sm">{T('infoText1')}</Text>
-                <Text className="text-sm">{T('infoText2')}</Text>
-                <Text className="text-sm">{T('phone')}: {hotel.contact.phone}</Text>
-                <Text className="text-sm">{T('email')}: {hotel.contact.email}</Text>
-              </Section>
-
-              <Text className="mt-8 text-base">
-                {T('outro')}
-              </Text>
-              <Text className="text-base">
-                {T('regards')}
-                <br />
-                {T('team')} {hotel.hotelName}
-              </Text>
-            </Section>
-
-            <Hr className="border-gray-300" />
-
-            <Section className="text-center text-xs text-gray-500 pt-4">
-               <p>{hotel.hotelName} | {hotel.domain}</p>
-               <p>{T('contact')}: {hotel.contact.email}</p>
-            </Section>
-
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
-  );
+                <p>${T('outro')}</p>
+                <p>
+                    ${T('regards')}<br>
+                    ${T('team')} ${hotel.hotelName}
+                </p>
+            </div>
+            <div class="footer">
+                <p>${hotel.hotelName} | ${hotel.domain}</p>
+                <p>${T('contact')}: ${hotel.contact.email}</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
 };
-
-export default BookingConfirmationEmail;

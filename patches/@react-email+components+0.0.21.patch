@@ -1,0 +1,15 @@
+diff --git a/node_modules/@react-email/components/package.json b/node_modules/@react-email/components/package.json
+index 548358e..833f545 100644
+--- a/node_modules/@react-email/components/package.json
++++ b/node_modules/@react-email/components/package.json
+@@ -37,6 +37,10 @@
+     "eslint-config-custom": "*",
+     "react": "18.2.0",
+     "tsconfig": "*"
++  },
++  "peerDependencies": {
++    "react": "18.x"
+   }
+ }
++
++
