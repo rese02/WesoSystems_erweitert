@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound, AlertCircle, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound, AlertCircle, UploadCloud, Image as ImageIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FileUpload } from '@/components/guest/file-upload';
@@ -118,12 +118,12 @@ export default function CreateHotelPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Hotelier-Zugang</CardTitle>
+              <CardTitle>Hotelier-Zugang & Berechtigungen</CardTitle>
               <CardDescription>
-                Erstellen Sie den initialen Benutzeraccount für den Hotelier.
+                Erstellen Sie den initialen Account und legen Sie die Rechte für den Hotelier fest.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="hotelierEmail">E-Mail des Hoteliers</Label>
                 <Input
@@ -158,6 +158,17 @@ export default function CreateHotelPage() {
                   </Button>
                 </div>
               </div>
+               <div className="flex items-start space-x-3 rounded-md border p-4">
+                  <Checkbox id="canEditBankDetails" name="canEditBankDetails" />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="canEditBankDetails" className="flex items-center gap-2">
+                       <ShieldCheck className="h-4 w-4" /> Hotelier darf Bankdaten bearbeiten
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Wenn aktiviert, kann der Hotelier die Bankverbindung in seinen Einstellungen selbst ändern.
+                    </p>
+                  </div>
+                </div>
             </CardContent>
           </Card>
 

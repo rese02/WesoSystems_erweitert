@@ -10,12 +10,42 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-// This is a placeholder page. In a real application, you would fetch
-// the hotel data and use it to pre-fill the form fields.
-// For example, using a server action and `useState` or a form library like `react-hook-form`.
+import { db } from '@/lib/firebase/client';
+import { Hotel } from '@/lib/types';
+import { doc, getDoc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function HotelSettingsPage() {
+  const params = useParams<{ hotelId: string }>();
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchHotel() {
+      if (params.hotelId) {
+        const hotelRef = doc(db, 'hotels', params.hotelId);
+        const hotelSnap = await getDoc(hotelRef);
+        if (hotelSnap.exists()) {
+          setHotel({ id: hotelSnap.id, ...hotelSnap.data() } as Hotel);
+        }
+        setLoading(false);
+      }
+    }
+    fetchHotel();
+  }, [params.hotelId]);
+
+  if (loading || !hotel) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const canEditBankDetails = hotel.permissions?.canEditBankDetails ?? false;
+
   return (
     <div className="space-y-6">
       <div>
@@ -36,19 +66,19 @@ export default function HotelSettingsPage() {
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="hotelName">Hotelname</Label>
-              <Input id="hotelName" name="hotelName" placeholder="z.B. Ihr Hotel" />
+              <Input id="hotelName" name="hotelName" defaultValue={hotel.hotelName} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="domain">Domain</Label>
-              <Input id="domain" name="domain" placeholder="z.B. ihr-hotel.de" />
+              <Input id="domain" name="domain" defaultValue={hotel.domain} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@ihr-hotel.de" />
+              <Input id="contactEmail" name="contactEmail" type="email" defaultValue={hotel.contact.email} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactPhone">Kontakt Telefon</Label>
-              <Input id="contactPhone" name="contactPhone" type="tel" placeholder="+49 123 456789" />
+              <Input id="contactPhone" name="contactPhone" type="tel" defaultValue={hotel.contact.phone} />
             </div>
           </CardContent>
         </Card>
@@ -57,52 +87,25 @@ export default function HotelSettingsPage() {
           <CardHeader>
             <CardTitle>Bankverbindung für Überweisungen</CardTitle>
             <CardDescription>
-              Diese Daten werden dem Gast für die Überweisung angezeigt.
+              Diese Daten werden dem Gast für die Überweisung angezeigt. {!canEditBankDetails && "Nur die Agentur kann diese Daten ändern."}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="grid gap-2 md:col-span-2">
               <Label htmlFor="accountHolder">Kontoinhaber</Label>
-              <Input id="accountHolder" name="accountHolder" placeholder="Ihr Name oder Firmenname" />
+              <Input id="accountHolder" name="accountHolder" defaultValue={hotel.bankDetails.accountHolder} disabled={!canEditBankDetails}/>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="iban">IBAN</Label>
-              <Input id="iban" name="iban" placeholder="Ihre IBAN" />
+              <Input id="iban" name="iban" defaultValue={hotel.bankDetails.iban} disabled={!canEditBankDetails}/>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="bic">BIC/SWIFT</Label>
-              <Input id="bic" name="bic" placeholder="Ihr BIC/SWIFT" />
+              <Input id="bic" name="bic" defaultValue={hotel.bankDetails.bic} disabled={!canEditBankDetails}/>
             </div>
             <div className="grid gap-2 md:col-span-2">
               <Label htmlFor="bankName">Bank</Label>
-              <Input id="bankName" name="bankName" placeholder="Name Ihrer Bank" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>E-Mail-Versand (SMTP)</CardTitle>
-            <CardDescription>
-              Damit das System in Ihrem Namen E-Mails versenden kann.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="smtpHost">Host</Label>
-              <Input id="smtpHost" name="smtpHost" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="smtpPort">Port</Label>
-              <Input id="smtpPort" name="smtpPort" type="number" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="smtpUser">E-Mail-Benutzer</Label>
-              <Input id="smtpUser" name="smtpUser" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="smtpPass">App-Passwort</Label>
-              <Input id="smtpPass" name="smtpPass" type="password" />
+              <Input id="bankName" name="bankName" defaultValue={hotel.bankDetails.bankName} disabled={!canEditBankDetails}/>
             </div>
           </CardContent>
         </Card>

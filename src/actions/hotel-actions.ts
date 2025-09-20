@@ -43,6 +43,7 @@ export async function createHotelAction(
 
   const mealTypes = formData.getAll('mealTypes') as string[];
   const roomCategories = formData.getAll('roomCategories') as string[];
+  const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
   const hotelData = {
     hotelName: formData.get('hotelName') as string,
@@ -78,6 +79,9 @@ export async function createHotelAction(
       mealTypes: mealTypes,
       roomCategories: roomCategories,
     },
+    permissions: {
+      canEditBankDetails: canEditBankDetails,
+    }
   };
 
   try {

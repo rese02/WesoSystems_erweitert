@@ -35,6 +35,10 @@ export type Hotel = {
     mealTypes: string[]; 
     roomCategories: string[];
   };
+
+  permissions: {
+    canEditBankDetails: boolean;
+  };
 };
 
 export type BookingStatus =
