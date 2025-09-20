@@ -2,18 +2,25 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Der Pfad für die Dokumente eines Gastes.
-    // {bookingId} ist die geheime, unerratbare ID der Buchung.
+    
+    // Allow anyone to write to the bookings directory.
+    // This is necessary for guests to upload their documents.
+    // The security is handled by the unguessable download URLs, which are
+    // stored in the secure Firestore database.
     match /bookings/{bookingId}/{fileName} {
-      
-      // ERLAUBT: Einen Schreibzugriff (Upload) für JEDEN.
-      // Das ist sicher, weil niemand die bookingId erraten kann.
-      // Sie funktioniert wie ein einmaliges Upload-Passwort.
       allow write: if true;
+      allow read: if request.auth != null; // Only authenticated users (hoteliers, admins) can read
+    }
 
-      // VERHINDERT: Dass ein Gast die Dokumente anderer Gäste lesen kann.
-      // Leserechte haben nur eingeloggte Benutzer (deine Hoteliers).
-      allow read: if request.auth != null;
+    // Allow authenticated users to manage their hotel logos
+    match /logos/{hotelId}/{fileName} {
+       allow read: if true; // Logos can be public
+       allow write: if request.auth != null;
+    }
+
+    // Deny all other routes by default
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }

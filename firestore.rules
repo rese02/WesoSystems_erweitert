@@ -1,29 +1,47 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Standardmäßig alle Lese- und Schreibzugriffe verweigern.
+    // Allow admins to read/write all data
+    // This is a placeholder for actual admin authentication logic
+    function isAdmin() {
+      // In a real app, you'd check for an admin claim on the user's token.
+      // For now, we'll keep it simple and assume no specific admin access via rules.
+      return false; 
+    }
+
+    // Allow hotel owners to read/write their own hotel data
+    function isHotelOwner(hotelId) {
+      // This is a simplified check. A real implementation would involve checking
+      // custom claims on the authenticated user's token.
+      return request.auth != null;
+    }
+
+    // Default deny all
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Hotels: Nur authentifizierte Benutzer (Agentur/Admins) können Hotels erstellen/lesen.
-    // In einer echten App würde man hier die Rollen (`request.auth.token.role`) prüfen.
+    // Rules for hotels collection
     match /hotels/{hotelId} {
-      allow read, write: if request.auth != null; 
-      
-      // Bookings & Guests: Nur authentifizierte Benutzer mit der richtigen Hotel-ID können darauf zugreifen.
+      allow read: if true; // Allow public read for hotel details if needed
+      allow write: if isHotelOwner(hotelId) || isAdmin();
+
+      // Rules for bookings subcollection
       match /bookings/{bookingId} {
-        allow read, write: if request.auth != null;
+        allow read: if isHotelOwner(hotelId) || isAdmin();
+        // ALLOW GUEST TO UPDATE a booking (to add their details)
+        allow update: if true; 
+        allow create: if isHotelOwner(hotelId) || isAdmin();
       }
     }
     
-    // Buchungslinks (guestLinks): Darf öffentlich gelesen, aber nur vom Server (authentifiziert) beschrieben werden.
-    // Der Gast benötigt Lesezugriff, um seine Buchungsdetails anzuzeigen.
-    match /guestLinks/{linkId} {
+    // Rules for booking links
+    match /bookingLinks/{linkId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      // ALLOW GUEST TO UPDATE a link (to mark it as used)
+      allow update: if true;
+      allow create: if isHotelOwner(request.resource.data.hotelId) || isAdmin();
     }
   }
 }
