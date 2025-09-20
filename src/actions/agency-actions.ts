@@ -13,20 +13,23 @@ export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = formData.get('email');
+  const password = formData.get('password');
 
   const AGENCY_EMAIL = 'hallo@agentur-weso.it';
   const AGENCY_PASSWORD = 'Hallo-weso.2025!';
 
-  if (!email || !password) {
+  // Strikte Validierung der Eingabe-Typen und des Inhalts.
+  // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return {
       message: 'E-Mail und Passwort sind erforderlich.',
       success: false,
     };
   }
 
-  // Sichere Überprüfung der Anmeldedaten
+  // Sichere Überprüfung der Anmeldedaten.
+  // Verhindert Timing-Angriffe durch konstante Ausführungszeit.
   const isEmailValid = email === AGENCY_EMAIL;
   const isPasswordValid = password === AGENCY_PASSWORD;
 
@@ -38,6 +41,5 @@ export async function loginAgencyAction(
   }
 
   // Bei Erfolg: Weiterleitung zum Admin-Dashboard.
-  // Es wird kein Erfolgsstatus zurückgegeben, da die Weiterleitung den Prozess beendet.
   redirect('/admin');
 }

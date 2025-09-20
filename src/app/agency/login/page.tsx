@@ -16,7 +16,6 @@ import Link from 'next/link';
 import { useActionState, useEffect } from 'react';
 import { loginAgencyAction } from '@/actions/agency-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
   message: '',
@@ -25,17 +24,6 @@ const initialState = {
 
 export default function AgencyLoginPage() {
   const [state, formAction, isPending] = useActionState(loginAgencyAction, initialState);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (state?.message && !state.success) {
-      toast({
-        title: 'Anmeldefehler',
-        description: state.message,
-        variant: 'destructive',
-      });
-    }
-  }, [state, toast]);
 
   return (
     <AuthLayout>

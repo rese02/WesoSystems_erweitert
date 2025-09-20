@@ -16,7 +16,6 @@ import Link from 'next/link';
 import { useActionState, useEffect } from 'react';
 import { loginHotelAction } from '@/actions/auth-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
 
 
 const initialState = {
@@ -26,18 +25,6 @@ const initialState = {
 
 export default function HotelLoginPage() {
   const [state, formAction] = useActionState(loginHotelAction, initialState);
-  const { toast } = useToast();
-
-   useEffect(() => {
-    if (state?.message && !state.success) {
-      toast({
-        title: 'Anmeldefehler',
-        description: state.message,
-        variant: 'destructive',
-      });
-    }
-  }, [state, toast]);
-
 
   return (
     <AuthLayout>

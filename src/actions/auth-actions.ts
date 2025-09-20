@@ -13,10 +13,12 @@ export async function loginHotelAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = formData.get('email');
+  const password = formData.get('password');
 
-  if (!email || !password) {
+  // Strikte Validierung der Eingabe-Typen und des Inhalts.
+  // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return {
       message: 'E-Mail und Passwort sind erforderlich.',
       success: false,
