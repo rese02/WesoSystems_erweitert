@@ -218,3 +218,18 @@ export async function updateHotelierProfileAction(
     return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
   }
 }
+
+export async function updateHotelLogo(hotelId: string, logoUrl: string) {
+  try {
+    const hotelRef = doc(db, 'hotels', hotelId);
+    await updateDoc(hotelRef, {
+      logoUrl: logoUrl,
+    });
+    revalidatePath(`/dashboard/${hotelId}`);
+    revalidatePath(`/dashboard/${hotelId}/profile`);
+    return { success: true, message: 'Logo updated successfully.' };
+  } catch (error) {
+    console.error('Error updating hotel logo:', error);
+    return { success: false, message: 'Failed to update logo.' };
+  }
+}
