@@ -65,6 +65,7 @@ export type Booking = {
   internalNotes?: string;
   createdAt: Timestamp | Date; 
   guestDetails?: GuestData;
+  paymentProofUrl?: string | null;
 };
 
 export type GuestData = {

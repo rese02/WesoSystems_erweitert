@@ -2,18 +2,18 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Standardmäßig alle Lese- und Schreibzugriffe verweigern.
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
+    // Der Pfad für die Dokumente eines Gastes.
+    // {bookingId} ist die geheime, unerratbare ID der Buchung.
+    match /bookings/{bookingId}/{fileName} {
+      
+      // ERLAUBT: Einen Schreibzugriff (Upload) für JEDEN.
+      // Das ist sicher, weil niemand die bookingId erraten kann.
+      // Sie funktioniert wie ein einmaliges Upload-Passwort.
+      allow write: if true;
 
-    // Erlaube Uploads nur für authentifizierte Benutzer.
-    // In einer echten App würde man den Pfad genauer einschränken,
-    // z.B. /hotels/{hotelId}/documents/{userId}/{fileName}
-    // und prüfen, ob der `request.auth.uid` die Berechtigung hat.
-    match /uploads/{userId}/{fileName} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null; // Erlaube Lesevorgänge für authentifizierte Benutzer
+      // VERHINDERT: Dass ein Gast die Dokumente anderer Gäste lesen kann.
+      // Leserechte haben nur eingeloggte Benutzer (deine Hoteliers).
+      allow read: if request.auth != null;
     }
   }
 }

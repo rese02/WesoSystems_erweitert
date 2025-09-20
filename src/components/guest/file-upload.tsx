@@ -2,51 +2,68 @@
 
 import { cn } from '@/lib/utils';
 import { UploadCloud, File as FileIcon, X } from 'lucide-react';
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
+import { storage } from '@/lib/firebase/client'; // Client-Instanz importieren
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { useToast } from '@/hooks/use-toast';
 
 type FileUploadProps = {
-  onFileSelect: (file: File | null) => void;
-  isUploading?: boolean;
+  bookingId: string;
+  fileType: 'idFront' | 'idBack' | 'paymentProof';
+  onUploadComplete: (fileType: 'idFront' | 'idBack' | 'paymentProof', downloadUrl: string) => void;
+  onUploadStart: () => void;
+  onUploadEnd: () => void;
 };
 
-export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProps) {
+
+export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStart, onUploadEnd }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { toast } = useToast();
 
-  const resetState = useCallback(() => {
+   const resetState = () => {
       setFile(null);
       setUploadProgress(0);
-      onFileSelect(null);
-  }, [onFileSelect]);
-
-  React.useEffect(() => {
-    if (isUploading) {
-        setUploadProgress(0);
-        const interval = setInterval(() => {
-            setUploadProgress(prev => {
-                if (prev >= 90) {
-                    clearInterval(interval);
-                    return 90; // Stop at 90 to indicate processing
-                }
-                return prev + 10;
-            });
-        }, 100);
-        return () => clearInterval(interval);
-    } else if (file) {
-        setUploadProgress(100);
-    }
-  }, [isUploading, file]);
+  };
 
 
   const handleFileChange = (selectedFile: File | null) => {
-    if (selectedFile) {
-      setFile(selectedFile);
-      onFileSelect(selectedFile);
-    }
-  };
+    if (!selectedFile) return;
 
+    setFile(selectedFile);
+    setUploadProgress(0);
+    onUploadStart();
+
+    // Der Pfad in Firebase Storage, z.B. "bookings/aBcDeFg123/payment_proof.pdf"
+    const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${selectedFile.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+    // Überwache den Upload-Prozess
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      },
+      (error) => {
+        // Fehlerbehandlung
+        console.error("Upload failed:", error);
+        toast({ title: 'Upload fehlgeschlagen', description: 'Bitte versuchen Sie es erneut.', variant: 'destructive' });
+        onUploadEnd();
+        setFile(null);
+      },
+      () => {
+        // Upload erfolgreich!
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          toast({ title: 'Datei erfolgreich hochgeladen!' });
+          onUploadEnd();
+          onUploadComplete(fileType, downloadURL); // Gibt die URL an die Eltern-Komponente weiter
+        });
+      }
+    );
+  };
+  
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -73,14 +90,19 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
               </p>
             </div>
           </div>
-           {uploadProgress < 100 && !isUploading ? (
+           {uploadProgress === 100 ? (
                <Button variant="ghost" size="icon" onClick={resetState}>
                  <X className="h-5 w-5" />
                </Button>
            ) : null }
         </div>
-        {(isUploading || uploadProgress > 0) && (
-          <Progress value={uploadProgress} className="mt-2 h-2" />
+        {(uploadProgress > 0) && (
+          <>
+            <Progress value={uploadProgress} className="mt-2 h-2" />
+            {uploadProgress < 100 && (
+                <p className="text-xs text-center mt-1 text-muted-foreground">Wird hochgeladen...</p>
+            )}
+          </>
         )}
       </div>
     );
@@ -90,7 +112,7 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        onClick={() => document.getElementById('file-input')?.click()}
+        onClick={() => document.getElementById(`file-input-${fileType}`)?.click()}
         className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition hover:border-primary"
     >
       <UploadCloud className="h-12 w-12 text-gray-400" />
@@ -101,7 +123,7 @@ export function FileUpload({ onFileSelect, isUploading = false }: FileUploadProp
         PDF, PNG oder JPG.
       </p>
       <input
-        id="file-input"
+        id={`file-input-${fileType}`}
         type="file"
         className="hidden"
         onChange={(e) =>

@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2 } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
-import { uploadFileAction } from '@/actions/file-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -20,7 +19,6 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { GuestLinkData } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
 
 
 const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
@@ -33,8 +31,7 @@ type BookingWizardProps = {
 type FellowTraveler = { id: number; name: string };
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
-  const { toast } = useToast();
-  const [isUploading, startUploading] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadChoice, setUploadChoice] = useState('later');
   const [birthDate, setBirthDate] = useState<Date>();
@@ -68,27 +65,9 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     { message: '', errors: null, isValid: true }
   );
 
-  const handleFileUpload = (file: File | null, type: 'idFront' | 'idBack' | 'paymentProof') => {
-    if (!file) {
-      setDocumentUrls(prev => ({...prev, [type]: ''}));
-      return;
-    };
-
-    startUploading(async () => {
-      try {
-        const result = await uploadFileAction(initialData.booking.id, file);
-        if (result.success && result.url) {
-          setDocumentUrls(prev => ({...prev, [type]: result.url!}));
-          toast({ title: 'Upload erfolgreich!', description: `${file.name} wurde hochgeladen.` });
-        } else {
-           toast({ title: 'Upload-Fehler', description: result.message, variant: 'destructive' });
-        }
-      } catch (error) {
-        toast({ title: 'Upload-Fehler', description: 'Ein unerwarteter Fehler ist aufgetreten.', variant: 'destructive' });
-      }
-    });
+  const handleUploadComplete = (fileType: 'idFront' | 'idBack' | 'paymentProof', url: string) => {
+    setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
   };
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -233,12 +212,24 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     <div className="space-y-4 rounded-md border p-4 animate-fade-in">
                         <div className="grid gap-2">
                             <Label>Ausweisdokument (Vorderseite) <span className="text-destructive">*</span></Label>
-                            <FileUpload onFileSelect={(file) => handleFileUpload(file, 'idFront')} isUploading={isUploading} />
+                            <FileUpload
+                                bookingId={linkId}
+                                fileType="idFront"
+                                onUploadComplete={handleUploadComplete}
+                                onUploadStart={() => setIsUploading(true)}
+                                onUploadEnd={() => setIsUploading(false)}
+                            />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                          <div className="grid gap-2">
                             <Label>Ausweisdokument (Rückseite) <span className="text-destructive">*</span></Label>
-                            <FileUpload onFileSelect={(file) => handleFileUpload(file, 'idBack')} isUploading={isUploading} />
+                             <FileUpload
+                                bookingId={linkId}
+                                fileType="idBack"
+                                onUploadComplete={handleUploadComplete}
+                                onUploadStart={() => setIsUploading(true)}
+                                onUploadEnd={() => setIsUploading(false)}
+                            />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
                     </div>
@@ -309,7 +300,13 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 </Card>
               <div>
                 <Label className="mb-2 block font-medium">Zahlungsbeleg hochladen <span className="text-destructive">*</span></Label>
-                <FileUpload onFileSelect={(file) => handleFileUpload(file, 'paymentProof')} isUploading={isUploading} />
+                <FileUpload
+                    bookingId={linkId}
+                    fileType="paymentProof"
+                    onUploadComplete={handleUploadComplete}
+                    onUploadStart={() => setIsUploading(true)}
+                    onUploadEnd={() => setIsUploading(false)}
+                />
                 <p className="text-xs text-muted-foreground mt-2">Ein Zahlungsnachweis ist erforderlich, um fortzufahren.</p>
               </div>
             </CardContent>
