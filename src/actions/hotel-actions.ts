@@ -10,6 +10,7 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
 } from 'firebase/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
@@ -46,6 +47,7 @@ export async function createHotelAction(
   const hotelData = {
     hotelName: formData.get('hotelName') as string,
     domain: formData.get('domain') as string,
+    logoUrl: formData.get('logoUrl') as string,
     createdAt: new Date(),
 
     hotelier: {
@@ -163,5 +165,56 @@ export async function createBookingAction(
   } catch (error) {
     console.error('Error creating booking:', error);
     return {success: false, message: 'Buchung konnte nicht erstellt werden.'};
+  }
+}
+
+type UpdateProfileState = {
+  message: string;
+  success: boolean;
+};
+
+export async function updateHotelierProfileAction(
+  hotelId: string,
+  prevState: UpdateProfileState,
+  formData: FormData
+): Promise<UpdateProfileState> {
+  const email = formData.get('email') as string;
+  const newPassword = formData.get('new-password') as string;
+  const confirmPassword = formData.get('confirm-password') as string;
+
+  if (!email) {
+    return { message: 'E-Mail ist erforderlich.', success: false };
+  }
+
+  const hotelRef = doc(db, 'hotels', hotelId);
+
+  try {
+    // Wenn ein neues Passwort eingegeben wurde, muss es validiert werden
+    if (newPassword) {
+      if (newPassword.length < 8) {
+        return { message: 'Das neue Passwort muss mindestens 8 Zeichen lang sein.', success: false };
+      }
+      if (newPassword !== confirmPassword) {
+        return { message: 'Die Passwörter stimmen nicht überein.', success: false };
+      }
+      
+      await updateDoc(hotelRef, {
+        'hotelier.email': email,
+        'hotelier.password': newPassword,
+      });
+
+    } else {
+      // Nur E-Mail aktualisieren
+      await updateDoc(hotelRef, {
+        'hotelier.email': email,
+      });
+    }
+
+    revalidatePath(`/dashboard/${hotelId}`);
+    return { message: 'Profil erfolgreich aktualisiert!', success: true };
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
   }
 }

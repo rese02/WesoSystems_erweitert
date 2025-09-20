@@ -8,6 +8,7 @@ import {
   Home,
   Users,
   MountainIcon,
+  User,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -41,9 +42,9 @@ export function DashboardSidebar({ role, hotelId, hotelName }: DashboardSidebarP
       label: 'Hotel anlegen',
     },
     {
-      href: '#',
-      icon: <Users />,
-      label: 'Team',
+      href: '/admin/profile',
+      icon: <User />,
+      label: 'Profil',
     },
      {
       href: '/',
@@ -67,7 +68,12 @@ export function DashboardSidebar({ role, hotelId, hotelName }: DashboardSidebarP
         {
           href: `/dashboard/${hotelId}/settings`,
           icon: <Settings />,
-          label: 'Einstellungen',
+          label: 'Stammdaten',
+        },
+         {
+          href: `/dashboard/${hotelId}/profile`,
+          icon: <User />,
+          label: 'Profil',
         },
       ]
     : [];

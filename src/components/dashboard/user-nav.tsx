@@ -11,33 +11,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Building } from 'lucide-react';
 import Link from 'next/link';
+import { Hotel } from '@/lib/types';
+import { useParams } from 'next/navigation';
 
-export function UserNav() {
+export function UserNav({ hotelData }: { hotelData?: Hotel }) {
+  const params = useParams();
+  const hotelId = params.hotelId as string;
+  
+  // Bestimme den Link für das Profil basierend darauf, ob es ein Hotelier oder Admin ist
+  const profileLink = hotelId ? `/dashboard/${hotelId}/profile` : '/admin/profile';
+  const displayName = hotelData?.hotelName || 'Agentur';
+  const displayEmail = hotelData?.hotelier?.email || 'hallo@agentur-weso.it';
+  const displayAvatarSrc = hotelData?.logoUrl;
+  const displayAvatarFallback = displayName.charAt(0).toUpperCase();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/avatars/01.png" alt="@shadcn" />
-            <AvatarFallback>U</AvatarFallback>
+            {displayAvatarSrc ? (
+              <AvatarImage src={displayAvatarSrc} alt={displayName} className="object-contain"/>
+            ) : (
+              <AvatarFallback>{displayAvatarFallback}</AvatarFallback>
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Benutzer</p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              user@example.com
+              {displayEmail}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/admin/profile">
+            <Link href={profileLink}>
               <User className="mr-2 h-4 w-4" />
               <span>Profil</span>
             </Link>

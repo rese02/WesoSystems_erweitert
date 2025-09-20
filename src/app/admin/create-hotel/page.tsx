@@ -12,9 +12,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound, AlertCircle } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound, AlertCircle, UploadCloud, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { FileUpload } from '@/components/guest/file-upload';
+import Image from 'next/image';
 
 const initialState = {
   message: '',
@@ -27,12 +29,12 @@ export default function CreateHotelPage() {
     'Doppelzimmer',
   ]);
   const [hotelierPassword, setHotelierPassword] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const [state, action] = useActionState(createHotelAction, initialState);
   
   useEffect(() => {
-    // Show a toast for general errors, but not for the duplicate email case
-    // as it's handled inline now.
     if (state.message && !state.success && state.message !== 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.') {
       toast({
         title: 'Fehler bei der Erstellung',
@@ -69,49 +71,47 @@ export default function CreateHotelPage() {
         <div className="grid gap-8 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Basisinformationen</CardTitle>
+              <CardTitle>Basisinformationen & Branding</CardTitle>
               <CardDescription>
-                Allgemeine Informationen und öffentliche Kontaktdaten des Hotels.
+                Allgemeine Informationen und öffentliches Erscheinungsbild des Hotels.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="hotelName">Hotelname</Label>
-                <Input
-                  id="hotelName"
-                  name="hotelName"
-                  placeholder="z.B. Ihr Hotel"
-                  required
-                />
+            <CardContent className="grid gap-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="hotelName">Hotelname</Label>
+                  <Input id="hotelName" name="hotelName" placeholder="z.B. Hotel Pradel" required />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="domain">Domain</Label>
+                  <Input id="domain" name="domain" placeholder="z.B. hotel-pradel.it" required />
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
+                  <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@hotel-pradel.it" required />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="contactPhone">Kontakt Telefon</Label>
+                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="+39 0471 123456" required />
+                </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="domain">Domain</Label>
-                <Input
-                  id="domain"
-                  name="domain"
-                  placeholder="z.B. ihr-hotel.de"
-                  required
-                />
-              </div>
-               <div className="grid gap-2">
-                <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-                <Input
-                  id="contactEmail"
-                  name="contactEmail"
-                  type="email"
-                  placeholder="info@ihr-hotel.de"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="contactPhone">Kontakt Telefon</Label>
-                <Input
-                  id="contactPhone"
-                  name="contactPhone"
-                  type="tel"
-                  placeholder="+49 123 456789"
-                  required
-                />
+                <Label>Hotel-Logo</Label>
+                {logoUrl ? (
+                   <div className='relative h-32 w-full rounded-md border p-2'>
+                        <Image src={logoUrl} alt="Hotel Logo Vorschau" fill className="object-contain" />
+                        <input type="hidden" name="logoUrl" value={logoUrl} />
+                   </div>
+                ) : (
+                    <FileUpload 
+                        bookingId="new-hotel-logo" 
+                        fileType="logo"
+                        uploadedFileUrl={null}
+                        onUploadStart={() => setIsUploading(true)}
+                        onUploadComplete={(type, url) => { setLogoUrl(url); setIsUploading(false); }}
+                        onDelete={() => setLogoUrl('')}
+                    />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -120,7 +120,7 @@ export default function CreateHotelPage() {
             <CardHeader>
               <CardTitle>Hotelier-Zugang</CardTitle>
               <CardDescription>
-                Erstellen Sie den initialen Benutzeraccount für den Hotelier. Das Passwort wird per E-Mail gesetzt.
+                Erstellen Sie den initialen Benutzeraccount für den Hotelier.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -281,7 +281,6 @@ export default function CreateHotelPage() {
                     </div>
                 </CardContent>
             </Card>
-
         </div>
 
         <div className="lg:col-span-1">
@@ -293,6 +292,7 @@ export default function CreateHotelPage() {
               <Button
                 type="submit"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={isUploading}
               >
                 Hotel erstellen
               </Button>
