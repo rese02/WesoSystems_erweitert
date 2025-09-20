@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { UploadCloud, File as FileIcon, X } from 'lucide-react';
+import { UploadCloud, File as FileIcon, X, CheckCircle2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
@@ -14,18 +14,19 @@ type FileUploadProps = {
   fileType: 'idFront' | 'idBack' | 'paymentProof';
   onUploadComplete: (fileType: 'idFront' | 'idBack' | 'paymentProof', downloadUrl: string) => void;
   onUploadStart: () => void;
-  onUploadEnd: () => void;
 };
 
 
-export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStart, onUploadEnd }: FileUploadProps) {
+export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStart }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDone, setIsDone] = useState(false);
   const { toast } = useToast();
 
    const resetState = () => {
       setFile(null);
       setUploadProgress(0);
+      setIsDone(false);
   };
 
 
@@ -35,6 +36,7 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
     onUploadStart();
     setFile(selectedFile);
     setUploadProgress(0);
+    setIsDone(false);
 
     // Der Pfad in Firebase Storage, z.B. "bookings/aBcDeFg123/payment_proof.pdf"
     const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${selectedFile.name}`);
@@ -50,15 +52,14 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
         // Fehlerbehandlung
         console.error("Upload failed:", error);
         toast({ title: 'Upload fehlgeschlagen', description: 'Bitte versuchen Sie es erneut.', variant: 'destructive' });
-        onUploadEnd();
-        setFile(null);
+        resetState();
       },
       () => {
         // Upload erfolgreich!
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           toast({ title: 'Datei erfolgreich hochgeladen!' });
+          setIsDone(true);
           onUploadComplete(fileType, downloadURL); // Gibt die URL an die Eltern-Komponente weiter
-          onUploadEnd();
         });
       }
     );
@@ -82,7 +83,11 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
       <div className="rounded-lg border border-dashed p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <FileIcon className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
+            {isDone ? 
+                <CheckCircle2 className="h-8 w-8 flex-shrink-0 text-green-500" />
+              : 
+                <FileIcon className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
+            }
             <div className="overflow-hidden">
               <p className="font-medium truncate">{file.name}</p>
               <p className="text-sm text-muted-foreground">
@@ -90,13 +95,13 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
               </p>
             </div>
           </div>
-           {uploadProgress === 100 ? (
+           {isDone && (
                <Button variant="ghost" size="icon" onClick={resetState}>
                  <X className="h-5 w-5" />
                </Button>
-           ) : null }
+           )}
         </div>
-        {(uploadProgress > 0) && (
+        {(uploadProgress > 0 && !isDone) && (
           <>
             <Progress value={uploadProgress} className="mt-2 h-2" />
             {uploadProgress < 100 && (
@@ -133,3 +138,5 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
     </div>
   );
 }
+
+    

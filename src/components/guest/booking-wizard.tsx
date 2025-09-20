@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useActionState, useEffect, useTransition } from 'react';
+import { useState, useActionState } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2, Copy, Check } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { GuestLinkData } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 
 const steps = ['Gast', 'Mitreiser', 'Zahlung', 'Prüfung'];
@@ -31,10 +32,9 @@ type BookingWizardProps = {
 type FellowTraveler = { id: number; name: string };
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
-  const [isUploading, setIsUploading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [uploadChoice, setUploadChoice] = useState('later');
-  const [birthDate, setBirthDate] = useState<Date>();
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     firstName: initialData.booking.guestName.split(' ')[0] || '',
@@ -44,6 +44,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     street: '',
     zip: '',
     city: '',
+    birthDate: '',
     specialRequests: '',
   });
 
@@ -52,6 +53,8 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     idBack: '',
     paymentProof: '',
   });
+  
+  const [uploadChoice, setUploadChoice] = useState('later');
 
   const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
   const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
@@ -65,9 +68,15 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     { message: '', errors: null, isValid: true }
   );
 
-  const handleUploadComplete = (fileType: 'idFront' | 'idBack' | 'paymentProof', url: string) => {
+  const handleUploadComplete = (fileType: keyof typeof documentUrls, url: string) => {
     setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
+    setIsUploading(false);
   };
+  
+  const handleUploadStart = () => {
+    setIsUploading(true);
+  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -86,22 +95,19 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const removeTraveler = (id: number) => {
     setFellowTravelers(fellowTravelers.filter((t) => t.id !== id));
   };
-  
+
   const isStep1Valid = () => {
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.street || !formData.zip || !formData.city) {
-      return false;
-    }
+    const requiredFields = [formData.firstName, formData.lastName, formData.email, formData.phone, formData.street, formData.zip, formData.city];
+    if (requiredFields.some(field => field.trim() === '')) return false;
+
     if (uploadChoice === 'now' && (!documentUrls.idFront || !documentUrls.idBack)) {
-      return false;
+      return false; // Wenn Upload gewählt, müssen die Dokumente hochgeladen sein
     }
     return true;
   };
 
   const isStep2Valid = () => {
-    if (fellowTravelers.length > 0 && fellowTravelers.some(t => !t.name.trim())) {
-      return false;
-    }
-    return true;
+    return fellowTravelers.every(t => t.name.trim() !== '');
   };
 
   const isStep3Valid = () => {
@@ -122,6 +128,23 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
         return false;
     }
   }
+
+  const CopyToClipboardButton = ({ textToCopy, fieldName }: { textToCopy: string; fieldName: string }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+      navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      toast({ title: `${fieldName} kopiert!`, description: `${textToCopy}` });
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+      <Button variant="ghost" size="icon" onClick={handleCopy} aria-label={`Kopiere ${fieldName}`}>
+        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+      </Button>
+    );
+  };
 
 
   const StepContent = () => {
@@ -163,25 +186,25 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                         <Input id="city" name="city" value={formData.city} onChange={handleInputChange} required />
                     </div>
                      <div className="grid gap-2">
-                        <Label>Geburtsdatum (optional, mind. 18)</Label>
+                        <Label htmlFor="birthDate">Geburtsdatum (optional, mind. 18)</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                 variant={'outline'}
                                 className={cn(
                                     'w-full justify-start text-left font-normal',
-                                    !birthDate && 'text-muted-foreground'
+                                    !formData.birthDate && 'text-muted-foreground'
                                 )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {birthDate ? format(birthDate, 'dd.MM.yyyy') : <span>Datum auswählen</span>}
+                                {formData.birthDate ? format(new Date(formData.birthDate), 'dd.MM.yyyy') : <span>Datum auswählen</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
                                 <Calendar
                                 mode="single"
-                                selected={birthDate}
-                                onSelect={setBirthDate}
+                                selected={formData.birthDate ? new Date(formData.birthDate) : undefined}
+                                onSelect={(date) => setFormData(prev => ({...prev, birthDate: date ? format(date, 'yyyy-MM-dd') : ''}))}
                                 captionLayout="dropdown-buttons"
                                 fromYear={1920}
                                 toYear={new Date().getFullYear() - 18}
@@ -216,8 +239,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                                 bookingId={linkId}
                                 fileType="idFront"
                                 onUploadComplete={handleUploadComplete}
-                                onUploadStart={() => setIsUploading(true)}
-                                onUploadEnd={() => setIsUploading(false)}
+                                onUploadStart={handleUploadStart}
                             />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
@@ -227,8 +249,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                                 bookingId={linkId}
                                 fileType="idBack"
                                 onUploadComplete={handleUploadComplete}
-                                onUploadStart={() => setIsUploading(true)}
-                                onUploadEnd={() => setIsUploading(false)}
+                                onUploadStart={handleUploadStart}
                             />
                              <p className="text-xs text-muted-foreground">JPG, PNG, PDF (max 5MB).</p>
                         </div>
@@ -292,10 +313,22 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <Card className="bg-muted/50">
                     <CardHeader><CardTitle className="text-base">Bankdaten des Hotels</CardTitle></CardHeader>
                     <CardContent className="space-y-2">
-                        <p><strong>Inhaber:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
-                        <p><strong>IBAN:</strong> {initialData.hotel.bankDetails.iban}</p>
-                        <p><strong>BIC:</strong> {initialData.hotel.bankDetails.bic}</p>
-                        <p><strong>Bank:</strong> {initialData.hotel.bankDetails.bankName}</p>
+                        <div className="flex items-center justify-between">
+                            <p><strong>Inhaber:</strong> {initialData.hotel.bankDetails.accountHolder}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.accountHolder} fieldName="Kontoinhaber" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <p><strong>IBAN:</strong> {initialData.hotel.bankDetails.iban}</p>
+                             <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.iban} fieldName="IBAN" />
+                        </div>
+                         <div className="flex items-center justify-between">
+                            <p><strong>BIC:</strong> {initialData.hotel.bankDetails.bic}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bic} fieldName="BIC" />
+                        </div>
+                         <div className="flex items-center justify-between">
+                            <p><strong>Bank:</strong> {initialData.hotel.bankDetails.bankName}</p>
+                            <CopyToClipboardButton textToCopy={initialData.hotel.bankDetails.bankName} fieldName="Bank" />
+                        </div>
                     </CardContent>
                 </Card>
               <div>
@@ -304,8 +337,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     bookingId={linkId}
                     fileType="paymentProof"
                     onUploadComplete={handleUploadComplete}
-                    onUploadStart={() => setIsUploading(true)}
-                    onUploadEnd={() => setIsUploading(false)}
+                    onUploadStart={handleUploadStart}
                 />
                 <p className="text-xs text-muted-foreground mt-2">Ein Zahlungsnachweis ist erforderlich, um fortzufahren.</p>
               </div>
@@ -330,7 +362,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <input type="hidden" name="lastName" value={formData.lastName} />
                 <input type="hidden" name="email" value={formData.email} />
                 <input type="hidden" name="phone" value={formData.phone} />
-                <input type="hidden" name="birthDate" value={birthDate ? format(birthDate, 'yyyy-MM-dd') : ''} />
+                <input type="hidden" name="birthDate" value={formData.birthDate} />
                 <input type="hidden" name="street" value={formData.street} />
                 <input type="hidden" name="zip" value={formData.zip} />
                 <input type="hidden" name="city" value={formData.city} />
@@ -411,10 +443,12 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             disabled={isNextButtonDisabled()}
             >
             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Weiter
+            {isUploading ? 'Lädt hoch...' : 'Weiter'}
           </Button>
         </div>
       )}
     </div>
   );
 }
+
+    
