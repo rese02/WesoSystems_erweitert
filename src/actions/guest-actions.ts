@@ -134,9 +134,9 @@ export async function finalizeBookingAction(
         
         const updatedBooking: Booking = { 
             ...bookingDetails, 
-            checkIn: bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate() : bookingDetails.checkIn,
-            checkOut: bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate() : bookingDetails.checkOut,
-            createdAt: bookingDetails.createdAt instanceof Timestamp ? bookingDetails.createdAt.toDate() : bookingDetails.createdAt,
+            checkIn: bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate() : new Date(bookingDetails.checkIn as any),
+            checkOut: bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate() : new Date(bookingDetails.checkOut as any),
+            createdAt: bookingDetails.createdAt instanceof Timestamp ? bookingDetails.createdAt.toDate() : new Date(bookingDetails.createdAt as any),
             guestDetails: finalGuestData,
             status: 'Data Provided',
             paymentOption: rawData.paymentOption as 'deposit' | 'full',

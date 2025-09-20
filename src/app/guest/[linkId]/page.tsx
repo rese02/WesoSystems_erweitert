@@ -12,7 +12,6 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
-    // Zuerst prüfen, ob der Link selbst gültig ist
     if (!linkSnap.exists()) {
         return null;
     }
@@ -50,7 +49,7 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const hotel: Hotel = {
         id: hotelSnap.id,
         ...hotelData,
-        createdAt: hotelCreatedAt,
+        createdAt: hotelCreatedAt.toISOString(),
     } as Hotel;
 
 
@@ -81,7 +80,6 @@ export default async function GuestBookingPage({
 
   const linkData = await getBookingLinkData(params.linkId);
 
-  // Wenn der Link ungültig oder die Daten inkonsistent sind, zeige eine 404-Seite
   if (!linkData) {
      notFound();
   }

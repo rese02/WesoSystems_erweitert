@@ -42,9 +42,10 @@ async function getBooking(hotelId: string, bookingId: string): Promise<Booking> 
       ...data, 
       id: bookingSnap.id,
       hotelId: hotelId,
-      checkIn: checkIn as any,
-      checkOut: checkOut as any,
-      createdAt: createdAt as any,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      createdAt: createdAt,
+      guestDetails: data.guestDetails || null,
   } as Booking;
 }
 

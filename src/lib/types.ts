@@ -5,7 +5,7 @@ export type Hotel = {
   hotelName: string;
   domain: string;
   logoUrl?: string; 
-  createdAt: string | Date; 
+  createdAt: string; 
 
   hotelier: {
     email: string;
@@ -59,15 +59,15 @@ export type Booking = {
   id: string; 
   hotelId: string;
   guestName: string; 
-  checkIn: Timestamp | Date; 
-  checkOut: Timestamp | Date; 
+  checkIn: Date | Timestamp; 
+  checkOut: Date | Timestamp; 
   status: BookingStatus;
   price: number;
   mealType: string;
   language: 'de' | 'en' | 'it';
   rooms: Room[];
   internalNotes?: string;
-  createdAt: Timestamp | Date; 
+  createdAt: Date | Timestamp; 
   guestDetails?: GuestData;
   paymentOption?: 'deposit' | 'full';
   amountPaid?: number;

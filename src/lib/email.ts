@@ -11,6 +11,9 @@ interface EmailPayload {
 }
 
 export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) {
+    if (!booking.guestDetails?.email) {
+        throw new Error('Guest email is not available.');
+    }
     
     const transporter = nodemailer.createTransport({
         host: hotel.smtp.host,
@@ -26,7 +29,7 @@ export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) 
 
     const options = {
         from: `"${hotel.hotelName}" <${hotel.smtp.user}>`,
-        to: booking.guestDetails?.email,
+        to: booking.guestDetails.email,
         subject: `Ihre Buchungsbestätigung vom ${hotel.hotelName} - Buchungsnr: ${booking.id.substring(0, 8).toUpperCase()}`,
         html: emailHtml,
     };
