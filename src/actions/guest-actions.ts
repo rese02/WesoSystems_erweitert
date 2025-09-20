@@ -38,18 +38,6 @@ export async function finalizeBookingAction(
   const bookingDetails = bookingLinkSnap.data().booking as Booking;
   const hotelId = bookingDetails.hotelId;
 
-  const hotelRef = doc(db, 'hotels', hotelId);
-  const hotelSnap = await getDoc(hotelRef);
-
-  if (!hotelSnap.exists()) {
-     return {
-      message: 'Hotel nicht gefunden.',
-      errors: ['Das zugehörige Hotel konnte nicht gefunden werden.'],
-      isValid: false,
-    };
-  }
-  const hotelData = hotelSnap.data() as Hotel;
-
   const totalAdults = bookingDetails.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = bookingDetails.rooms.reduce((sum, room) => sum + room.children, 0);
 
@@ -120,41 +108,49 @@ export async function finalizeBookingAction(
     await updateDoc(bookingLinkRef, {
         status: 'used'
     });
+    
+    // E-Mail-Versand vorerst auskommentiert, um uns auf die Datenspeicherung zu konzentrieren
+    /*
+    const hotelRef = doc(db, 'hotels', hotelId);
+    const hotelSnap = await getDoc(hotelRef);
+    if (hotelSnap.exists()) {
+        const hotelData = hotelSnap.data() as Hotel;
+        try {
+            const hotelCreatedAt = hotelData.createdAt instanceof Timestamp 
+                ? hotelData.createdAt.toDate() 
+                : new Date(hotelData.createdAt);
 
-    try {
-        const hotelCreatedAt = hotelData.createdAt instanceof Timestamp 
-            ? hotelData.createdAt.toDate() 
-            : new Date(hotelData.createdAt);
+            const fullHotelData: Hotel = {
+                id: hotelSnap.id,
+                ...hotelData,
+                createdAt: hotelCreatedAt.toISOString(),
+            } as Hotel;
+            
+            const updatedBooking: Booking = { 
+                ...bookingDetails, 
+                checkIn: bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate() : new Date(bookingDetails.checkIn as any),
+                checkOut: bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate() : new Date(bookingDetails.checkOut as any),
+                createdAt: bookingDetails.createdAt instanceof Timestamp ? bookingDetails.createdAt.toDate() : new Date(bookingDetails.createdAt as any),
+                guestDetails: finalGuestData,
+                status: 'Data Provided',
+                paymentOption: rawData.paymentOption as 'deposit' | 'full',
+                amountPaid: parseFloat(rawData.amountPaid as string),
+            };
 
-        const fullHotelData: Hotel = {
-            id: hotelSnap.id,
-            ...hotelData,
-            createdAt: hotelCreatedAt.toISOString(),
-        } as Hotel;
-        
-        const updatedBooking: Booking = { 
-            ...bookingDetails, 
-            checkIn: bookingDetails.checkIn instanceof Timestamp ? bookingDetails.checkIn.toDate() : new Date(bookingDetails.checkIn as any),
-            checkOut: bookingDetails.checkOut instanceof Timestamp ? bookingDetails.checkOut.toDate() : new Date(bookingDetails.checkOut as any),
-            createdAt: bookingDetails.createdAt instanceof Timestamp ? bookingDetails.createdAt.toDate() : new Date(bookingDetails.createdAt as any),
-            guestDetails: finalGuestData,
-            status: 'Data Provided',
-            paymentOption: rawData.paymentOption as 'deposit' | 'full',
-            amountPaid: parseFloat(rawData.amountPaid as string),
-        };
-
-        await sendBookingConfirmation({
-            booking: updatedBooking,
-            hotel: fullHotelData,
-        });
-    } catch(emailError) {
-        console.error("Failed to send confirmation email:", emailError);
-         return {
-          message: 'Ihre Daten wurden gespeichert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Überprüfen Sie die SMTP-Einstellungen des Hotels.',
-          errors: ['Bitte kontaktieren Sie das Hotel direkt, um die Bestätigung sicherzustellen.'],
-          isValid: false, 
-        };
+            await sendBookingConfirmation({
+                booking: updatedBooking,
+                hotel: fullHotelData,
+            });
+        } catch(emailError) {
+            console.error("Failed to send confirmation email:", emailError);
+             return {
+              message: 'Ihre Daten wurden gespeichert, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Überprüfen Sie die SMTP-Einstellungen des Hotels.',
+              errors: ['Bitte kontaktieren Sie das Hotel direkt, um die Bestätigung sicherzustellen.'],
+              isValid: false, 
+            };
+        }
     }
+    */
 
 
     revalidatePath(`/guest/${linkId}`);
@@ -163,7 +159,7 @@ export async function finalizeBookingAction(
   } catch (error) {
     console.error('Error finalizing booking:', error);
     return {
-      message: 'Ein unerwarteter Server-Fehler ist aufgetreten.',
+      message: 'Ein unerwarteter Server-Fehler ist aufgetreten. Die Daten konnten nicht gespeichert werden.',
       errors: ['Der Server konnte die Anfrage nicht verarbeiten.'],
       isValid: false,
     };

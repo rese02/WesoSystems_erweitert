@@ -13,29 +13,29 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkSnap = await getDoc(linkRef);
 
     if (!linkSnap.exists()) {
-        return null;
+        return null; // Wird zu notFound() in der Page-Komponente
     }
     
     const linkData = linkSnap.data();
-
-    // Prüfen, ob der Link bereits als "used" markiert ist
+    const bookingData = linkData.booking as Booking;
+     
+    // Prüfen, ob der Link bereits als "used" markiert ist.
+    // Wenn ja, zeige die "bereits bearbeitet" Nachricht.
     if (linkData.status === 'used') {
-        const bookingData = linkData.booking as Booking;
         return {
             id: linkSnap.id,
-            booking: {
+            booking: { // Wir benötigen einige Basis-Buchungsdaten für die Anzeige
                 ...bookingData,
-                status: 'Data Provided', // Set a status that indicates completion
+                status: 'Data Provided', // Simuliert den Zustand nach der Bearbeitung
                 checkIn: bookingData.checkIn instanceof Timestamp ? bookingData.checkIn.toDate() : new Date(bookingData.checkIn),
                 checkOut: bookingData.checkOut instanceof Timestamp ? bookingData.checkOut.toDate() : new Date(bookingData.checkOut),
                 createdAt: bookingData.createdAt instanceof Timestamp ? bookingData.createdAt.toDate() : new Date(bookingData.createdAt),
             },
-            hotel: {} as Hotel, // Hotel data is not needed for this state
+            hotel: {} as Hotel, // Hoteldaten sind hier nicht zwingend erforderlich
         }
     }
     
-    const bookingData = linkData.booking;
-
+    // Wenn der Link noch aktiv ist, aber die Buchungsdaten fehlen -> Fehler
     if (!bookingData || !bookingData.hotelId) {
         console.error('Integritätsproblem der Buchungsdaten für linkId:', linkId);
         return null;
