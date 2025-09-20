@@ -17,6 +17,23 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     }
     
     const linkData = linkSnap.data();
+
+    // Prüfen, ob der Link bereits als "used" markiert ist
+    if (linkData.status === 'used') {
+        const bookingData = linkData.booking as Booking;
+        return {
+            id: linkSnap.id,
+            booking: {
+                ...bookingData,
+                status: 'Data Provided', // Set a status that indicates completion
+                checkIn: bookingData.checkIn instanceof Timestamp ? bookingData.checkIn.toDate() : new Date(bookingData.checkIn),
+                checkOut: bookingData.checkOut instanceof Timestamp ? bookingData.checkOut.toDate() : new Date(bookingData.checkOut),
+                createdAt: bookingData.createdAt instanceof Timestamp ? bookingData.createdAt.toDate() : new Date(bookingData.createdAt),
+            },
+            hotel: {} as Hotel, // Hotel data is not needed for this state
+        }
+    }
+    
     const bookingData = linkData.booking;
 
     if (!bookingData || !bookingData.hotelId) {
@@ -52,16 +69,6 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
         createdAt: hotelCreatedAt.toISOString(),
     } as Hotel;
 
-
-    // Prüfen, ob der Link bereits als "used" markiert ist
-    if (linkData.status === 'used') {
-        // Rekonstruiere nur genug Daten, um die "schon bearbeitet"-Seite anzuzeigen
-         return {
-            id: linkSnap.id,
-            booking, // Gib die konvertierte Buchung weiter
-            hotel,   // Gib das konvertierte Hotel weiter
-         }
-    }
     
     // Rekonstruiere das vollständige Objekt zur Übergabe an die Komponenten
     return { 
