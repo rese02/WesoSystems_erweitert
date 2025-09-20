@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
-import { updateHotelierProfileAction } from '@/actions/hotel-actions';
+import { updateHotelierProfileAction, updateHotelLogo } from '@/actions/hotel-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { Hotel } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -62,14 +62,23 @@ export default function HotelierProfilePage() {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>;
   }
 
-  const handleLogoUpload = async (type: string, url: string) => {
+  const handleLogoUpload = async (fileType: string, url: string) => {
     setIsUploading(false);
-    const hotelRef = doc(db, 'hotels', params.hotelId);
-    await updateDoc(hotelRef, { logoUrl: url });
-    setHotel(prev => prev ? {...prev, logoUrl: url} : null);
-    toast({ title: 'Logo aktualisiert!' });
+    if (hotel) {
+        await updateHotelLogo(hotel.id, url);
+        setHotel(prev => prev ? {...prev, logoUrl: url} : null);
+        toast({ title: 'Logo aktualisiert!' });
+    }
   };
   
+  const handleLogoDelete = async (fileType: string) => {
+    if (hotel) {
+        await updateHotelLogo(hotel.id, '');
+        setHotel(prev => prev ? {...prev, logoUrl: ''} : null);
+        toast({ title: 'Logo entfernt.'});
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-6">
       <div>
@@ -88,20 +97,20 @@ export default function HotelierProfilePage() {
                 <CardTitle>Hotel Logo</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-                <div className="relative mx-auto h-32 w-32 rounded-full border">
+                <Avatar className="relative mx-auto h-32 w-32 rounded-full border">
                    {hotel.logoUrl ? (
-                        <Image src={hotel.logoUrl} alt="Hotel Logo" fill className="rounded-full object-contain p-2"/>
+                        <AvatarImage src={hotel.logoUrl} alt="Hotel Logo" className="object-contain p-2"/>
                    ) : (
                         <AvatarFallback className="text-4xl bg-muted">{hotel.hotelName.charAt(0)}</AvatarFallback>
                    )}
-                </div>
+                </Avatar>
                 <FileUpload 
                     bookingId={hotel.id}
                     fileType="logo"
                     uploadedFileUrl={hotel.logoUrl || null}
                     onUploadStart={() => setIsUploading(true)}
                     onUploadComplete={handleLogoUpload}
-                    onDelete={() => handleLogoUpload('logo', '')}
+                    onDelete={handleLogoDelete}
                 />
             </CardContent>
           </Card>
