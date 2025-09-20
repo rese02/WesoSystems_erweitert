@@ -13,12 +13,36 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     const linkSnap = await getDoc(linkRef);
 
     // Zuerst prüfen, ob der Link selbst gültig und nicht verwendet ist
-    if (!linkSnap.exists() || linkSnap.data().status === 'used') {
-        return null; // Dies löst ein notFound() in der Seitenkomponente aus
+    if (!linkSnap.exists()) {
+        return null;
     }
     
     const data = linkSnap.data();
-    const bookingData = data.booking; // Die Buchungsdaten sind hier direkt eingebettet
+    
+    // Prüfen, ob der Link bereits als "used" markiert ist
+    if (data.status === 'used') {
+        const hotelId = data.booking?.hotelId;
+        if(hotelId){
+            const hotelRef = doc(db, 'hotels', hotelId);
+            const hotelSnap = await getDoc(hotelRef);
+            if(hotelSnap.exists()){
+                 // Rekonstruiere nur genug Daten, um die "schon bearbeitet"-Seite anzuzeigen
+                 return {
+                    id: linkSnap.id,
+                    booking: { status: 'Data Provided' } as Booking,
+                    hotel: hotelSnap.data() as Hotel,
+                 }
+            }
+        }
+        // Fallback, wenn keine Hotel-Daten gefunden werden
+        return {
+            id: linkSnap.id,
+            booking: { status: 'Data Provided' } as Booking,
+            hotel: {} as Hotel,
+        }
+    }
+    
+    const bookingData = data.booking;
 
     if (!bookingData || !bookingData.hotelId) {
         console.error('Integritätsproblem der Buchungsdaten für linkId:', linkId);
@@ -42,7 +66,6 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
       createdAt: bookingData.createdAt.toDate(),
     };
     
-    // Konvertiere auch den Hotel-Timestamp, um ihn serialisierbar zu machen
     const hotel: Hotel = {
         id: hotelSnap.id,
         ...hotelData,
@@ -53,7 +76,7 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     // Rekonstruiere das vollständige Objekt zur Übergabe an die Komponenten
     return { 
         id: linkSnap.id, 
-        booking, // Das vollständige Buchungsobjekt mit serialisierbaren Daten
+        booking,
         hotel,
     };
 }

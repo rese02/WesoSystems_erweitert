@@ -7,16 +7,16 @@ async function getHotelName(linkId: string): Promise<string> {
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
-    // Immediately return notFound if the link is invalid or already used
-    if (!linkSnap.exists() || linkSnap.data().status === 'used') {
+    // Link muss existieren für das Layout
+    if (!linkSnap.exists()) {
         notFound();
     }
     
-    // Now we know the link is valid, get the booking data from it
+    // Jetzt wissen wir, dass der Link gültig ist, holen wir die Booking-Daten daraus
     const booking = linkSnap.data().booking;
     if (!booking || !booking.hotelId) {
-        // This would indicate a data integrity issue
-        console.error('Booking data or hotelId missing in booking link:', linkId);
+        // Dies würde auf ein Datenintegritätsproblem hinweisen
+        console.error('Booking-Daten oder hotelId fehlen im booking link:', linkId);
         notFound();
     }
     
@@ -27,7 +27,7 @@ async function getHotelName(linkId: string): Promise<string> {
         return hotelSnap.data().hotelName;
     }
 
-    // Fallback hotel name if something goes wrong
+    // Fallback-Hotelname, falls etwas schiefgeht
     return 'Ihr Hotel';
 }
 
