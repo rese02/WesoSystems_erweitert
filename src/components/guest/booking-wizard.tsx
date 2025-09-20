@@ -259,7 +259,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
       return initialData.booking.price;
   }, [paymentOption, initialData.booking.price]);
 
-  const handleUploadComplete = (fileType: keyof typeof documentUrls, url: string) => {
+  const handleUploadComplete = (fileType: string, url: string) => {
     setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
     setIsUploading(false);
   };
@@ -267,6 +267,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const handleUploadStart = () => {
     setIsUploading(true);
   };
+  
+  const handleFileDelete = (fileType: string) => {
+    setDocumentUrls(prev => ({...prev, [fileType]: ''}));
+  }
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -430,8 +434,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                             <FileUpload
                                 bookingId={linkId}
                                 fileType="idFront"
-                                onUploadComplete={(url) => handleUploadComplete('idFront', url)}
+                                uploadedFileUrl={documentUrls.idFront || null}
+                                onUploadComplete={handleUploadComplete}
                                 onUploadStart={handleUploadStart}
+                                onDelete={handleFileDelete}
                             />
                              <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
                         </div>
@@ -440,8 +446,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                              <FileUpload
                                 bookingId={linkId}
                                 fileType="idBack"
-                                onUploadComplete={(url) => handleUploadComplete('idBack', url)}
+                                uploadedFileUrl={documentUrls.idBack || null}
+                                onUploadComplete={handleUploadComplete}
                                 onUploadStart={handleUploadStart}
+                                onDelete={handleFileDelete}
                             />
                              <p className="text-xs text-muted-foreground">{T('fileTypeHint')}</p>
                         </div>
@@ -559,8 +567,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <FileUpload
                     bookingId={linkId}
                     fileType="paymentProof"
-                    onUploadComplete={(url) => handleUploadComplete('paymentProof', url)}
+                    uploadedFileUrl={documentUrls.paymentProof || null}
+                    onUploadComplete={handleUploadComplete}
                     onUploadStart={handleUploadStart}
+                    onDelete={handleFileDelete}
                 />
                 <p className="text-xs text-muted-foreground mt-2">{T('uploadProofDescription')}</p>
               </div>
@@ -674,5 +684,3 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     </div>
   );
 }
-
-    

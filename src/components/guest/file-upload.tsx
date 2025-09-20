@@ -5,66 +5,78 @@ import { UploadCloud, File as FileIcon, X, CheckCircle2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { storage } from '@/lib/firebase/client'; // Client-Instanz importieren
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase/client';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 
 type FileUploadProps = {
   bookingId: string;
-  fileType: 'idFront' | 'idBack' | 'paymentProof';
-  onUploadComplete: (fileType: 'idFront' | 'idBack' | 'paymentProof', downloadUrl: string) => void;
+  fileType: string; // z.B. 'idFront', 'idBack', 'paymentProof'
+  uploadedFileUrl: string | null;
+  onUploadComplete: (fileType: string, downloadUrl: string) => void;
   onUploadStart: () => void;
+  onDelete: (fileType: string) => void;
 };
 
-
-export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStart }: FileUploadProps) {
-  const [file, setFile] = useState<File | null>(null);
+export function FileUpload({
+  bookingId,
+  fileType,
+  uploadedFileUrl,
+  onUploadComplete,
+  onUploadStart,
+  onDelete,
+}: FileUploadProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [isDone, setIsDone] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-
-   const resetState = () => {
-      setFile(null);
-      setUploadProgress(0);
-      setIsDone(false);
-  };
-
 
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return;
 
     onUploadStart();
-    setFile(selectedFile);
+    setIsUploading(true);
     setUploadProgress(0);
-    setIsDone(false);
 
-    // Der Pfad in Firebase Storage, z.B. "bookings/aBcDeFg123/payment_proof.pdf"
     const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${selectedFile.name}`);
     const uploadTask = uploadBytesResumable(storageRef, selectedFile);
 
-    // Überwache den Upload-Prozess
-    uploadTask.on('state_changed',
+    uploadTask.on(
+      'state_changed',
       (snapshot) => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setUploadProgress(progress);
       },
       (error) => {
-        // Fehlerbehandlung
-        console.error("Upload failed:", error);
+        console.error('Upload failed:', error);
         toast({ title: 'Upload fehlgeschlagen', description: 'Bitte versuchen Sie es erneut.', variant: 'destructive' });
-        resetState();
+        setIsUploading(false);
       },
       () => {
-        // Upload erfolgreich!
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           toast({ title: 'Datei erfolgreich hochgeladen!' });
-          setIsDone(true);
-          onUploadComplete(fileType, downloadURL); // Gibt die URL an die Eltern-Komponente weiter
+          onUploadComplete(fileType, downloadURL);
+          setIsUploading(false);
         });
       }
     );
   };
   
+  const handleDelete = () => {
+      if (uploadedFileUrl) {
+        const fileRef = ref(storage, uploadedFileUrl);
+        deleteObject(fileRef).then(() => {
+            onDelete(fileType);
+            toast({ title: 'Datei entfernt.'});
+        }).catch((error) => {
+            console.error("Error deleting file:", error);
+            toast({ title: 'Fehler beim Löschen', description: 'Die Datei konnte nicht entfernt werden.', variant: 'destructive' });
+        });
+      } else {
+        onDelete(fileType);
+      }
+  };
+
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -78,65 +90,58 @@ export function FileUpload({ bookingId, fileType, onUploadComplete, onUploadStar
     e.stopPropagation();
   };
 
-  if (file) {
-    return (
+  if (uploadedFileUrl) {
+     return (
       <div className="rounded-lg border border-dashed p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            {isDone ? 
-                <CheckCircle2 className="h-8 w-8 flex-shrink-0 text-green-500" />
-              : 
-                <FileIcon className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
-            }
+             <CheckCircle2 className="h-8 w-8 flex-shrink-0 text-green-500" />
             <div className="overflow-hidden">
-              <p className="font-medium truncate">{file.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {(file.size / 1024).toFixed(2)} KB
-              </p>
+              <p className="font-medium truncate">Datei hochgeladen</p>
+              <a href={uploadedFileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:underline">Vorschau</a>
             </div>
           </div>
-           {isDone && (
-               <Button variant="ghost" size="icon" onClick={resetState}>
-                 <X className="h-5 w-5" />
-               </Button>
-           )}
+           <Button variant="ghost" size="icon" onClick={handleDelete}>
+             <X className="h-5 w-5" />
+           </Button>
         </div>
-        {(uploadProgress > 0 && !isDone) && (
-          <>
-            <Progress value={uploadProgress} className="mt-2 h-2" />
-            {uploadProgress < 100 && (
-                <p className="text-xs text-center mt-1 text-muted-foreground">Wird hochgeladen...</p>
-            )}
-          </>
-        )}
+      </div>
+    );
+  }
+  
+  if (isUploading) {
+     return (
+      <div className="rounded-lg border border-dashed p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
+             <FileIcon className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
+             <p className="font-medium truncate">Wird hochgeladen...</p>
+          </div>
+        </div>
+        <Progress value={uploadProgress} className="mt-2 h-2" />
+        <p className="text-xs text-center mt-1 text-muted-foreground">{Math.round(uploadProgress)}%</p>
       </div>
     );
   }
 
+
   return (
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onClick={() => document.getElementById(`file-input-${fileType}`)?.click()}
-        className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition hover:border-primary"
+    <div
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onClick={() => document.getElementById(`file-input-${fileType}`)?.click()}
+      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition hover:border-primary"
     >
       <UploadCloud className="h-12 w-12 text-gray-400" />
-      <p className="mt-4 font-semibold">
-        Datei hierher ziehen oder klicken
-      </p>
-      <p className="text-sm text-muted-foreground">
-        PDF, PNG oder JPG.
-      </p>
+      <p className="mt-4 font-semibold">Datei hierher ziehen oder klicken</p>
+      <p className="text-sm text-muted-foreground">PDF, PNG oder JPG.</p>
       <input
         id={`file-input-${fileType}`}
         type="file"
         className="hidden"
-        onChange={(e) =>
-          handleFileChange(e.target.files ? e.target.files[0] : null)
-        }
+        onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
+        accept="image/png, image/jpeg, application/pdf"
       />
     </div>
   );
 }
-
-    
