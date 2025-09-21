@@ -541,7 +541,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                   {uploadChoice === 'now' && (
                     <div className='animate-in fade-in-50 space-y-4'>
                         <Separator />
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                              <div className="grid gap-2">
                                 <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
                                 <FileUpload
@@ -737,7 +737,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-center pt-4 pb-12">
+      <div className="flex justify-center pt-4 pb-12 overflow-x-auto">
         <Stepper steps={steps} currentStep={currentStep} />
       </div>
 

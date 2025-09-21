@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound, AlertCircle, UploadCloud, Image as ImageIcon, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FileUpload } from '@/components/guest/file-upload';
@@ -84,11 +84,11 @@ export default function CreateHotelPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="domain">Domain</Label>
-                  <Input id="domain" name="domain" placeholder="hotel-beispiel.de" required />
+                  <Input id="domain" name="domain" placeholder="Ihre Domain" required />
                 </div>
                  <div className="grid gap-2">
                   <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-                  <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@hotel-beispiel.de" required />
+                  <Input id="contactEmail" name="contactEmail" type="email" placeholder="Ihre Kontakt E-Mail" required />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="contactPhone">Kontakt Telefon</Label>
@@ -130,7 +130,7 @@ export default function CreateHotelPage() {
                   id="hotelierEmail"
                   name="hotelierEmail"
                   type="email"
-                  placeholder="E-Mail für den Hotel-Login"
+                  placeholder="Ihre E-Mail für den Hotel-Login"
                   required
                   className={cn({ 'border-destructive': state.message && !state.success && state.message.includes('E-Mail') })}
                 />
@@ -185,20 +185,20 @@ export default function CreateHotelPage() {
                 <Input
                   id="accountHolder"
                   name="accountHolder"
-                  placeholder="Name des Kontoinhabers"
+                  placeholder="Ihr Name des Kontoinhabers"
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="iban">IBAN</Label>
-                <Input id="iban" name="iban" placeholder="IBAN des Kontos" required />
+                <Input id="iban" name="iban" placeholder="Ihre IBAN" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="bic">BIC/SWIFT</Label>
                 <Input
                   id="bic"
                   name="bic"
-                  placeholder="BIC/SWIFT des Kontos"
+                  placeholder="Ihre BIC/SWIFT"
                   required
                 />
               </div>
@@ -207,7 +207,7 @@ export default function CreateHotelPage() {
                 <Input
                   id="bankName"
                   name="bankName"
-                  placeholder="Name der Bank"
+                  placeholder="Ihr Name der Bank"
                   required
                 />
               </div>
@@ -222,19 +222,19 @@ export default function CreateHotelPage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="smtpHost">Host</Label>
-                    <Input id="smtpHost" name="smtpHost" placeholder="z.B. smtp.gmail.com" required/>
+                    <Input id="smtpHost" name="smtpHost" placeholder="Ihr Host" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPort">Port</Label>
-                    <Input id="smtpPort" name="smtpPort" type="number" placeholder="z.B. 587" required/>
+                    <Input id="smtpPort" name="smtpPort" type="number" placeholder="Ihr Port" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpUser">E-Mail-Benutzer</Label>
-                    <Input id="smtpUser" name="smtpUser" placeholder="E-Mail für den Versand" required/>
+                    <Input id="smtpUser" name="smtpUser" placeholder="Ihre E-Mail für den Versand" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPass">App-Passwort</Label>
-                    <Input id="smtpPass" name="smtpPass" placeholder="Zugehöriges App-Passwort" type="password" required/>
+                    <Input id="smtpPass" name="smtpPass" placeholder="Ihr zugehöriges App-Passwort" type="password" required/>
                 </div>
             </CardContent>
           </Card>

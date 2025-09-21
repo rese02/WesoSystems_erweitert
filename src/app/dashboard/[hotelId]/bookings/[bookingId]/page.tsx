@@ -105,10 +105,10 @@ export default async function BookingDetailsPage({ params }: { params: { hotelId
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         
         {/* Left Column */}
-        <div className="space-y-8 lg:col-span-2">
+        <div className="space-y-8 md:col-span-2">
             <Card>
                 <CardHeader>
                     <CardTitle>Buchungsübersicht</CardTitle>
@@ -215,7 +215,7 @@ export default async function BookingDetailsPage({ params }: { params: { hotelId
         </div>
 
         {/* Right Column */}
-        <div className="space-y-8 lg:col-span-1">
+        <div className="space-y-8 md:col-span-1">
             <Card>
                 <CardHeader><CardTitle>Dokumente des Hauptgastes</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
