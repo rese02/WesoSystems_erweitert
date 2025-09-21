@@ -8,6 +8,8 @@ import { Progress } from '../ui/progress';
 import { storage } from '@/lib/firebase/client';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import imageCompression from 'browser-image-compression';
+
 
 type FileUploadProps = {
   bookingId: string;
@@ -30,15 +32,41 @@ export function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = (selectedFile: File | null) => {
+  const handleFileChange = async (selectedFile: File | null) => {
     if (!selectedFile) return;
 
     onUploadStart();
     setIsUploading(true);
     setUploadProgress(0);
 
-    const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${selectedFile.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+    let fileToUpload = selectedFile;
+
+    // Nur Bilder komprimieren (PNG, JPG)
+    if (selectedFile.type.startsWith('image/')) {
+        try {
+            const options = {
+                maxSizeMB: 1, // Maximale Dateigröße nach Komprimierung
+                maxWidthOrHeight: 1920, // Maximale Breite oder Höhe
+                useWebWorker: true,
+                initialQuality: 0.7, // Startqualität der Komprimierung
+            };
+            
+            console.log(`Original size: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            toast({ title: 'Komprimiere Bild...', description: 'Dies kann einen Moment dauern.' });
+            
+            const compressedFile = await imageCompression(selectedFile, options);
+            console.log(`Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            fileToUpload = compressedFile;
+
+        } catch (error) {
+            console.error('Image compression failed:', error);
+            toast({ title: 'Bildkomprimierung fehlgeschlagen', description: 'Die Originaldatei wird hochgeladen.', variant: 'destructive' });
+        }
+    }
+
+
+    const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${fileToUpload.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
     uploadTask.on(
       'state_changed',
