@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { db } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/admin';
 import { Booking, GuestData, Hotel } from '@/lib/types';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { notFound } from 'next/navigation';
 import { CheckCircle, Calendar, Bed, Utensils, Users, Euro } from 'lucide-react';
 import { format } from 'date-fns';
@@ -17,29 +17,43 @@ type PageData = {
 }
 
 async function getData(linkId: string): Promise<PageData | null> {
-    const linkRef = doc(db, 'bookingLinks', linkId);
-    const linkSnap = await getDoc(linkRef);
-    if (!linkSnap.exists()) return null;
+    const linkRef = db.collection('bookingLinks').doc(linkId);
+    const linkSnap = await linkRef.get();
+    if (!linkSnap.exists) {
+        console.error(`ThankYouPage: bookingLink ${linkId} not found.`);
+        return null;
+    }
 
     const linkData = linkSnap.data();
-    const bookingDetailsInLink = linkData?.booking as Booking;
+    if (!linkData) return null;
+
+    const bookingDetailsInLink = linkData.booking as Booking;
     if (!bookingDetailsInLink || !bookingDetailsInLink.hotelId || !bookingDetailsInLink.id) {
+         console.error(`ThankYouPage: Incomplete booking data in link ${linkId}`);
          notFound();
     }
 
-    const bookingRef = doc(db, 'hotels', bookingDetailsInLink.hotelId, bookingDetailsInLink.id);
-    const bookingSnap = await getDoc(bookingRef);
-    if (!bookingSnap.exists()) notFound();
+    // KORREKTER PFAD: hotels/{hotelId}/bookings/{bookingId}
+    const bookingRef = db.collection('hotels').doc(bookingDetailsInLink.hotelId).collection('bookings').doc(bookingDetailsInLink.id);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+        console.error(`ThankYouPage: Booking document not found at path: ${bookingRef.path}`);
+        notFound();
+    }
     const bookingData = bookingSnap.data() as Booking;
 
-    const hotelRef = doc(db, 'hotels', bookingData.hotelId);
-    const hotelSnap = await getDoc(hotelRef);
-    if (!hotelSnap.exists()) notFound();
+    const hotelRef = db.collection('hotels').doc(bookingData.hotelId);
+    const hotelSnap = await hotelRef.get();
+    if (!hotelSnap.exists) {
+        console.error(`ThankYouPage: Hotel document not found at path: ${hotelRef.path}`);
+        notFound();
+    }
 
     const hotelData = hotelSnap.data() as Hotel;
 
     const toDate = (ts: any) => ts instanceof Timestamp ? ts.toDate() : new Date(ts);
 
+    // WICHTIG: Füge die ID des Dokuments zum Objekt hinzu
     const booking: Booking = {
         ...bookingData,
         id: bookingSnap.id,

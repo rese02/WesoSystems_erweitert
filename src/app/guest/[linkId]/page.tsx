@@ -1,8 +1,10 @@
 import { BookingSummaryCard } from '@/components/guest/booking-summary-card';
 import { BookingWizard } from '@/components/guest/booking-wizard';
+import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase/client';
 import { GuestLinkData, Hotel, Booking } from '@/lib/types';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null> {
@@ -15,9 +17,13 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     
     const linkData = linkSnap.data();
     
-    // Wenn der Link genutzt wurde, leite direkt zur Danke-Seite weiter.
+    // Wenn der Link genutzt wurde, zeige eine spezifische Meldung oder leite um.
     if (linkData.status === 'used') {
-        redirect(`/guest/${linkId}/thank-you`);
+        return {
+            id: linkSnap.id,
+            booking: { status: 'Completed' } as Booking,
+            hotel: {} as Hotel,
+        }
     }
     
     // Wenn der Link noch aktiv ist, aber die Buchungsdaten fehlen -> Fehler
@@ -75,6 +81,20 @@ export default async function GuestBookingPage({
 
   if (!linkData) {
      notFound();
+  }
+
+  // NEU: Die Sperre
+  // Wenn die Buchung bereits abgeschlossen ist (der Link also 'used' ist), zeige eine Meldung.
+  if (linkData.booking.status === 'Completed') {
+    return (
+        <div className="text-center p-10 flex flex-col items-center justify-center min-h-[60vh]">
+            <h1 className="text-2xl font-bold">Dieser Buchungslink wurde bereits verwendet.</h1>
+            <p className="text-muted-foreground mt-2">Ihre Daten wurden bereits erfolgreich übermittelt.</p>
+             <Button asChild variant="link" className="mt-4">
+              <Link href="/">Zur Startseite</Link>
+            </Button>
+        </div>
+    );
   }
 
   // Wenn der Status 'Pending' ist, zeige dem Gast den Wizard
