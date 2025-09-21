@@ -41,7 +41,7 @@ async function getData(linkId: string): Promise<PageData> {
 
     const booking: Booking = {
         ...bookingData,
-        id: bookingSnap.id,
+        id: bookingSnap.id, // Ensure the document ID is correctly assigned
         hotelId: bookingData.hotelId,
         checkIn: toDate(bookingData.checkIn),
         checkOut: toDate(bookingData.checkOut),

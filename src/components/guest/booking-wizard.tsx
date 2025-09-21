@@ -569,10 +569,12 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                   )}
                 </div>
               )) : <p className="text-muted-foreground">{T('noFellowTravelers')}</p>}
-              <Button type="button" variant="outline" onClick={addTraveler}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                {T('addPerson')}
-              </Button>
+              {fellowTravelers.length < numberOfFellowTravelers && (
+                <Button type="button" variant="outline" onClick={addTraveler}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {T('addPerson')}
+                </Button>
+              )}
             </CardContent>
           </Card>
         );
