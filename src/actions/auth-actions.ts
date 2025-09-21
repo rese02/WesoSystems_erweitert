@@ -1,6 +1,7 @@
 'use server';
 
-import { db } from '@/lib/firebase/admin'; // Nutzt die stabile Admin-Verbindung
+import { db } from '@/lib/firebase/client'; // Umstellung auf die Client-SDK
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { redirect } from 'next/navigation';
 
 type LoginState = {
@@ -24,13 +25,16 @@ export async function loginHotelAction(
   }
 
   try {
-    const hotelsRef = db.collection('hotels');
-    const q = hotelsRef
-      .where('hotelier.email', '==', email)
-      .where('hotelier.password', '==', password)
-      .limit(1);
+    const hotelsRef = collection(db, 'hotels');
+    // Die Abfrage sucht nach einer exakten Übereinstimmung der verschachtelten Felder.
+    const q = query(
+        hotelsRef,
+        where('hotelier.email', '==', email),
+        where('hotelier.password', '==', password),
+        limit(1)
+    );
 
-    const querySnapshot = await q.get();
+    const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       return {
