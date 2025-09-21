@@ -34,10 +34,12 @@ export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) 
     const emailHtml = bookingConfirmationEmailTemplate({ booking, hotel });
 
     const lang = booking.language || 'de';
+    const bookingIdForSubject = booking.id ? booking.id.substring(0, 8).toUpperCase() : 'N/A';
+    
     const subjects = {
-        de: `Ihre Buchungsbestätigung vom ${hotel.hotelName} - Buchungsnr: ${booking.id.substring(0, 8).toUpperCase()}`,
-        en: `Your booking confirmation from ${hotel.hotelName} - Booking no: ${booking.id.substring(0, 8).toUpperCase()}`,
-        it: `La Sua conferma di prenotazione da ${hotel.hotelName} - N. prenotazione: ${booking.id.substring(0, 8).toUpperCase()}`,
+        de: `Ihre Buchungsbestätigung vom ${hotel.hotelName} - Buchungsnr: ${bookingIdForSubject}`,
+        en: `Your booking confirmation from ${hotel.hotelName} - Booking no: ${bookingIdForSubject}`,
+        it: `La Sua conferma di prenotazione da ${hotel.hotelName} - N. prenotazione: ${bookingIdForSubject}`,
     }
 
     const options = {
