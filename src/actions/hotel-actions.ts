@@ -11,6 +11,7 @@ import {
   where,
   getDocs,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
@@ -254,5 +255,39 @@ export async function updateBookingStatus(
   } catch (error) {
     console.error('Error updating booking status:', error);
     return { success: false, message: 'Fehler beim Aktualisieren des Status.' };
+  }
+}
+
+export async function deleteBookingsAction(hotelId: string, bookingIds: string[]) {
+  if (!bookingIds || bookingIds.length === 0) {
+    return { success: false, message: 'Keine Buchungen zum Löschen ausgewählt.' };
+  }
+
+  const batch = writeBatch(db);
+
+  try {
+    // Get all booking links associated with the booking IDs to delete them as well
+    const linksCollection = collection(db, 'bookingLinks');
+    const linkQuery = query(linksCollection, where('bookingId', 'in', bookingIds));
+    const linkSnapshot = await getDocs(linkQuery);
+
+    linkSnapshot.forEach(linkDoc => {
+      batch.delete(linkDoc.ref);
+    });
+
+    // Delete the bookings themselves
+    bookingIds.forEach(id => {
+      const bookingRef = doc(db, 'hotels', hotelId, 'bookings', id);
+      batch.delete(bookingRef);
+    });
+
+    await batch.commit();
+    
+    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    return { success: true, message: 'Ausgewählte Buchungen erfolgreich gelöscht.' };
+
+  } catch (error) {
+    console.error('Error deleting bookings:', error);
+    return { success: false, message: 'Fehler beim Löschen der Buchungen.' };
   }
 }

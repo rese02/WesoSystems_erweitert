@@ -5,6 +5,7 @@ import {
   type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
+  type RowSelectionState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -31,7 +32,9 @@ interface DataTableProps<TData, TValue> {
   filterColumnId: string;
   filterPlaceholder: string;
   loading?: boolean;
-  statusFilter?: React.ReactNode;
+  rowSelection?: RowSelectionState;
+  setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  toolbarContent?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -40,7 +43,9 @@ export function DataTable<TData, TValue>({
   filterColumnId,
   filterPlaceholder,
   loading = false,
-  statusFilter,
+  rowSelection,
+  setRowSelection,
+  toolbarContent,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
@@ -55,9 +60,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   });
 
@@ -74,7 +81,7 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
-        {statusFilter}
+        {toolbarContent}
       </div>
       <div className="rounded-lg border bg-card">
         <Table>

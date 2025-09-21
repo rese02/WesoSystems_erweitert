@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowUpDown, PlusCircle } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
@@ -16,6 +16,20 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { BookingDataTableRowActions } from '@/components/data-table/booking-data-table-row-actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { deleteBookingsAction } from '@/actions/hotel-actions';
+import { useToast } from '@/hooks/use-toast';
 
 
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
@@ -47,6 +61,8 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<EnrichedBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [rowSelection, setRowSelection] = useState({});
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -88,6 +104,28 @@ export default function BookingsPage() {
   }, [bookings, statusFilter]);
 
   const bookingColumns: ColumnDef<EnrichedBooking>[] = [
+    {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Alle auswählen"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Zeile auswählen"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
     { accessorKey: 'guestName', header: 'Gast' },
     { 
         accessorKey: 'checkIn', 
@@ -148,6 +186,27 @@ export default function BookingsPage() {
     },
   ];
 
+  const selectedBookingIds = useMemo(() => {
+    return Object.keys(rowSelection).map(index => bookings[parseInt(index)].id);
+  }, [rowSelection, bookings]);
+
+  const handleDeleteSelected = async () => {
+    const result = await deleteBookingsAction(params.hotelId, selectedBookingIds);
+    if (result.success) {
+      toast({
+        title: 'Erfolgreich gelöscht',
+        description: result.message,
+      });
+      setRowSelection({}); // Reset selection
+    } else {
+      toast({
+        title: 'Fehler beim Löschen',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -170,18 +229,44 @@ export default function BookingsPage() {
         filterColumnId="guestName"
         filterPlaceholder="Buchungen filtern..."
         loading={loading}
-        statusFilter={
-           <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                {ALL_STATUSES.map(status => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        rowSelection={rowSelection}
+        setRowSelection={setRowSelection}
+        toolbarContent={
+            <>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Status filtern" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Alle Status</SelectItem>
+                        {ALL_STATUSES.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {selectedBookingIds.length > 0 && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" className="ml-2">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {selectedBookingIds.length} löschen
+                            </Button>
+                        </AlertDialogTrigger>
+                         <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Sind Sie absolut sicher?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Diese Aktion kann nicht rückgängig gemacht werden. Dies wird {selectedBookingIds.length} Buchung(en) und alle zugehörigen Daten dauerhaft von den Servern löschen.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90">Löschen</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </>
         }
       />
     </div>
