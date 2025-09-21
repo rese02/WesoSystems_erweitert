@@ -16,16 +16,18 @@ type PageData = {
     hotel: Hotel;
 }
 
-async function getData(linkId: string): Promise<PageData> {
+async function getData(linkId: string): Promise<PageData | null> {
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
-    if (!linkSnap.exists()) notFound();
+    if (!linkSnap.exists()) return null;
 
-    const bookingDetailsInLink = linkSnap.data()?.booking as Booking;
-    if (!bookingDetailsInLink) notFound();
+    const linkData = linkSnap.data();
+    const bookingDetailsInLink = linkData?.booking as Booking;
+    if (!bookingDetailsInLink || !bookingDetailsInLink.hotelId || !bookingDetailsInLink.id) {
+         notFound();
+    }
 
-    // Lade die aktuellsten Buchungsdaten direkt aus der Hotel-Subkollektion
-    const bookingRef = doc(db, 'hotels', bookingDetailsInLink.hotelId, 'bookings', bookingDetailsInLink.id);
+    const bookingRef = doc(db, 'hotels', bookingDetailsInLink.hotelId, bookingDetailsInLink.id);
     const bookingSnap = await getDoc(bookingRef);
     if (!bookingSnap.exists()) notFound();
     const bookingData = bookingSnap.data() as Booking;
@@ -36,12 +38,11 @@ async function getData(linkId: string): Promise<PageData> {
 
     const hotelData = hotelSnap.data() as Hotel;
 
-    // Make sure all timestamps are converted to dates
     const toDate = (ts: any) => ts instanceof Timestamp ? ts.toDate() : new Date(ts);
 
     const booking: Booking = {
         ...bookingData,
-        id: bookingSnap.id, // Ensure the document ID is correctly assigned
+        id: bookingSnap.id,
         hotelId: bookingData.hotelId,
         checkIn: toDate(bookingData.checkIn),
         checkOut: toDate(bookingData.checkOut),
@@ -51,16 +52,21 @@ async function getData(linkId: string): Promise<PageData> {
     return { booking, hotel: hotelData };
 }
 
+
 const formatDate = (date: Date, fmt: string) => format(date, fmt, { locale: de });
 
 export default async function ThankYouPage({ params }: ThankYouPageProps) {
-    const { booking } = await getData(params.linkId);
+    const data = await getData(params.linkId);
+    if (!data) {
+        notFound();
+    }
+    const { booking } = data;
     const guest = booking.guestDetails as GuestData;
 
-    const totalGuests = booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
+    const totalGuests = booking.rooms.reduce((sum, room) => sum + (room.adults || 0) + (room.children || 0), 0);
 
   return (
-    <div className="flex items-start justify-center">
+    <div className="flex items-start justify-center p-4">
       <Card className="w-full max-w-2xl text-center">
         <CardHeader>
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
