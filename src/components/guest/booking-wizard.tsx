@@ -421,25 +421,25 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     <p className="text-sm text-muted-foreground">
                       {idUploadRequirement === 'required' ? T('idDocsDescriptionRequired') : T('idDocsDescription')}
                     </p>
-                    {idUploadRequirement === 'required' ? (
-                       <div className="pt-2">
+                    <RadioGroup defaultValue={uploadChoice} value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
+                        {idUploadRequirement === 'required' ? (
                           <Label htmlFor="upload-now" className="flex flex-1 cursor-default items-center gap-2 rounded-md border border-primary bg-muted/50 p-4">
-                              <RadioGroupItem value="now" id="upload-now" checked={true}/>
-                              {T('uploadNow')}
-                          </Label>
-                      </div>
-                    ) : (
-                      <RadioGroup defaultValue="later" value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
-                          <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                               <RadioGroupItem value="now" id="upload-now" />
                               {T('uploadNow')}
                           </Label>
-                          <Label htmlFor="upload-later" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
-                              <RadioGroupItem value="later" id="upload-later" />
-                              {T('uploadLater')}
-                          </Label>
-                      </RadioGroup>
-                    )}
+                        ) : (
+                          <>
+                            <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                                <RadioGroupItem value="now" id="upload-now" />
+                                {T('uploadNow')}
+                            </Label>
+                            <Label htmlFor="upload-later" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                                <RadioGroupItem value="later" id="upload-later" />
+                                {T('uploadLater')}
+                            </Label>
+                          </>
+                        )}
+                    </RadioGroup>
                 </div>
 
                 {uploadChoice === 'now' && (
