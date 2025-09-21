@@ -2,20 +2,20 @@ import { Building } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import { Hotel } from '@/lib/types';
 
-async function getHotelName(linkId: string): Promise<string> {
+
+async function getHotelData(linkId: string): Promise<Hotel | null> {
     const linkRef = doc(db, 'bookingLinks', linkId);
     const linkSnap = await getDoc(linkRef);
 
-    // Link muss existieren für das Layout
     if (!linkSnap.exists()) {
         notFound();
     }
     
-    // Jetzt wissen wir, dass der Link gültig ist, holen wir die Booking-Daten daraus
-    const booking = linkSnap.data().booking;
+    const booking = linkSnap.data()?.booking;
     if (!booking || !booking.hotelId) {
-        // Dies würde auf ein Datenintegritätsproblem hinweisen
         console.error('Booking-Daten oder hotelId fehlen im booking link:', linkId);
         notFound();
     }
@@ -24,11 +24,10 @@ async function getHotelName(linkId: string): Promise<string> {
     const hotelSnap = await getDoc(hotelRef);
 
     if (hotelSnap.exists()) {
-        return hotelSnap.data().hotelName;
+        return hotelSnap.data() as Hotel;
     }
 
-    // Fallback-Hotelname, falls etwas schiefgeht
-    return 'Ihr Hotel';
+    return null;
 }
 
 export default async function GuestLayout({
@@ -38,18 +37,24 @@ export default async function GuestLayout({
   children: React.ReactNode;
   params: { linkId: string };
 }) {
-  const hotelName = await getHotelName(params.linkId);
+  const hotel = await getHotelData(params.linkId);
   return (
-    <div>
-      <header className="flex h-16 items-center border-b px-4 sm:px-6">
-        <div className="flex items-center gap-2 font-semibold">
-          <Building className="h-6 w-6 text-primary" />
-          <span className="font-headline text-lg">{hotelName}</span>
-        </div>
+    <div className='bg-muted/40 min-h-screen flex flex-col'>
+      <header className="flex h-20 items-center justify-center border-b bg-background px-4 sm:px-6">
+        {hotel?.logoUrl ? (
+            <div className='relative h-16 w-32'>
+                <Image src={hotel.logoUrl} alt={hotel.hotelName} fill className="object-contain" />
+            </div>
+        ) : (
+             <div className="flex items-center gap-2 font-semibold">
+                <Building className="h-6 w-6 text-primary" />
+                <span className="font-headline text-lg">{hotel?.hotelName || "Hotel"}</span>
+            </div>
+        )}
       </header>
-      <main className="bg-muted/40 p-4 sm:p-8">{children}</main>
+      <main className="flex-1 p-4 sm:p-8">{children}</main>
       <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} WesoSystems. All rights reserved.
+        © {new Date().getFullYear()} {hotel?.hotelName || "WesoSystems"}. All rights reserved.
       </footer>
     </div>
   );
