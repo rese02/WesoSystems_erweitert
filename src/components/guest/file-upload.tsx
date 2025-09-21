@@ -63,7 +63,7 @@ export function FileUpload({
     }
 
 
-    const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${fileToUpload.name}`);
+    const storageRef = ref(storage, `bookings/${bookingId}/${fileType}_${Date.now()}_${fileToUpload.name}`);
     const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
     uploadTask.on(

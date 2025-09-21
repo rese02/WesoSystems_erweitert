@@ -50,7 +50,7 @@ export default function HotelLoginPage() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="name@ihr-hotel.de"
+                  placeholder="Ihre E-Mail"
                   required
                   className="h-12 text-base"
                   autoComplete="off"
@@ -58,7 +58,7 @@ export default function HotelLoginPage() {
               </div>
               <div className="grid gap-2">
               <Label htmlFor="password">Passwort</Label>
-              <Input id="password" name="password" type="password" required className="h-12 text-base" autoComplete="off"/>
+              <Input id="password" name="password" type="password" required className="h-12 text-base" autoComplete="off" placeholder="Ihr Passwort"/>
               </div>
 
               {state?.message && !state.success && (

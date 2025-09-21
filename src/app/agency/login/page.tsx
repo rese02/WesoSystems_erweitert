@@ -49,7 +49,7 @@ export default function AgencyLoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="name@agentur.de"
+                placeholder="Ihre E-Mail"
                 required
                 className="h-12 text-base"
                 autoComplete="off"
@@ -62,6 +62,7 @@ export default function AgencyLoginPage() {
                 name="password"
                 type="password"
                 required
+                placeholder='Ihr Passwort'
                 className="h-12 text-base"
                 autoComplete="off"
               />

@@ -110,11 +110,11 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="firstName">Vorname</Label>
-                <Input id="firstName" name="firstName" required placeholder="Vorname des Gastes"/>
+                <Input id="firstName" name="firstName" required placeholder="Vorname des Hauptgastes"/>
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="lastName">Nachname</Label>
-                <Input id="lastName" name="lastName" required placeholder="Nachname des Gastes"/>
+                <Input id="lastName" name="lastName" required placeholder="Nachname des Hauptgastes"/>
               </div>
             </CardContent>
           </Card>
@@ -166,7 +166,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="price">Gesamtpreis (€)</Label>
-                <Input id="price" name="price" type="number" step="0.01" required placeholder="Preis in Euro"/>
+                <Input id="price" name="price" type="number" step="0.01" required placeholder="z.B. 1250.50"/>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="mealType">Verpflegung</Label>
@@ -279,7 +279,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 <CardDescription>Zusätzliche Informationen für das Hotelpersonal.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Textarea name="internalNotes" placeholder="z.B. VIP-Gast, besondere Wünsche vermerken..." />
+                <Textarea name="internalNotes" placeholder="Interne Notizen hier eingeben..." />
             </CardContent>
           </Card>
 

@@ -21,8 +21,14 @@ async function getData(linkId: string): Promise<PageData> {
     const linkSnap = await getDoc(linkRef);
     if (!linkSnap.exists()) notFound();
 
-    const bookingData = linkSnap.data()?.booking as Booking;
-    if (!bookingData) notFound();
+    const bookingDetailsInLink = linkSnap.data()?.booking as Booking;
+    if (!bookingDetailsInLink) notFound();
+
+    // Lade die aktuellsten Buchungsdaten direkt aus der Hotel-Subkollektion
+    const bookingRef = doc(db, 'hotels', bookingDetailsInLink.hotelId, 'bookings', bookingDetailsInLink.id);
+    const bookingSnap = await getDoc(bookingRef);
+    if (!bookingSnap.exists()) notFound();
+    const bookingData = bookingSnap.data() as Booking;
 
     const hotelRef = doc(db, 'hotels', bookingData.hotelId);
     const hotelSnap = await getDoc(hotelRef);
@@ -35,6 +41,8 @@ async function getData(linkId: string): Promise<PageData> {
 
     const booking: Booking = {
         ...bookingData,
+        id: bookingSnap.id,
+        hotelId: bookingData.hotelId,
         checkIn: toDate(bookingData.checkIn),
         checkOut: toDate(bookingData.checkOut),
         createdAt: toDate(bookingData.createdAt),
@@ -66,7 +74,7 @@ export default async function ThankYouPage({ params }: ThankYouPageProps) {
           <div className="text-muted-foreground">
              <p>Vielen Dank, {guest?.firstName || 'Gast'}!</p>
              <p>Ihre Informationen für diese Buchung wurden vollständig an uns gesendet.
-             Sie haben bereits eine Bestätigungs-E-Mail erhalten oder erhalten diese in Kürze.</p>
+             Sie erhalten in Kürze eine Bestätigungs-E-Mail.</p>
           </div>
 
           <Card className='text-left'>
@@ -80,11 +88,11 @@ export default async function ThankYouPage({ params }: ThankYouPageProps) {
                 </div>
                 <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground"><Calendar className='w-4 h-4' /> Anreise</span>
-                    <span className="font-medium">{formatDate(booking.checkIn as Date, "eeee, dd. MMM yyyy 'ab' HH:mm 'Uhr'")}</span>
+                    <span className="font-medium">{formatDate(booking.checkIn as Date, "eeee, dd. MMM yyyy")}</span>
                 </div>
                  <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground"><Calendar className='w-4 h-4' /> Abreise</span>
-                    <span className="font-medium">{formatDate(booking.checkOut as Date, "eeee, dd. MMM yyyy 'bis' HH:mm 'Uhr'")}</span>
+                    <span className="font-medium">{formatDate(booking.checkOut as Date, "eeee, dd. MMM yyyy")}</span>
                 </div>
                  {booking.rooms.map((room, index) => (
                     <div key={index} className="flex items-center justify-between">
@@ -98,7 +106,7 @@ export default async function ThankYouPage({ params }: ThankYouPageProps) {
                 </div>
                  <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground"><Users className='w-4 h-4' /> Personen</span>
-                    <span className="font-medium">{totalGuests} Erw.</span>
+                    <span className="font-medium">{totalGuests} Pers.</span>
                 </div>
                  <div className="flex items-center justify-between text-lg">
                     <span className="flex items-center gap-2 font-bold"><Euro className='w-5 h-5' /> Gesamtpreis</span>

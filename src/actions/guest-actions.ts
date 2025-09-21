@@ -1,10 +1,11 @@
 'use server';
 
 import { db } from '@/lib/firebase/admin'; // Nutzt die stabile Admin-Verbindung
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Booking, FellowTravelerData, GuestData } from '@/lib/types';
+import { Booking, FellowTravelerData, GuestData, Hotel } from '@/lib/types';
+import { sendBookingConfirmation } from '@/lib/email';
 
 
 type FormState = {
@@ -39,6 +40,13 @@ export async function finalizeBookingAction(
     }
     const hotelId = bookingDetails.hotelId;
     const bookingId = bookingDetails.id;
+
+    const hotelRef = db.collection('hotels').doc(hotelId);
+    const hotelSnap = await hotelRef.get();
+    if (!hotelSnap.exists()) {
+        return { message: 'Fehler: Hotel nicht gefunden.', isValid: false };
+    }
+    const hotelData = hotelSnap.data() as Hotel;
 
 
     // Daten aus dem Formular sauber extrahieren
@@ -100,6 +108,22 @@ export async function finalizeBookingAction(
     // Den Buchungslink als "verwendet" markieren
     await bookingLinkRef.update({
         status: 'used'
+    });
+    
+    // E-Mail-Versand vorbereiten
+    const updatedBookingDataForEmail: Booking = {
+      ...bookingDetails,
+      checkIn: (bookingDetails.checkIn as Timestamp).toDate(),
+      checkOut: (bookingDetails.checkOut as Timestamp).toDate(),
+      createdAt: (bookingDetails.createdAt as Timestamp).toDate(),
+      guestDetails: finalGuestData,
+      status: 'Data Provided',
+    };
+
+    // E-Mail senden (ohne auf das Ergebnis zu warten, um den Gast nicht aufzuhalten)
+    sendBookingConfirmation({ booking: updatedBookingDataForEmail, hotel: hotelData }).catch(emailError => {
+        // Loggen des Fehlers im Hintergrund, falls der E-Mail-Versand fehlschlägt
+        console.error('Hintergrund-Fehler beim Senden der Bestätigungs-E-Mail:', emailError);
     });
 
 

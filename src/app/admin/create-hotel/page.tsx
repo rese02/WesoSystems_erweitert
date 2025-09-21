@@ -80,19 +80,19 @@ export default function CreateHotelPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="hotelName">Hotelname</Label>
-                  <Input id="hotelName" name="hotelName" placeholder="z.B. Hotel Pradel" required />
+                  <Input id="hotelName" name="hotelName" placeholder="Name des Hotels" required />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="domain">Domain</Label>
-                  <Input id="domain" name="domain" placeholder="z.B. hotel-pradel.it" required />
+                  <Input id="domain" name="domain" placeholder="hotel-beispiel.de" required />
                 </div>
                  <div className="grid gap-2">
                   <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-                  <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@hotel-pradel.it" required />
+                  <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@hotel-beispiel.de" required />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="contactPhone">Kontakt Telefon</Label>
-                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="+39 0471 123456" required />
+                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="Ihre Telefonnummer" required />
                 </div>
               </div>
               <div className="grid gap-2">
@@ -130,7 +130,7 @@ export default function CreateHotelPage() {
                   id="hotelierEmail"
                   name="hotelierEmail"
                   type="email"
-                  placeholder="hotelier@example.com"
+                  placeholder="E-Mail für den Hotel-Login"
                   required
                   className={cn({ 'border-destructive': state.message && !state.success && state.message.includes('E-Mail') })}
                 />
@@ -149,7 +149,7 @@ export default function CreateHotelPage() {
                     name="hotelierPassword"
                     value={hotelierPassword}
                     readOnly
-                    placeholder="Klicken Sie auf 'Generieren'"
+                    placeholder="Sicheres Passwort generieren"
                     required
                   />
                   <Button type="button" variant="outline" onClick={generatePassword}>
@@ -185,20 +185,20 @@ export default function CreateHotelPage() {
                 <Input
                   id="accountHolder"
                   name="accountHolder"
-                  placeholder="Ihr Name oder Firmenname"
+                  placeholder="Name des Kontoinhabers"
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="iban">IBAN</Label>
-                <Input id="iban" name="iban" placeholder="Ihre IBAN" required />
+                <Input id="iban" name="iban" placeholder="IBAN des Kontos" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="bic">BIC/SWIFT</Label>
                 <Input
                   id="bic"
                   name="bic"
-                  placeholder="Ihr BIC/SWIFT"
+                  placeholder="BIC/SWIFT des Kontos"
                   required
                 />
               </div>
@@ -207,7 +207,7 @@ export default function CreateHotelPage() {
                 <Input
                   id="bankName"
                   name="bankName"
-                  placeholder="Name Ihrer Bank"
+                  placeholder="Name der Bank"
                   required
                 />
               </div>
@@ -222,19 +222,19 @@ export default function CreateHotelPage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="smtpHost">Host</Label>
-                    <Input id="smtpHost" name="smtpHost" defaultValue="smtp.gmail.com" required/>
+                    <Input id="smtpHost" name="smtpHost" placeholder="z.B. smtp.gmail.com" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPort">Port</Label>
-                    <Input id="smtpPort" name="smtpPort" type="number" defaultValue="587" required/>
+                    <Input id="smtpPort" name="smtpPort" type="number" placeholder="z.B. 587" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpUser">E-Mail-Benutzer</Label>
-                    <Input id="smtpUser" name="smtpUser" placeholder="z.B. info@ihr-hotel.de" required/>
+                    <Input id="smtpUser" name="smtpUser" placeholder="E-Mail für den Versand" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPass">App-Passwort</Label>
-                    <Input id="smtpPass" name="smtpPass" placeholder="Gmail App-Passwort eingeben" type="password" required/>
+                    <Input id="smtpPass" name="smtpPass" placeholder="Zugehöriges App-Passwort" type="password" required/>
                 </div>
             </CardContent>
           </Card>

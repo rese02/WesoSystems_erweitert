@@ -14,14 +14,14 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       title: "Ihre Buchungsbestätigung",
       hotel: "Hotel",
       dear: "Sehr geehrte/r",
-      intro: "vielen Dank für Ihre Buchung bei uns. Wir freuen uns, Sie bald begrüßen zu dürfen!",
+      intro: "vielen Dank für Ihre Buchung bei uns. Ihre Daten wurden erfolgreich übermittelt und wir freuen uns, Sie bald begrüßen zu dürfen!",
       details: "Details Ihrer Buchung",
       bookingNumber: "Buchungsnummer",
       name: "Name",
       checkIn: "Anreise",
       checkOut: "Abreise",
-      checkInTime: "ab",
-      checkOutTime: "bis",
+      checkInTime: "ab 15:00",
+      checkOutTime: "bis 11:00",
       timeSuffix: "Uhr",
       room: "Zimmer",
       guests: "Gäste",
@@ -33,7 +33,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       balance: "Saldo",
       balancePaid: "Vollständig bezahlt",
       importantInfo: "Wichtige Informationen",
-      infoText1: "Bitte halten Sie diese Bestätigung beim Check-in bereit.",
+      infoText1: "Dies ist eine Bestätigung, dass wir Ihre Daten erhalten haben. Eine separate Zahlungsbestätigung folgt gegebenenfalls.",
       infoText2: "Für Fragen stehen wir Ihnen gerne zur Verfügung:",
       phone: "Telefon",
       email: "E-Mail",
@@ -46,14 +46,14 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       title: "Your Booking Confirmation",
       hotel: "Hotel",
       dear: "Dear",
-      intro: "thank you for your booking with us. We look forward to welcoming you soon!",
+      intro: "thank you for your booking with us. Your data has been successfully submitted and we look forward to welcoming you soon!",
       details: "Your Booking Details",
       bookingNumber: "Booking Number",
       name: "Name",
       checkIn: "Arrival",
       checkOut: "Departure",
-      checkInTime: "from",
-      checkOutTime: "until",
+      checkInTime: "from 3:00 PM",
+      checkOutTime: "until 11:00 AM",
       timeSuffix: "",
       room: "Room",
       guests: "Guests",
@@ -65,7 +65,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       balance: "Balance",
       balancePaid: "Paid in full",
       importantInfo: "Important Information",
-      infoText1: "Please have this confirmation ready at check-in.",
+      infoText1: "This is a confirmation that we have received your data. A separate payment confirmation may follow.",
       infoText2: "If you have any questions, we are at your disposal:",
       phone: "Phone",
       email: "Email",
@@ -78,14 +78,14 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       title: "La Sua Conferma di Prenotazione",
       hotel: "Hotel",
       dear: "Gentile",
-      intro: "grazie per aver prenotato con noi. Non vediamo l'ora di darLe il benvenuto!",
+      intro: "grazie per aver prenotato con noi. I Suoi dati sono stati inviati con successo e non vediamo l'ora di darLe il benvenuto!",
       details: "Dettagli della Sua Prenotazione",
       bookingNumber: "Numero di Prenotazione",
       name: "Nome",
       checkIn: "Arrivo",
       checkOut: "Partenza",
-      checkInTime: "dalle",
-      checkOutTime: "fino alle",
+      checkInTime: "dalle 15:00",
+      checkOutTime: "fino alle 11:00",
       timeSuffix: "",
       room: "Camera",
       guests: "Ospiti",
@@ -97,7 +97,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       balance: "Saldo",
       balancePaid: "Interamente pagato",
       importantInfo: "Informazioni Importanti",
-      infoText1: "Si prega di tenere questa conferma pronta al check-in.",
+      infoText1: "Questa è una conferma che abbiamo ricevuto i Suoi dati. Potrebbe seguire una conferma di pagamento separata.",
       infoText2: "Per qualsiasi domanda, siamo a Sua completa disposizione:",
       phone: "Telefono",
       email: "E-mail",
@@ -129,12 +129,7 @@ export const bookingConfirmationEmailTemplate = ({
     const d = date instanceof Date ? date : new Date(date);
     return format(d, 'EEEE, dd. MMMM yyyy', { locale });
   };
-  const formatTime = (date: any) => {
-      if (!date) return '';
-      const d = date instanceof Date ? date : new Date(date);
-      return format(d, 'HH:mm', { locale });
-  }
-
+  
   const totalAdults = booking.rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalChildren = booking.rooms.reduce((sum, room) => sum + room.children, 0);
   const guestName = booking.guestDetails?.firstName ? `${booking.guestDetails.firstName} ${booking.guestDetails.lastName}` : booking.guestName;
@@ -142,51 +137,88 @@ export const bookingConfirmationEmailTemplate = ({
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR' }).format(amount);
 
+  const amountDue = booking.paymentOption === 'deposit' ? booking.price * 0.7 : 0;
+
   return `
     <!DOCTYPE html>
-    <html>
+    <html lang="${lang}">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-            .container { background-color: #ffffff; margin: 40px auto; padding: 20px; border-radius: 8px; max-width: 600px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-            .header { background-color: #e6f4ea; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .header h1 { font-size: 24px; color: #333; margin: 0; }
-            .header p { font-size: 18px; color: #555; margin: 5px 0 0; }
-            .content { padding: 20px; }
-            .content p { line-height: 1.6; }
-            .content h2 { font-size: 20px; color: #444; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px; }
-            .details, .payment { margin-top: 20px; }
-            .details p, .payment p { margin: 10px 0; }
-            .info-box { margin-top: 30px; background-color: #f9f9f9; padding: 15px; border-radius: 5px; }
-            .info-box h3 { font-size: 16px; margin: 0 0 10px; }
-            .footer { text-align: center; font-size: 12px; color: #888; padding-top: 20px; border-top: 1px solid #eee; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; background-color: #f4f4f7; margin: 0; padding: 20px; color: #333; }
+            .container { background-color: #ffffff; margin: 0 auto; padding: 40px; border-radius: 12px; max-width: 600px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+            .header { text-align: center; border-bottom: 1px solid #e9e9e9; padding-bottom: 20px; margin-bottom: 30px; }
+            .header img { max-height: 60px; margin-bottom: 15px; }
+            .header h1 { font-size: 26px; color: #333; margin: 0; font-weight: 700; }
+            .content { padding: 0; }
+            .content p { line-height: 1.7; margin: 0 0 15px; }
+            .content h2 { font-size: 20px; color: #333; border-bottom: 2px solid #e9e9e9; padding-bottom: 8px; margin-top: 40px; margin-bottom: 20px; font-weight: 600; }
+            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px; margin-top: 20px; padding: 20px; background-color: #f9f9fc; border-radius: 8px; }
+            .details-grid p { margin: 0; font-size: 15px; }
+            .details-grid strong { color: #555; display: block; margin-bottom: 4px; font-size: 13px; font-weight: 500; }
+            .total-price { font-size: 24px; font-weight: bold; color: #1a1a1a; text-align: right; margin-top: 20px; }
+            .info-box { margin-top: 30px; background-color: #f9f9fc; padding: 20px; border-radius: 8px; }
+            .info-box h3 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
+            .footer { text-align: center; font-size: 13px; color: #888; padding-top: 30px; margin-top: 30px; border-top: 1px solid #e9e9e9; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
+                ${hotel.logoUrl ? `<img src="${hotel.logoUrl}" alt="${hotel.hotelName}">` : ''}
                 <h1>${T('title')}</h1>
-                <p>${hotel.hotelName}</p>
             </div>
             <div class="content">
-                <p>${T('dear')} ${guestName},</p>
+                <p><strong>${T('dear')} ${guestName},</strong></p>
                 <p>${T('intro')}</p>
 
                 <h2>${T('details')}</h2>
-                <div class="details">
-                    <p><strong>${T('bookingNumber')}:</strong> ${booking.id.substring(0, 8).toUpperCase()}</p>
-                    <p><strong>${T('name')}:</strong> ${guestName}</p>
-                    <p><strong>${T('checkIn')}:</strong> ${formatDate(booking.checkIn)} (${T('checkInTime')} ${formatTime(booking.checkIn)} ${T('timeSuffix')})</p>
-                    <p><strong>${T('checkOut')}:</strong> ${formatDate(booking.checkOut)} (${T('checkOutTime')} ${formatTime(booking.checkOut)} ${T('timeSuffix')})</p>
-                    <p><strong>${T('room')}:</strong> ${roomsText}</p>
-                    <p><strong>${T('guests')}:</strong> ${totalAdults} ${T('adults')}, ${totalChildren} ${T('children')}</p>
-                    <p><strong>${T('meal')}:</strong> ${booking.mealType}</p>
+                <div class="details-grid">
+                    <div>
+                        <strong>${T('bookingNumber')}</strong>
+                        <p>${booking.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                     <div>
+                        <strong>${T('name')}</strong>
+                        <p>${guestName}</p>
+                    </div>
+                    <div>
+                        <strong>${T('checkIn')}</strong>
+                        <p>${formatDate(booking.checkIn)} (${T('checkInTime')})</p>
+                    </div>
+                    <div>
+                        <strong>${T('checkOut')}</strong>
+                        <p>${formatDate(booking.checkOut)} (${T('checkOutTime')})</p>
+                    </div>
+                    <div>
+                        <strong>${T('room')}</strong>
+                        <p>${roomsText}</p>
+                    </div>
+                     <div>
+                        <strong>${T('guests')}</strong>
+                        <p>${totalAdults} ${T('adults')}, ${totalChildren} ${T('children')}</p>
+                    </div>
+                     <div>
+                        <strong>${T('meal')}</strong>
+                        <p>${booking.mealType}</p>
+                    </div>
                 </div>
 
                 <h2>${T('payment')}</h2>
-                <div class="payment">
-                    <p><strong>${T('totalPrice')}:</strong> ${formatCurrency(booking.price)}</p>
-                    <p style="color: green; font-weight: bold;">${T('balance')}: 0,00 € (${T('balancePaid')})</p>
+                <div class="details-grid">
+                    <div>
+                       <strong>${T('totalPrice')}</strong>
+                       <p style="font-size: 18px; font-weight: 600;">${formatCurrency(booking.price)}</p>
+                    </div>
+                     <div>
+                       <strong>Geleistete Zahlung</strong>
+                       <p>${formatCurrency(booking.amountPaid || 0)}</p>
+                    </div>
+                    <div>
+                       <strong>Offener Betrag</strong>
+                       <p style="font-size: 18px; font-weight: 600; color: ${amountDue > 0 ? '#d9534f' : '#5cb85c'};">${formatCurrency(amountDue)}</p>
+                    </div>
                 </div>
 
                 <div class="info-box">
@@ -197,10 +229,10 @@ export const bookingConfirmationEmailTemplate = ({
                     <p><strong>${T('email')}:</strong> ${hotel.contact.email}</p>
                 </div>
 
-                <p>${T('outro')}</p>
+                <p style="margin-top: 30px;">${T('outro')}</p>
                 <p>
                     ${T('regards')}<br>
-                    ${T('team')} ${hotel.hotelName}
+                    <strong>${T('team')} ${hotel.hotelName}</strong>
                 </p>
             </div>
             <div class="footer">

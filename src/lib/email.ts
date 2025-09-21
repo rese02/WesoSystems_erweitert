@@ -11,9 +11,16 @@ interface EmailPayload {
 
 export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) {
     if (!booking.guestDetails?.email) {
-        throw new Error('Guest email is not available.');
+        console.error("E-Mail-Versand fehlgeschlagen: Gast-E-Mail ist nicht verfügbar.", {bookingId: booking.id});
+        return { success: false, message: 'Guest email is not available.' };
     }
     
+    // Validierung der SMTP-Daten
+    if (!hotel.smtp || !hotel.smtp.host || !hotel.smtp.user || !hotel.smtp.appPass) {
+        console.error("E-Mail-Versand fehlgeschlagen: SMTP-Konfiguration unvollständig.", {hotelId: hotel.id});
+        return { success: false, message: 'SMTP configuration is incomplete.' };
+    }
+
     const transporter = nodemailer.createTransport({
         host: hotel.smtp.host,
         port: hotel.smtp.port,
@@ -26,19 +33,27 @@ export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) 
 
     const emailHtml = bookingConfirmationEmailTemplate({ booking, hotel });
 
+    const lang = booking.language || 'de';
+    const subjects = {
+        de: `Ihre Buchungsbestätigung vom ${hotel.hotelName} - Buchungsnr: ${booking.id.substring(0, 8).toUpperCase()}`,
+        en: `Your booking confirmation from ${hotel.hotelName} - Booking no: ${booking.id.substring(0, 8).toUpperCase()}`,
+        it: `La Sua conferma di prenotazione da ${hotel.hotelName} - N. prenotazione: ${booking.id.substring(0, 8).toUpperCase()}`,
+    }
+
     const options = {
         from: `"${hotel.hotelName}" <${hotel.smtp.user}>`,
         to: booking.guestDetails.email,
-        subject: `Ihre Buchungsbestätigung vom ${hotel.hotelName} - Buchungsnr: ${booking.id.substring(0, 8).toUpperCase()}`,
+        subject: subjects[lang],
         html: emailHtml,
     };
 
     try {
         const info = await transporter.sendMail(options);
-        console.log('Message sent: %s', info.messageId);
+        console.log('Bestätigungs-E-Mail erfolgreich gesendet: %s', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        console.error('Error sending email:', error);
-        throw new Error('Email could not be sent.');
+        console.error('Fehler beim Senden der E-Mail:', error);
+        // Wir werfen keinen Fehler, um den Benutzerfluss nicht zu blockieren, aber wir geben einen Fehlerstatus zurück.
+        return { success: false, message: 'Email could not be sent.' };
     }
 }
