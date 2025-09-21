@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {Booking, Room, IdUploadRequirement} from '@/lib/types';
+import {Booking, Room, IdUploadRequirement, BookingStatus} from '@/lib/types';
 import {DateRange} from 'react-day-picker';
 
 type CreateHotelState = {
@@ -236,5 +236,23 @@ export async function updateHotelLogo(hotelId: string, logoUrl: string) {
   } catch (error) {
     console.error('Error updating hotel logo:', error);
     return { success: false, message: 'Failed to update logo.' };
+  }
+}
+
+export async function updateBookingStatus(
+  hotelId: string,
+  bookingId: string,
+  status: BookingStatus
+) {
+  try {
+    const bookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingId);
+    await updateDoc(bookingRef, {
+      status: status,
+    });
+    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    return { success: true, message: 'Status erfolgreich aktualisiert.' };
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    return { success: false, message: 'Fehler beim Aktualisieren des Status.' };
   }
 }

@@ -31,6 +31,7 @@ interface DataTableProps<TData, TValue> {
   filterColumnId: string;
   filterPlaceholder: string;
   loading?: boolean;
+  statusFilter?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -39,6 +40,7 @@ export function DataTable<TData, TValue>({
   filterColumnId,
   filterPlaceholder,
   loading = false,
+  statusFilter,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
@@ -61,7 +63,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         <Input
           placeholder={filterPlaceholder}
           value={
@@ -72,6 +74,7 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        {statusFilter}
       </div>
       <div className="rounded-lg border bg-card">
         <Table>

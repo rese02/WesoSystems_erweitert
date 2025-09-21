@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { MoreHorizontal } from 'lucide-react';
@@ -12,6 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,8 +27,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
-import { Booking } from '@/lib/types';
+import { Booking, BookingStatus } from '@/lib/types';
 import { useParams } from 'next/navigation';
+import { updateBookingStatus } from '@/actions/hotel-actions';
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -35,6 +37,7 @@ interface DataTableRowActionsProps<TData> {
 
 type EnrichedBooking = Booking & { linkId?: string };
 
+const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Cancelled'];
 
 export function BookingDataTableRowActions<TData>({
   row,
@@ -60,6 +63,23 @@ export function BookingDataTableRowActions<TData>({
     });
   };
 
+  const handleStatusChange = async (newStatus: BookingStatus) => {
+    const result = await updateBookingStatus(params.hotelId, booking.id, newStatus);
+    if (result.success) {
+      toast({
+        title: 'Status aktualisiert!',
+        description: `Der Buchungsstatus wurde auf "${newStatus}" geändert.`,
+      });
+    } else {
+      toast({
+        title: 'Fehler',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+
   return (
     <AlertDialog>
       <DropdownMenu>
@@ -83,9 +103,20 @@ export function BookingDataTableRowActions<TData>({
             Buchungslink kopieren
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-           <DropdownMenuItem>
-            Status ändern
-          </DropdownMenuItem>
+           <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Status ändern</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                    {ALL_STATUSES.map(status => (
+                         <DropdownMenuItem 
+                            key={status} 
+                            onClick={() => handleStatusChange(status)}
+                            disabled={status === booking.status}
+                        >
+                            {status}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuSubContent>
+           </DropdownMenuSub>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:text-destructive">
@@ -105,7 +136,7 @@ export function BookingDataTableRowActions<TData>({
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive hover:bg-destructive/90"
-            // onClick={handleDelete}
+            onClick={() => handleStatusChange('Cancelled')}
           >
             Fortfahren
           </AlertDialogAction>
