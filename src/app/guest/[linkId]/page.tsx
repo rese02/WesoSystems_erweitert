@@ -3,7 +3,7 @@ import { BookingWizard } from '@/components/guest/booking-wizard';
 import { db } from '@/lib/firebase/client';
 import { GuestLinkData, Hotel, Booking } from '@/lib/types';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react';
 
@@ -17,25 +17,25 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     }
     
     const linkData = linkSnap.data();
-    const bookingData = linkData.booking as Booking;
+    const bookingDataFromLink = linkSnap.data()?.booking as Booking;
      
-    // Prüfen, ob der Link bereits als "used" markiert ist.
-    // Wenn ja, zeige die "bereits bearbeitet" Nachricht.
-    if (linkData.status === 'used') {
-        return {
-            id: linkSnap.id,
-            booking: { // Wir benötigen einige Basis-Buchungsdaten für die Anzeige
-                ...bookingData,
-                status: 'Data Provided', // Simuliert den Zustand nach der Bearbeitung
-                checkIn: bookingData.checkIn instanceof Timestamp ? bookingData.checkIn.toDate() : new Date(bookingData.checkIn),
-                checkOut: bookingData.checkOut instanceof Timestamp ? bookingData.checkOut.toDate() : new Date(bookingData.checkOut),
-                createdAt: bookingData.createdAt instanceof Timestamp ? bookingData.createdAt.toDate() : new Date(bookingData.createdAt),
-            },
-            hotel: {} as Hotel, // Hoteldaten sind hier nicht zwingend erforderlich
+    // Wenn der Link genutzt wurde, hole die finalen Daten direkt aus der Hotel-Buchung
+    if (linkData.status === 'used' && bookingDataFromLink) {
+        const hotelBookingRef = doc(db, 'hotels', bookingDataFromLink.hotelId, 'bookings', bookingDataFromLink.id);
+        const hotelBookingSnap = await getDoc(hotelBookingRef);
+        if (hotelBookingSnap.exists()) {
+            // Wenn die finale Buchung existiert, setzen wir den Status auf "Data Provided"
+            // um die Weiterleitung zur Danke-Seite auszulösen.
+             return {
+                id: linkSnap.id,
+                booking: { status: 'Data Provided' } as Booking,
+                hotel: {} as Hotel,
+            };
         }
     }
     
     // Wenn der Link noch aktiv ist, aber die Buchungsdaten fehlen -> Fehler
+    const bookingData = linkData.booking as Booking;
     if (!bookingData || !bookingData.hotelId) {
         console.error('Integritätsproblem der Buchungsdaten für linkId:', linkId);
         return null;
@@ -91,19 +91,10 @@ export default async function GuestBookingPage({
      notFound();
   }
 
-  // Das Gast-Formular sollte nur zugänglich sein, wenn die Buchung 'Pending' ist
+  // Wenn die Buchung nicht mehr 'Pending' ist, wurde sie bereits bearbeitet.
+  // Leite den Benutzer direkt zur Danke-Seite weiter.
   if (linkData.booking.status !== 'Pending') {
-    return (
-        <div className="mx-auto max-w-2xl py-12">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Buchung bereits bearbeitet</AlertTitle>
-              <AlertDescription>
-                Die Daten für diese Buchung wurden bereits übermittelt. Sie müssen nichts weiter tun.
-              </AlertDescription>
-            </Alert>
-        </div>
-     )
+    redirect(`/guest/${params.linkId}/thank-you`);
   }
 
   // Wenn der Status 'Pending' ist, zeige dem Gast den Wizard
