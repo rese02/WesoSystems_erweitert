@@ -1,7 +1,6 @@
 'use server';
 
-import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/admin'; // Nutzt die stabile Admin-Verbindung
 import { redirect } from 'next/navigation';
 
 type LoginState = {
@@ -17,7 +16,6 @@ export async function loginHotelAction(
   const password = formData.get('password');
 
   // Strikte Validierung der Eingabe-Typen und des Inhalts.
-  // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
   if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return {
       message: 'E-Mail und Passwort sind erforderlich.',
@@ -25,15 +23,14 @@ export async function loginHotelAction(
     };
   }
 
-  const hotelsRef = collection(db, 'hotels');
-  const q = query(
-    hotelsRef,
-    where('hotelier.email', '==', email),
-    where('hotelier.password', '==', password)
-  );
-
   try {
-    const querySnapshot = await getDocs(q);
+    const hotelsRef = db.collection('hotels');
+    const q = hotelsRef
+      .where('hotelier.email', '==', email)
+      .where('hotelier.password', '==', password)
+      .limit(1);
+
+    const querySnapshot = await q.get();
 
     if (querySnapshot.empty) {
       return {
@@ -42,13 +39,13 @@ export async function loginHotelAction(
       };
     }
 
-    // Assuming one email belongs to one hotel
+    // Extrahieren der Hotel-ID aus dem ersten gefundenen Dokument
     const hotelDoc = querySnapshot.docs[0];
     const hotelId = hotelDoc.id;
 
-    // On success, we don't return state but redirect instead
+    // Bei Erfolg: Weiterleitung zum spezifischen Hotel-Dashboard.
     redirect(`/dashboard/${hotelId}`);
-    
+
   } catch (error) {
     console.error('Login error:', error);
     return {
