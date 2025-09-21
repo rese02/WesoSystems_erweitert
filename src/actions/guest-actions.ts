@@ -26,7 +26,7 @@ export async function finalizeBookingAction(
   try {
     const bookingLinkSnap = await bookingLinkRef.get();
 
-    if (!bookingLinkSnap.exists() || bookingLinkSnap.data()?.status === 'used') {
+    if (!bookingLinkSnap.exists || bookingLinkSnap.data()?.status === 'used') {
         return {
         message: 'Ungültiger oder bereits verwendeter Buchungslink.',
         errors: ['Dieser Link ist nicht gültig oder abgelaufen.'],
@@ -43,7 +43,7 @@ export async function finalizeBookingAction(
 
     const hotelRef = db.collection('hotels').doc(hotelId);
     const hotelSnap = await hotelRef.get();
-    if (!hotelSnap.exists()) {
+    if (!hotelSnap.exists) {
         return { message: 'Fehler: Hotel nicht gefunden.', isValid: false };
     }
     const hotelData = hotelSnap.data() as Hotel;
@@ -118,6 +118,8 @@ export async function finalizeBookingAction(
       createdAt: (bookingDetails.createdAt as Timestamp).toDate(),
       guestDetails: finalGuestData,
       status: 'Data Provided',
+      amountPaid: parseFloat(rawData.amountPaid as string),
+      paymentOption: rawData.paymentOption as 'deposit' | 'full',
     };
 
     // E-Mail senden (ohne auf das Ergebnis zu warten, um den Gast nicht aufzuhalten)
