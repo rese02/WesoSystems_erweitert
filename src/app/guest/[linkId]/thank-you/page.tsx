@@ -84,7 +84,7 @@ export default async function ThankYouPage({ params }: ThankYouPageProps) {
              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Buchungsnummer</span>
-                    <span className="font-mono text-sm font-bold">{booking.id.substring(0, 8).toUpperCase()}</span>
+                    <span className="font-mono text-sm font-bold">{booking.id ? booking.id.substring(0, 8).toUpperCase() : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground"><Calendar className='w-4 h-4' /> Anreise</span>

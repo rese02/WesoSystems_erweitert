@@ -113,6 +113,8 @@ export async function finalizeBookingAction(
     // E-Mail-Versand vorbereiten
     const updatedBookingDataForEmail: Booking = {
       ...bookingDetails,
+      // Wichtig: Die ID muss hier explizit gesetzt werden, da sie im bookingDetails-Objekt vorhanden ist
+      id: bookingId, 
       checkIn: (bookingDetails.checkIn as Timestamp).toDate(),
       checkOut: (bookingDetails.checkOut as Timestamp).toDate(),
       createdAt: (bookingDetails.createdAt as Timestamp).toDate(),
