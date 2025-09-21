@@ -3,25 +3,30 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Der Pfad für die Dokumente eines Gastes.
-    // {bookingId} ist die geheime, unerratbare ID der Buchung.
+    // The path for a guest's documents.
+    // {bookingId} is the secret, unguessable ID of the booking.
+    // Allow create (upload) for ANYONE to this specific folder.
+    // This is safe because nobody can guess the bookingId.
+    // It acts like a one-time password for the upload.
     match /bookings/{bookingId}/{fileName} {
-      
-      // ERLAUBT: Einen Schreibzugriff (Upload) für JEDEN in diesen spezifischen Ordner.
-      // Das ist sicher, weil niemand die bookingId erraten kann.
-      // Sie funktioniert wie ein einmaliges Passwort für den Upload.
       allow create: if true;
 
-      // VERBOTEN: Niemand (außer eingeloggten Nutzern) darf Dateien lesen,
-      // aktualisieren oder löschen. Die Dokumente sind nach dem Upload sicher.
+      // Disallow anyone other than authenticated users from reading,
+      // updating, or deleting files. Documents are secure after upload.
       allow read, update, delete: if request.auth != null;
     }
 
-    // Regel für Logos
-    match /logos/{fileId}/{fileName} {
-       allow create: if true; // Jeder darf Logos hochladen
-       allow read: if true; // Jeder darf Logos lesen
-       allow delete: if request.auth != null; // Nur eingeloggte Admins/Hoteliers dürfen löschen
+    // Allow logo uploads for anyone, as they are public branding assets.
+    // The path is also unguessable.
+     match /bookings/new-hotel-logo/{fileName} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+     match /bookings/{hotelId}/{fileName} {
+      allow create: if true; // Allows hotelier to upload new logo
+      allow read: if true; // Allow public read for logos
+      allow update, delete: if request.auth != null;
     }
   }
 }

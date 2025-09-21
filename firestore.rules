@@ -3,26 +3,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Globale Regel: Standardmäßig alles blockieren, außer es wird explizit erlaubt.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Regeln für Hotels (bleiben sicher, nur für eingeloggte Benutzer)
+    // Hotels and their subcollections are only accessible by authenticated users (agency/hotelier)
     match /hotels/{hotelId}/{document=**} {
       allow read, write: if request.auth != null;
     }
 
-    // Regeln für Buchungslinks
+    // Booking links can be updated by anyone to prevent reuse
     match /bookingLinks/{linkId} {
-      // ERLAUBT: Jeder darf einen spezifischen Link lesen, um die Daten zu laden.
       allow read: if true;
-      // ERLAUBT: Jeder darf einen Link aktualisieren (um ihn als 'used' zu markieren).
-      allow update: if request.auth == null;
+      allow update: if true; // Allow guests to mark the link as 'used'
+      allow create, delete: if request.auth != null;
     }
-
-    // Regeln für die Agentur
-    // (Hier können spezifische Regeln für die Agentur-Sammlung hinzugefügt werden, falls vorhanden)
-    // z.B. match /agency/{docId} { allow read, write: if request.auth != null; }
   }
 }
