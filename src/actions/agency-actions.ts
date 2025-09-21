@@ -18,7 +18,7 @@ export async function loginAgencyAction(
 
   // Sichere, serverseitige Definition der Anmeldedaten
   const AGENCY_EMAIL = 'hallo@agentur-weso.it';
-  const AGENCY_PASSWORD = 'wesosystems';
+  const AGENCY_PASSWORD = 'Hallo-weso.2025!';
 
   // Strikte Validierung der Eingabe-Typen und des Inhalts.
   // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
