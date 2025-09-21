@@ -43,13 +43,21 @@ export function DataTable<TData, TValue>({
   filterColumnId,
   filterPlaceholder,
   loading = false,
-  rowSelection,
-  setRowSelection,
+  rowSelection: controlledRowSelection,
+  setRowSelection: controlledSetRowSelection,
   toolbarContent,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
+    
+  // Interne State-Verwaltung für die Zeilenauswahl
+  const [internalRowSelection, setInternalRowSelection] = React.useState({});
+  
+  // Bestimme, welcher State und Setter verwendet wird
+  const rowSelection = controlledRowSelection ?? internalRowSelection;
+  const setRowSelection = controlledSetRowSelection ?? setInternalRowSelection;
+
 
   const table = useReactTable({
     data,
