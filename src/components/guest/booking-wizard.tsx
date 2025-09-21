@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { GuestLinkData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '../ui/separator';
 
 const locales = {
   de: de,
@@ -203,7 +204,12 @@ type BookingWizardProps = {
   initialData: GuestLinkData;
 };
 
-type FellowTraveler = { id: number; name: string };
+type FellowTraveler = { 
+    id: number; 
+    name: string;
+    idFrontUrl: string;
+    idBackUrl: string;
+};
 type PaymentOption = 'deposit' | 'full';
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
@@ -248,7 +254,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
 
   const [fellowTravelers, setFellowTravelers] = useState<FellowTraveler[]>(
-    Array.from({ length: numberOfFellowTravelers }, (_, i) => ({ id: i + 1, name: '' }))
+    Array.from({ length: numberOfFellowTravelers }, (_, i) => ({ id: i + 1, name: '', idFrontUrl: '', idBackUrl: '' }))
   );
   
   const [formState, formAction, isPending] = useActionState(
@@ -264,7 +270,16 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   }, [paymentOption, initialData.booking.price]);
 
   const handleUploadComplete = (fileType: string, url: string) => {
-    setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
+    const travelerMatch = fileType.match(/^fellowTraveler_(\d+)_(idFront|idBack)$/);
+
+    if (travelerMatch) {
+      const [, travelerId, type] = travelerMatch;
+      setFellowTravelers(prev => prev.map(t =>
+        t.id === parseInt(travelerId) ? { ...t, [type === 'idFront' ? 'idFrontUrl' : 'idBackUrl']: url } : t
+      ));
+    } else {
+        setDocumentUrls(prev => ({ ...prev, [fileType]: url }));
+    }
     setIsUploading(false);
   };
   
@@ -273,7 +288,16 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   };
   
   const handleFileDelete = (fileType: string) => {
-    setDocumentUrls(prev => ({...prev, [fileType]: ''}));
+    const travelerMatch = fileType.match(/^fellowTraveler_(\d+)_(idFront|idBack)$/);
+
+    if (travelerMatch) {
+       const [, travelerId, type] = travelerMatch;
+       setFellowTravelers(prev => prev.map(t =>
+        t.id === parseInt(travelerId) ? { ...t, [type === 'idFront' ? 'idFrontUrl' : 'idBackUrl']: '' } : t
+      ));
+    } else {
+       setDocumentUrls(prev => ({...prev, [fileType]: ''}));
+    }
   }
 
 
@@ -288,7 +312,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
 
 
   const addTraveler = () => {
-    setFellowTravelers([...fellowTravelers, { id: Date.now(), name: '' }]);
+    setFellowTravelers([...fellowTravelers, { id: Date.now(), name: '', idFrontUrl: '', idBackUrl: '' }]);
   };
 
   const removeTraveler = (id: number) => {
@@ -306,7 +330,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   };
 
   const isStep2Valid = () => {
-    return fellowTravelers.every(t => t.name.trim() !== '');
+    if (!fellowTravelers.every(t => t.name.trim() !== '')) return false;
+    if (uploadChoice === 'now' && !fellowTravelers.every(t => t.idFrontUrl && t.idBackUrl)) {
+      return false;
+    }
+    return true;
   };
 
   const isStep3Valid = () => {
@@ -486,27 +514,58 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 {T('fellowTravelersDescription', numberOfFellowTravelers)}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {fellowTravelers.length > 0 ? fellowTravelers.map((traveler, index) => (
-                <div key={traveler.id} className="flex items-end gap-2">
-                  <div className="flex-grow">
-                    <Label htmlFor={`traveler-${traveler.id}`}>{T('fellowTravelerLabel', index)} <span className="text-destructive">*</span></Label>
-                    <Input 
-                        id={`traveler-${traveler.id}`}
-                        placeholder={T('fellowTravelerPlaceholder')} 
-                        value={traveler.name}
-                        onChange={(e) => handleTravelerNameChange(traveler.id, e.target.value)}
-                        required
-                    />
+                <div key={traveler.id} className="space-y-4 rounded-md border p-4">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-grow">
+                      <Label htmlFor={`traveler-name-${traveler.id}`}>{T('fellowTravelerLabel', index)} <span className="text-destructive">*</span></Label>
+                      <Input 
+                          id={`traveler-name-${traveler.id}`}
+                          placeholder={T('fellowTravelerPlaceholder')} 
+                          value={traveler.name}
+                          onChange={(e) => handleTravelerNameChange(traveler.id, e.target.value)}
+                          required
+                      />
+                    </div>
+                    {fellowTravelers.length > numberOfFellowTravelers && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeTraveler(traveler.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
-                  {fellowTravelers.length > numberOfFellowTravelers && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeTraveler(traveler.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                  {uploadChoice === 'now' && (
+                    <div className='animate-fade-in space-y-4'>
+                        <Separator />
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                             <div className="grid gap-2">
+                                <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
+                                <FileUpload
+                                    bookingId={linkId}
+                                    fileType={`fellowTraveler_${traveler.id}_idFront`}
+                                    uploadedFileUrl={traveler.idFrontUrl || null}
+                                    onUploadComplete={handleUploadComplete}
+                                    onUploadStart={handleUploadStart}
+                                    onDelete={handleFileDelete}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>{T('idBackLabel')} <span className="text-destructive">*</span></Label>
+                                <FileUpload
+                                    bookingId={linkId}
+                                    fileType={`fellowTraveler_${traveler.id}_idBack`}
+                                    uploadedFileUrl={traveler.idBackUrl || null}
+                                    onUploadComplete={handleUploadComplete}
+                                    onUploadStart={handleUploadStart}
+                                    onDelete={handleFileDelete}
+                                />
+                            </div>
+                        </div>
+                    </div>
                   )}
                 </div>
               )) : <p className="text-muted-foreground">{T('noFellowTravelers')}</p>}
@@ -614,9 +673,15 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <input type="hidden" name="zip" value={formData.zip} />
                 <input type="hidden" name="city" value={formData.city} />
                 <input type="hidden" name="specialRequests" value={formData.specialRequests} />
+                
                 {fellowTravelers.map((t, i) => (
-                     <input key={t.id} type="hidden" name={`fellowTraveler_${i}`} value={t.name} />
+                    <React.Fragment key={t.id}>
+                        <input type="hidden" name={`fellowTraveler_${t.id}_name`} value={t.name} />
+                        <input type="hidden" name={`fellowTraveler_${t.id}_idFrontUrl`} value={t.idFrontUrl} />
+                        <input type="hidden" name={`fellowTraveler_${t.id}_idBackUrl`} value={t.idBackUrl} />
+                    </React.Fragment>
                 ))}
+
                  <input type="hidden" name="idFrontUrl" value={documentUrls.idFront} />
                  <input type="hidden" name="idBackUrl" value={documentUrls.idBack} />
                  <input type="hidden" name="paymentProofUrl" value={documentUrls.paymentProof} />

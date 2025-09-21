@@ -18,6 +18,7 @@ import {
   Eye,
   MailCheck,
   FileX2,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -183,16 +184,29 @@ export default async function BookingDetailsPage({ params }: { params: { hotelId
                 <CardHeader><CardTitle>Mitreisende</CardTitle></CardHeader>
                 <CardContent>
                      {guest && guest.fellowTravelers?.length > 0 ? (
-                        <ul className="space-y-3">
+                        <ul className="space-y-6">
                         {guest.fellowTravelers.map((t, i) => (
-                             <li key={i} className="flex items-center gap-3">
-                                <Users className="h-5 w-5 text-muted-foreground"/>
-                                <span>{t.name}</span>
+                             <li key={i} className="rounded-md border p-4">
+                                <div className='flex items-center justify-between'>
+                                     <div className="flex items-center gap-3">
+                                        <Users className="h-5 w-5 text-muted-foreground"/>
+                                        <span className='font-medium'>{t.name}</span>
+                                    </div>
+                                    <Badge variant="outline" className='flex items-center gap-2'>
+                                        <ShieldCheck className='h-4 w-4 text-green-600'/>
+                                        Dokumente vorhanden
+                                    </Badge>
+                                </div>
+                                <Separator className='my-4'/>
+                                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                                    <DocumentLink url={t.idFrontUrl} label="Ausweis (Vorderseite)" />
+                                    <DocumentLink url={t.idBackUrl} label="Ausweis (Rückseite)" />
+                                </div>
                             </li>
                         ))}
                         </ul>
                     ) : (
-                        <p className="text-muted-foreground">Keine Mitreisenden angegeben.</p>
+                        <p className="text-muted-foreground">Keine Mitreisenden angegeben oder keine Dokumente hochgeladen.</p>
                     )}
                 </CardContent>
             </Card>
@@ -202,7 +216,7 @@ export default async function BookingDetailsPage({ params }: { params: { hotelId
         {/* Right Column */}
         <div className="space-y-8 lg:col-span-1">
             <Card>
-                <CardHeader><CardTitle>Dokumente</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Dokumente des Hauptgastes</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <DocumentLink url={guest?.documentUrls?.paymentProof} label="Zahlungsbeleg" />
                     <DocumentLink url={guest?.documentUrls?.idFront} label="Ausweis (Vorderseite)" />

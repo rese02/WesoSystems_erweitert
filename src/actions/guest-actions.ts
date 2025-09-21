@@ -4,7 +4,7 @@ import { db } from '@/lib/firebase/admin'; // Nutzt die stabile Admin-Verbindung
 import { FieldValue } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Booking, GuestData } from '@/lib/types';
+import { Booking, FellowTravelerData, GuestData } from '@/lib/types';
 
 
 type FormState = {
@@ -44,12 +44,28 @@ export async function finalizeBookingAction(
     // Daten aus dem Formular sauber extrahieren
     const rawData = Object.fromEntries(formData.entries());
     
-    const fellowTravelers = [];
+    // Mitreisende strukturiert extrahieren
+    const fellowTravelersMap = new Map<string, Partial<FellowTravelerData>>();
     for (const [key, value] of formData.entries()) {
-        if (key.startsWith('fellowTraveler_') && typeof value === 'string' && value.trim() !== '') {
-            fellowTravelers.push({ name: value });
+        const match = key.match(/^fellowTraveler_(\d+)_(name|idFrontUrl|idBackUrl)$/);
+        if (match && typeof value === 'string') {
+            const [, id, field] = match;
+            if (!fellowTravelersMap.has(id)) {
+                fellowTravelersMap.set(id, {});
+            }
+            const traveler = fellowTravelersMap.get(id)!;
+            (traveler as any)[field] = value;
         }
     }
+    
+    const fellowTravelers = Array.from(fellowTravelersMap.values())
+        .filter(t => t.name && t.name.trim() !== '')
+        .map(t => ({
+            name: t.name || '',
+            idFrontUrl: t.idFrontUrl || '',
+            idBackUrl: t.idBackUrl || '',
+        }));
+
 
     const finalGuestData: GuestData = {
         firstName: rawData.firstName as string,

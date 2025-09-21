@@ -76,6 +76,13 @@ export type Booking = {
   idUploadRequirement: IdUploadRequirement;
 };
 
+export type FellowTravelerData = {
+  name: string;
+  idFrontUrl?: string;
+  idBackUrl?: string;
+};
+
+
 export type GuestData = {
   firstName: string;
   lastName: string;
@@ -85,7 +92,7 @@ export type GuestData = {
   street: string;
   zip: string;
   city: string;
-  fellowTravelers: { name: string }[];
+  fellowTravelers: FellowTravelerData[];
   specialRequests?: string;
   documentUrls: {
     idFront: string;
