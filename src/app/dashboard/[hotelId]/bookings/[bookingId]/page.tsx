@@ -15,7 +15,7 @@ import {
   Home,
   Users,
   FileText,
-  Download,
+  Eye,
   MailCheck,
   FileX2,
 } from 'lucide-react';
@@ -46,6 +46,7 @@ async function getBooking(hotelId: string, bookingId: string): Promise<Booking> 
       checkOut: checkOut,
       createdAt: createdAt,
       guestDetails: data.guestDetails || null,
+      idUploadRequirement: data.idUploadRequirement || 'choice', // Fallback
   } as Booking;
 }
 
@@ -76,7 +77,7 @@ const DocumentLink = ({ url, label }: { url?: string; label: string }) => {
             </div>
             <Button asChild variant="outline" size="sm">
                 <a href={url} target="_blank" rel="noopener noreferrer">
-                    <Download className="mr-2 h-4 w-4"/> Herunterladen
+                    <Eye className="mr-2 h-4 w-4"/> Ansehen
                 </a>
             </Button>
         </div>

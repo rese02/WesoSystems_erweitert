@@ -43,6 +43,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         selectDate: "Datum auswählen",
         idDocsLabel: "Ausweisdokumente",
         idDocsDescription: "Bitte wählen Sie, wie Sie die Ausweisdokumente bereitstellen möchten.",
+        idDocsDescriptionRequired: "Das Hochladen Ihrer Ausweisdokumente ist für diese Buchung erforderlich.",
         uploadNow: "Jetzt hochladen",
         uploadLater: "Vor Ort vorzeigen",
         idFrontLabel: "Ausweisdokument (Vorderseite)",
@@ -97,6 +98,7 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         selectDate: "Select date",
         idDocsLabel: "ID Documents",
         idDocsDescription: "Please choose how you would like to provide your ID documents.",
+        idDocsDescriptionRequired: "Uploading your ID documents is required for this booking.",
         uploadNow: "Upload now",
         uploadLater: "Show on site",
         idFrontLabel: "ID Document (Front)",
@@ -151,6 +153,7 @@ notesPlaceholder: "Do you have any special requests or remarks?",
         selectDate: "Seleziona data",
         idDocsLabel: "Documenti d'Identità",
         idDocsDescription: "Si prega di scegliere come fornire i documenti d'identità.",
+        idDocsDescriptionRequired: "Il caricamento dei documenti d'identità è obbligatorio per questa prenotazione.",
         uploadNow: "Carica ora",
         uploadLater: "Mostra in loco",
         idFrontLabel: "Documento d'Identità (Fronte)",
@@ -218,7 +221,8 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   };
   const steps = T('steps') as unknown as string[];
   const locale = locales[lang];
-  
+  const idUploadRequirement = initialData.booking.idUploadRequirement || 'choice';
+
   const [formData, setFormData] = useState({
     firstName: initialData.booking.guestName.split(' ')[0] || '',
     lastName: initialData.booking.guestName.split(' ').slice(1).join(' ') || '',
@@ -237,7 +241,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     paymentProof: '',
   });
   
-  const [uploadChoice, setUploadChoice] = useState('later');
+  const [uploadChoice, setUploadChoice] = useState(idUploadRequirement === 'required' ? 'now' : 'later');
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
 
   const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
@@ -414,17 +418,28 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
 
                 <div className="space-y-2">
                     <Label>{T('idDocsLabel')}</Label>
-                    <p className="text-sm text-muted-foreground">{T('idDocsDescription')}</p>
-                    <RadioGroup defaultValue="later" value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
-                        <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
-                            <RadioGroupItem value="now" id="upload-now" />
-                            {T('uploadNow')}
-                        </Label>
-                        <Label htmlFor="upload-later" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
-                            <RadioGroupItem value="later" id="upload-later" />
-                            {T('uploadLater')}
-                        </Label>
-                    </RadioGroup>
+                    <p className="text-sm text-muted-foreground">
+                      {idUploadRequirement === 'required' ? T('idDocsDescriptionRequired') : T('idDocsDescription')}
+                    </p>
+                    {idUploadRequirement === 'required' ? (
+                       <div className="pt-2">
+                          <Label htmlFor="upload-now" className="flex flex-1 cursor-default items-center gap-2 rounded-md border border-primary bg-muted/50 p-4">
+                              <RadioGroupItem value="now" id="upload-now" checked={true}/>
+                              {T('uploadNow')}
+                          </Label>
+                      </div>
+                    ) : (
+                      <RadioGroup defaultValue="later" value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
+                          <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                              <RadioGroupItem value="now" id="upload-now" />
+                              {T('uploadNow')}
+                          </Label>
+                          <Label htmlFor="upload-later" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                              <RadioGroupItem value="later" id="upload-later" />
+                              {T('uploadLater')}
+                          </Label>
+                      </RadioGroup>
+                    )}
                 </div>
 
                 {uploadChoice === 'now' && (

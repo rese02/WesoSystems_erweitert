@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {Booking, Room} from '@/lib/types';
+import {Booking, Room, IdUploadRequirement} from '@/lib/types';
 import {DateRange} from 'react-day-picker';
 
 type CreateHotelState = {
@@ -133,6 +133,7 @@ export async function createBookingAction(
     price: parseFloat(formData.get('price') as string),
     mealType: formData.get('mealType') as string,
     language: formData.get('language') as 'de' | 'en' | 'it' || 'de',
+    idUploadRequirement: formData.get('idUploadRequirement') as IdUploadRequirement || 'choice',
     internalNotes: (formData.get('internalNotes') as string) || '',
     rooms: rooms,
     status: 'Pending',

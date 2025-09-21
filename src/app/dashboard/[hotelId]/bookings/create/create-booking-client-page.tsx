@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CalendarIcon, PlusCircle, Trash2, Loader2, X } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Loader2, X, Info } from 'lucide-react';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -34,6 +34,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Room } from '@/lib/types';
 import { createBookingAction } from '@/actions/hotel-actions';
 import { useRouter } from 'next/navigation';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { IdUploadRequirement } from '@/lib/types';
 
 type RoomState = Room & { id: number };
 
@@ -189,6 +191,19 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                     <SelectItem value="it">Italienisch</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+               <div className="grid gap-4 md:col-span-2">
+                <Label>Ausweis-Upload durch Gast</Label>
+                 <RadioGroup name="idUploadRequirement" defaultValue="choice" className="flex gap-4 pt-2">
+                    <Label htmlFor="id-choice" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                        <RadioGroupItem value="choice" id="id-choice" />
+                        Gast hat die Wahl (Hochladen oder vor Ort)
+                    </Label>
+                    <Label htmlFor="id-required" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
+                        <RadioGroupItem value="required" id="id-required" />
+                        Upload ist verpflichtend
+                    </Label>
+                </RadioGroup>
               </div>
             </CardContent>
           </Card>

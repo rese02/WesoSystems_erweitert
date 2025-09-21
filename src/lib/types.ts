@@ -55,6 +55,8 @@ export type Room = {
   infants: number;
 };
 
+export type IdUploadRequirement = 'required' | 'choice' | 'none';
+
 export type Booking = {
   id: string; 
   hotelId: string;
@@ -71,6 +73,7 @@ export type Booking = {
   guestDetails?: GuestData;
   paymentOption?: 'deposit' | 'full';
   amountPaid?: number;
+  idUploadRequirement: IdUploadRequirement;
 };
 
 export type GuestData = {
