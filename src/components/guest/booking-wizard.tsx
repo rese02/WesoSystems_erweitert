@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, useMemo } from 'react';
+import { useState, useActionState, useMemo, Fragment } from 'react';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -451,7 +451,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </p>
                     <RadioGroup defaultValue={uploadChoice} value={uploadChoice} onValueChange={(val) => setUploadChoice(val)} className="flex gap-4 pt-2">
                         {idUploadRequirement === 'required' ? (
-                          <Label htmlFor="upload-now" className="flex flex-1 cursor-default items-center gap-2 rounded-md border border-primary bg-muted/50 p-4">
+                          <Label htmlFor="upload-now" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                               <RadioGroupItem value="now" id="upload-now" />
                               {T('uploadNow')}
                           </Label>
@@ -471,7 +471,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 </div>
 
                 {uploadChoice === 'now' && (
-                    <div className="space-y-4 rounded-md border p-4 animate-fade-in">
+                    <div className="space-y-4 rounded-md border p-4 animate-in fade-in-50">
                         <div className="grid gap-2">
                             <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
                             <FileUpload
@@ -539,7 +539,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     )}
                   </div>
                   {uploadChoice === 'now' && (
-                    <div className='animate-fade-in space-y-4'>
+                    <div className='animate-in fade-in-50 space-y-4'>
                         <Separator />
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                              <div className="grid gap-2">
@@ -675,11 +675,11 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <input type="hidden" name="specialRequests" value={formData.specialRequests} />
                 
                 {fellowTravelers.map((t, i) => (
-                    <React.Fragment key={t.id}>
+                    <Fragment key={t.id}>
                         <input type="hidden" name={`fellowTraveler_${t.id}_name`} value={t.name} />
                         <input type="hidden" name={`fellowTraveler_${t.id}_idFrontUrl`} value={t.idFrontUrl} />
                         <input type="hidden" name={`fellowTraveler_${t.id}_idBackUrl`} value={t.idBackUrl} />
-                    </React.Fragment>
+                    </Fragment>
                 ))}
 
                  <input type="hidden" name="idFrontUrl" value={documentUrls.idFront} />
@@ -720,7 +720,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     <AlertDescription>{formState.message}</AlertDescription>
                     </Alert>
                 )}
-                <Button type="submit" disabled={isPending || isUploading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button type="submit" disabled={isPending || isUploading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {(isPending || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {T('submitButton')}
               </Button>
@@ -739,7 +739,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
         <Stepper steps={steps} currentStep={currentStep} />
       </div>
 
-      <div className="animate-fade-in">{StepContent()}</div>
+      <div className="animate-in fade-in-50">{StepContent()}</div>
 
       {currentStep < 4 && (
         <div className="flex justify-between gap-4">

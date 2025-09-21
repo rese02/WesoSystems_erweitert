@@ -78,8 +78,8 @@ export type Booking = {
 
 export type FellowTravelerData = {
   name: string;
-  idFrontUrl?: string;
-  idBackUrl?: string;
+  idFrontUrl: string;
+  idBackUrl: string;
 };
 
 

@@ -4,9 +4,6 @@ import { db } from '@/lib/firebase/client';
 import { GuestLinkData, Hotel, Booking } from '@/lib/types';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { notFound, redirect } from 'next/navigation';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from 'lucide-react';
-
 
 async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null> {
     const linkRef = doc(db, 'bookingLinks', linkId);
@@ -17,21 +14,10 @@ async function getBookingLinkData(linkId: string): Promise<GuestLinkData | null>
     }
     
     const linkData = linkSnap.data();
-    const bookingDataFromLink = linkSnap.data()?.booking as Booking;
-     
-    // Wenn der Link genutzt wurde, hole die finalen Daten direkt aus der Hotel-Buchung
-    if (linkData.status === 'used' && bookingDataFromLink) {
-        const hotelBookingRef = doc(db, 'hotels', bookingDataFromLink.hotelId, 'bookings', bookingDataFromLink.id);
-        const hotelBookingSnap = await getDoc(hotelBookingRef);
-        if (hotelBookingSnap.exists()) {
-            // Wenn die finale Buchung existiert, setzen wir den Status auf "Data Provided"
-            // um die Weiterleitung zur Danke-Seite auszulösen.
-             return {
-                id: linkSnap.id,
-                booking: { status: 'Data Provided' } as Booking,
-                hotel: {} as Hotel,
-            };
-        }
+    
+    // Wenn der Link genutzt wurde, leite direkt zur Danke-Seite weiter.
+    if (linkData.status === 'used') {
+        redirect(`/guest/${linkId}/thank-you`);
     }
     
     // Wenn der Link noch aktiv ist, aber die Buchungsdaten fehlen -> Fehler
@@ -89,12 +75,6 @@ export default async function GuestBookingPage({
 
   if (!linkData) {
      notFound();
-  }
-
-  // Wenn die Buchung nicht mehr 'Pending' ist, wurde sie bereits bearbeitet.
-  // Leite den Benutzer direkt zur Danke-Seite weiter.
-  if (linkData.booking.status !== 'Pending') {
-    redirect(`/guest/${params.linkId}/thank-you`);
   }
 
   // Wenn der Status 'Pending' ist, zeige dem Gast den Wizard

@@ -25,7 +25,7 @@ export async function finalizeBookingAction(
   try {
     const bookingLinkSnap = await bookingLinkRef.get();
 
-    if (!bookingLinkSnap.exists || bookingLinkSnap.data()?.status === 'used') {
+    if (!bookingLinkSnap.exists() || bookingLinkSnap.data()?.status === 'used') {
         return {
         message: 'Ungültiger oder bereits verwendeter Buchungslink.',
         errors: ['Dieser Link ist nicht gültig oder abgelaufen.'],

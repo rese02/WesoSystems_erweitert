@@ -41,7 +41,7 @@ export function FileUpload({
 
     let fileToUpload = selectedFile;
 
-    // Nur Bilder komprimieren (PNG, JPG)
+    // Nur Bilder komprimieren (PNG, JPG, JPEG)
     if (selectedFile.type.startsWith('image/')) {
         try {
             const options = {
@@ -51,11 +51,9 @@ export function FileUpload({
                 initialQuality: 0.7, // Startqualität der Komprimierung
             };
             
-            console.log(`Original size: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`);
             toast({ title: 'Komprimiere Bild...', description: 'Dies kann einen Moment dauern.' });
             
             const compressedFile = await imageCompression(selectedFile, options);
-            console.log(`Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
             fileToUpload = compressedFile;
 
         } catch (error) {
@@ -168,7 +166,7 @@ export function FileUpload({
         type="file"
         className="hidden"
         onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
-        accept="image/png, image/jpeg, application/pdf"
+        accept="image/png, image/jpeg, image/jpg, application/pdf"
       />
     </div>
   );

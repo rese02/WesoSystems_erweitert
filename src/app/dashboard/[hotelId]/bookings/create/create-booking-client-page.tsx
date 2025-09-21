@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CalendarIcon, PlusCircle, Trash2, Loader2, X, Info } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';

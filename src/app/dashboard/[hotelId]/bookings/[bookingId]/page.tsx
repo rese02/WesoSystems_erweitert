@@ -19,6 +19,7 @@ import {
   MailCheck,
   FileX2,
   ShieldCheck,
+  Badge,
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
