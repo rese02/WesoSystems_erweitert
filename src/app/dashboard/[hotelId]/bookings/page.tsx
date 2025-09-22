@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowUpDown, PlusCircle, Trash2 } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, Trash2, Clock, CheckCircle2, FileText, PieChart, XCircle, Ban, BadgeCheck } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { type ColumnDef, type Row } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -26,30 +26,66 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { deleteBookingsAction } from '@/actions/hotel-actions';
 import { useToast } from '@/hooks/use-toast';
 
+const statusConfig: Record<BookingStatus, { label: string; icon: React.ElementType; color: string }> = {
+  Pending: { label: 'Ausstehend', icon: Clock, color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  'Data Provided': { label: 'Daten erhalten', icon: FileText, color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  'Partial Payment': { label: 'Teilzahlung', icon: PieChart, color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  Confirmed: { label: 'Bestätigt', icon: CheckCircle2, color: 'bg-green-100 text-green-800 border-green-200' },
+  Completed: { label: 'Abgeschlossen', icon: BadgeCheck, color: 'bg-green-100 text-green-800 border-green-200' },
+  Cancelled: { label: 'Storniert', icon: Ban, color: 'bg-red-100 text-red-800 border-red-200' },
+};
 
-const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
-  <Badge
-    className={cn('capitalize', {
-      'bg-green-100 text-green-800 border-green-200': status === 'Confirmed' || status === 'Data Provided' || status === 'Completed',
-      'bg-yellow-100 text-yellow-800 border-yellow-200': status === 'Partial Payment',
-      'bg-orange-100 text-orange-800 border-orange-200': status === 'Pending',
-      'bg-red-100 text-red-800 border-red-200': status === 'Cancelled',
-    })}
-    variant="outline"
-  >
-    {status}
-  </Badge>
-);
+const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => {
+    const config = statusConfig[status] || { label: status, icon: Clock, color: 'bg-gray-100 text-gray-800' };
+    const Icon = config.icon;
+    return (
+        <Badge
+            className={cn('capitalize gap-1.5', config.color)}
+            variant="outline"
+        >
+            <Icon className="h-3 w-3" />
+            {config.label}
+        </Badge>
+    );
+};
 
-const formatDate = (timestamp: Timestamp | Date, includeTime: boolean = false) => {
+const PaymentStatusBadge = ({ booking }: { booking: Booking }) => {
+    let status: 'Bezahlt' | 'Teilzahlung' | 'Ausstehend' = 'Ausstehend';
+    let color = 'bg-orange-100 text-orange-800 border-orange-200';
+    let icon = Clock;
+
+    if (booking.status === 'Confirmed' || booking.status === 'Completed') {
+        status = 'Bezahlt';
+        color = 'bg-green-100 text-green-800 border-green-200';
+        icon = CheckCircle2;
+    } else if (booking.status === 'Partial Payment') {
+        status = 'Teilzahlung';
+        color = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        icon = PieChart;
+    }
+
+    const Icon = icon;
+
+    return (
+        <Badge
+            className={cn('capitalize gap-1.5', color)}
+            variant="outline"
+        >
+            <Icon className="h-3 w-3" />
+            {status}
+        </Badge>
+    );
+};
+
+
+const formatDate = (timestamp: Timestamp | Date | undefined, includeTime: boolean = false) => {
     if (!timestamp) return 'N/A';
     const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
-    const formatString = includeTime ? 'dd.MM.yyyy, HH:mm \'Uhr\'' : 'dd.MM.yyyy';
+    const formatString = includeTime ? 'dd.MM.yyyy, HH:mm' : 'dd.MM.yyyy';
     return format(date, formatString, { locale: de });
 };
 
@@ -130,6 +166,11 @@ export default function BookingsPage() {
         enableSorting: false,
         enableHiding: false,
     },
+    {
+        accessorKey: 'id',
+        header: 'Buchungs-ID',
+        cell: ({ row }) => <div className="font-mono uppercase">{row.getValue<string>('id').substring(0, 6)}</div>
+    },
     { accessorKey: 'guestName', header: 'Gast' },
     { 
         accessorKey: 'checkIn', 
@@ -141,45 +182,33 @@ export default function BookingsPage() {
         header: 'Check-out',
         cell: ({ row }) => formatDate(row.getValue('checkOut'))
     },
-     { 
-        accessorKey: 'createdAt', 
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Erstellt am
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => {
-            const date = row.getValue('createdAt') as Timestamp | Date;
-            if (!date) return 'N/A';
-            const d = date instanceof Timestamp ? date.toDate() : date;
-            return (
-                <div>
-                    <div>{format(d, 'dd.MM.yyyy', { locale: de })}</div>
-                    <div className="text-xs text-muted-foreground">{format(d, 'HH:mm', { locale: de })} Uhr</div>
-                </div>
-            )
-        }
-    },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <BookingStatusBadge status={row.getValue('status')} />,
     },
+    { 
+        id: 'lastChange',
+        accessorFn: row => row.updatedAt || row.createdAt,
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Letzte Änderung
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+            const date = row.getValue('lastChange') as Timestamp | Date;
+            return formatDate(date, true);
+        },
+        sortingFn: 'datetime',
+    },
     {
-      accessorKey: 'price',
-      header: () => <div className="text-right">Preis</div>,
-      cell: ({ row }) => {
-        const amount = parseFloat(row.getValue('price'));
-        const formatted = new Intl.NumberFormat('de-DE', {
-          style: 'currency',
-          currency: 'EUR',
-        }).format(amount);
-        return <div className="text-right font-medium">{formatted}</div>;
-      },
+      id: 'paymentStatus',
+      header: 'Zahlungsstatus',
+      cell: ({ row }) => <PaymentStatusBadge booking={row.original} />,
     },
     {
       id: 'actions',
@@ -187,16 +216,31 @@ export default function BookingsPage() {
     },
   ];
 
- const selectedBookingIds = useMemo(() => {
-    return Object.keys(rowSelection)
-      .map(indexStr => {
-        const index = parseInt(indexStr, 10);
-        // Greife auf die gefilterten Buchungen zu, die in der Tabelle angezeigt werden
-        const booking = filteredBookings[index];
-        return booking ? booking.id : null;
-      })
-      .filter((id): id is string => id !== null);
-  }, [rowSelection, filteredBookings]);
+  const selectedBookingIds = useMemo(() => {
+    const selectedRows = table.getSelectedRowModel().flatRows;
+    return selectedRows.map(row => (row.original as Booking).id);
+  }, [rowSelection, table.getSelectedRowModel()]);
+
+  const { getTableProps, getHeaderGroups, getRowModel, getSelectedRowModel } = useReactTable({
+        data: filteredBookings,
+        columns: bookingColumns,
+        state: { rowSelection },
+        onRowSelectionChange: setRowSelection,
+        getCoreRowModel: getCoreRowModel(),
+        enableRowSelection: true,
+  });
+
+  const table = useReactTable({
+    data: filteredBookings,
+    columns: bookingColumns,
+    state: { rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
 
   const handleDeleteSelected = async () => {
@@ -221,9 +265,9 @@ export default function BookingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-3xl font-bold">Buchungsübersicht</h1>
+          <h1 className="font-headline text-3xl font-bold">Aktuelle Buchungen</h1>
           <p className="mt-1 text-muted-foreground">
-            Alle Buchungen für Ihr Hotel im Überblick.
+            Durchsuchen und filtern Sie Ihre Buchungen oder wählen Sie Buchungen aus, um sie gesammelt zu löschen.
           </p>
         </div>
         <Button asChild>
@@ -237,30 +281,19 @@ export default function BookingsPage() {
         columns={bookingColumns}
         data={filteredBookings}
         filterColumnId="guestName"
-        filterPlaceholder="Buchungen filtern..."
+        filterPlaceholder="Name, ID..."
         loading={loading}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
-        initialSorting={[{ id: 'createdAt', desc: true }]}
+        initialSorting={[{ id: 'lastChange', desc: true }]}
         toolbarContent={
             <>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Status filtern" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Alle Status</SelectItem>
-                        {ALL_STATUSES.map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
                 {selectedBookingIds.length > 0 && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive" className="ml-2">
+                            <Button variant="outline" className="ml-auto">
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                {selectedBookingIds.length} löschen
+                                Löschen
                             </Button>
                         </AlertDialogTrigger>
                          <AlertDialogContent>
@@ -277,11 +310,23 @@ export default function BookingsPage() {
                         </AlertDialogContent>
                     </AlertDialog>
                 )}
+                 <div className='flex items-center gap-2 ml-auto'>
+                    <span className="text-sm text-muted-foreground">Status filtern</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Status filtern" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Alle Status</SelectItem>
+                            {Object.entries(statusConfig).map(([status, {label}]) => (
+                            <SelectItem key={status} value={status}>{label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
             </>
         }
       />
     </div>
   );
 }
-
-    
