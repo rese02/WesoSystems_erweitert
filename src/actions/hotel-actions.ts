@@ -174,6 +174,68 @@ export async function createBookingAction(
   }
 }
 
+export async function updateBookingAction(
+  hotelId: string,
+  bookingId: string,
+  formData: FormData,
+  rooms: Room[],
+  date?: DateRange
+) {
+  if (!date?.from || !date?.to) {
+    return {success: false, message: 'An- und Abreisedatum sind erforderlich.'};
+  }
+  
+  const bookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingId);
+
+  const updatedBookingData = {
+    guestName: `${formData.get('firstName')} ${formData.get('lastName')}`,
+    checkIn: Timestamp.fromDate(date.from),
+    checkOut: Timestamp.fromDate(date.to),
+    price: parseFloat(formData.get('price') as string),
+    mealType: formData.get('mealType') as string,
+    language: formData.get('language') as 'de' | 'en' | 'it' || 'de',
+    idUploadRequirement: formData.get('idUploadRequirement') as IdUploadRequirement || 'choice',
+    internalNotes: (formData.get('internalNotes') as string) || '',
+    rooms: rooms,
+    updatedAt: Timestamp.now(),
+  };
+
+  try {
+    await updateDoc(bookingRef, updatedBookingData);
+    
+    // Also update the booking data in the corresponding link document if it exists
+    const linksCollection = collection(db, 'bookingLinks');
+    const linkQuery = query(linksCollection, where('bookingId', '==', bookingId), where('hotelId', '==', hotelId));
+    const linkSnapshot = await getDocs(linkQuery);
+
+    if (!linkSnapshot.empty) {
+      const linkDocRef = linkSnapshot.docs[0].ref;
+      // Get existing booking data from link and merge with new data
+      const existingLinkData = (await getDocs(linkQuery)).docs[0].data().booking;
+      await updateDoc(linkDocRef, {
+        'booking.guestName': updatedBookingData.guestName,
+        'booking.checkIn': updatedBookingData.checkIn,
+        'booking.checkOut': updatedBookingData.checkOut,
+        'booking.price': updatedBookingData.price,
+        'booking.mealType': updatedBookingData.mealType,
+        'booking.language': updatedBookingData.language,
+        'booking.idUploadRequirement': updatedBookingData.idUploadRequirement,
+        'booking.internalNotes': updatedBookingData.internalNotes,
+        'booking.rooms': updatedBookingData.rooms,
+      });
+    }
+
+    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    revalidatePath(`/dashboard/${hotelId}/bookings/${bookingId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating booking:', error);
+    return { success: false, message: 'Buchung konnte nicht aktualisiert werden.' };
+  }
+}
+
+
 type UpdateProfileState = {
   message: string;
   success: boolean;

@@ -24,7 +24,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { Booking, BookingStatus } from '@/lib/types';
@@ -37,7 +36,7 @@ interface DataTableRowActionsProps<TData> {
 
 type EnrichedBooking = Booking & { linkId?: string };
 
-const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Cancelled'];
+const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Completed', 'Cancelled'];
 
 export function BookingDataTableRowActions<TData>({
   row,
@@ -97,7 +96,7 @@ export function BookingDataTableRowActions<TData>({
              <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}`}>Buchung ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/${params.hotelId}/bookings/create`}>Buchung bearbeiten</Link>
+            <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}/edit`}>Buchung bearbeiten</Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyBookingLink}>
             Buchungslink kopieren
@@ -119,7 +118,7 @@ export function BookingDataTableRowActions<TData>({
            </DropdownMenuSub>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => e.preventDefault()}>
               Stornieren
             </DropdownMenuItem>
           </AlertDialogTrigger>

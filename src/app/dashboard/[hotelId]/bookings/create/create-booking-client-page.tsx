@@ -31,28 +31,42 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Room } from '@/lib/types';
-import { createBookingAction } from '@/actions/hotel-actions';
+import { Booking, Room } from '@/lib/types';
+import { createBookingAction, updateBookingAction } from '@/actions/hotel-actions';
 import { useRouter } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IdUploadRequirement } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore';
 
 type RoomState = Room & { id: number };
 
 type CreateBookingClientPageProps = {
     hotelId: string;
+    booking?: Booking | null; // Make booking optional for create mode
     config: {
         roomCategories: string[];
         mealTypes: string[];
     }
 }
 
-export function CreateBookingClientPage({ hotelId, config }: CreateBookingClientPageProps) {
+export function CreateBookingClientPage({ hotelId, booking, config }: CreateBookingClientPageProps) {
   const router = useRouter();
-  const [date, setDate] = useState<DateRange | undefined>();
-  const [rooms, setRooms] = useState<RoomState[]>([
-    { id: 1, type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 },
-  ]);
+  const isEditMode = !!booking;
+
+  const getInitialDate = () => {
+    if (booking?.checkIn && booking?.checkOut) {
+      const checkInDate = booking.checkIn instanceof Timestamp ? booking.checkIn.toDate() : new Date(booking.checkIn);
+      const checkOutDate = booking.checkOut instanceof Timestamp ? booking.checkOut.toDate() : new Date(booking.checkOut);
+      return { from: checkInDate, to: checkOutDate };
+    }
+    return undefined;
+  }
+  
+  const [date, setDate] = useState<DateRange | undefined>(getInitialDate());
+  const [rooms, setRooms] = useState<RoomState[]>(
+    booking?.rooms.map((r, i) => ({ ...r, id: i })) ||
+    [{ id: 1, type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
+  );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -67,18 +81,33 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
     setRooms(rooms.filter((room) => room.id !== id));
   };
   
-  const handleCreateBooking = async (formData: FormData) => {
+  const handleSubmit = async (formData: FormData) => {
     setLoading(true);
-    const result = await createBookingAction(hotelId, formData, rooms, date);
+    let result;
+    if (isEditMode && booking) {
+      result = await updateBookingAction(hotelId, booking.id, formData, rooms, date);
+    } else {
+      result = await createBookingAction(hotelId, formData, rooms, date);
+    }
     setLoading(false);
 
     if (result.success) {
-      toast({
-          title: 'Buchungslink erstellt!',
-          description: 'Der Link kann an den Gast gesendet werden. Er wurde in die Zwischenablage kopiert.'
-      });
-      navigator.clipboard.writeText(result.link || '');
-      router.push(`/dashboard/${hotelId}/bookings`);
+      if (isEditMode) {
+         toast({
+            title: 'Buchung aktualisiert!',
+            description: 'Die Buchungsdaten wurden erfolgreich gespeichert.'
+         });
+         router.push(`/dashboard/${hotelId}/bookings`);
+      } else {
+        toast({
+            title: 'Buchungslink erstellt!',
+            description: 'Der Link kann an den Gast gesendet werden. Er wurde in die Zwischenablage kopiert.'
+        });
+        if (result.link) {
+            navigator.clipboard.writeText(result.link);
+        }
+        router.push(`/dashboard/${hotelId}/bookings`);
+      }
     } else {
       toast({
         title: 'Fehler',
@@ -88,13 +117,28 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
     }
   };
 
+  const getFirstName = () => {
+    if (!booking?.guestName) return '';
+    return booking.guestName.split(' ')[0] || '';
+  }
+
+  const getLastName = () => {
+    if (!booking?.guestName) return '';
+    const parts = booking.guestName.split(' ');
+    if (parts.length > 1) {
+      return parts.slice(1).join(' ');
+    }
+    return '';
+  }
+
+
   return (
-    <form action={handleCreateBooking} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6">
        <div className="flex items-center justify-between">
         <div>
-            <h1 className="font-headline text-3xl font-bold">Neue Buchung erstellen</h1>
+            <h1 className="font-headline text-3xl font-bold">{isEditMode ? 'Buchung bearbeiten' : 'Neue Buchung erstellen'}</h1>
             <p className="text-muted-foreground">
-            Bereiten Sie eine Buchung vor und generieren Sie einen Link für den Gast.
+            {isEditMode ? 'Ändern Sie die Details dieser Buchung.' : 'Bereiten Sie eine Buchung vor und generieren Sie einen Link für den Gast.'}
             </p>
         </div>
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -111,11 +155,11 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="firstName">Vorname</Label>
-                    <Input id="firstName" name="firstName" required placeholder="Vorname des Hauptgastes"/>
+                    <Input id="firstName" name="firstName" required placeholder="Vorname des Hauptgastes" defaultValue={getFirstName()}/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="lastName">Nachname</Label>
-                    <Input id="lastName" name="lastName" required placeholder="Nachname des Hauptgastes"/>
+                    <Input id="lastName" name="lastName" required placeholder="Nachname des Hauptgastes" defaultValue={getLastName()}/>
                 </div>
                 </CardContent>
             </Card>
@@ -167,11 +211,11 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="price">Gesamtpreis (€)</Label>
-                    <Input id="price" name="price" type="number" step="0.01" required placeholder="z.B. 1250.50"/>
+                    <Input id="price" name="price" type="number" step="0.01" required placeholder="z.B. 1250.50" defaultValue={booking?.price}/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="mealType">Verpflegung</Label>
-                    <Select name="mealType" required defaultValue={config.mealTypes[0]}>
+                    <Select name="mealType" required defaultValue={booking?.mealType || config.mealTypes[0]}>
                     <SelectTrigger>
                         <SelectValue placeholder="Verpflegung auswählen" />
                     </SelectTrigger>
@@ -182,7 +226,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="language">Sprache für Gastformular</Label>
-                    <Select name="language" defaultValue="de">
+                    <Select name="language" defaultValue={booking?.language || 'de'}>
                     <SelectTrigger>
                         <SelectValue placeholder="Sprache auswählen" />
                     </SelectTrigger>
@@ -195,7 +239,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 </div>
                 <div className="grid gap-4 md:col-span-2">
                     <Label>Ausweis-Upload durch Gast</Label>
-                    <RadioGroup name="idUploadRequirement" defaultValue="choice" className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <RadioGroup name="idUploadRequirement" defaultValue={booking?.idUploadRequirement || "choice"} className="flex flex-col sm:flex-row gap-4 pt-2">
                         <Label htmlFor="id-choice" className="flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-4 hover:bg-muted/50 has-[input:checked]:border-primary has-[input:checked]:bg-muted/50">
                             <RadioGroupItem value="choice" id="id-choice" />
                             Gast hat die Wahl (Hochladen oder vor Ort)
@@ -280,7 +324,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                     <CardDescription>Zusätzliche Informationen für das Hotelpersonal.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Textarea name="internalNotes" placeholder="Interne Notizen hier eingeben..." />
+                    <Textarea name="internalNotes" placeholder="Interne Notizen hier eingeben..." defaultValue={booking?.internalNotes}/>
                 </CardContent>
             </Card>
           </div>
@@ -292,7 +336,7 @@ export function CreateBookingClientPage({ hotelId, config }: CreateBookingClient
                 <CardContent className="grid gap-2">
                      <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Buchung erstellen
+                        {isEditMode ? 'Änderungen speichern' : 'Buchung erstellen'}
                     </Button>
                     <Button type="button" variant="outline" className="w-full" onClick={() => router.back()}>Abbrechen</Button>
                 </CardContent>
