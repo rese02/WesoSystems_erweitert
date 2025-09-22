@@ -33,10 +33,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { deleteBookingsAction } from '@/actions/hotel-actions';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 const statusConfig: Record<BookingStatus, { label: string; icon: React.ElementType; color: string }> = {
   Pending: { label: 'Ausstehend', icon: Clock, color: 'bg-orange-100 text-orange-800 border-orange-200' },
@@ -232,6 +233,7 @@ export default function BookingsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    autoResetPageIndex: false,
     initialState: {
       sorting: [{ id: 'lastChange', desc: true }]
     }
