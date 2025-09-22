@@ -6,7 +6,7 @@ import {PlusCircle} from 'lucide-react';
 import {hotelColumns} from '@/components/data-table/columns';
 import {DataTable} from '@/components/data-table/data-table';
 import {db} from '@/lib/firebase/client';
-import {collection, onSnapshot, orderBy, query} from 'firebase/firestore';
+import {collection, onSnapshot, orderBy, query, Timestamp} from 'firebase/firestore';
 import {Hotel} from '@/lib/types';
 import {useEffect, useState} from 'react';
 
@@ -20,23 +20,19 @@ export default function AgencyDashboardPage() {
 
     const unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
+      async (snapshot) => {
         const hotelsList = snapshot.docs.map((doc) => {
           const data = doc.data();
 
-          let createdAt: string;
-          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-            createdAt = data.createdAt.toDate().toISOString();
-          } else if (data.createdAt) {
-            createdAt = new Date(data.createdAt).toISOString();
-          } else {
-            createdAt = new Date().toISOString();
-          }
+          // Handle Timestamp conversion safely
+          const createdAt = data.createdAt instanceof Timestamp 
+            ? data.createdAt.toDate().toISOString() 
+            : new Date().toISOString();
 
           return {
             id: doc.id,
             ...data,
-            hotelier: data.hotelier || {},
+            hotelier: data.hotelier || {}, // ensure hotelier object exists
             createdAt: createdAt,
           } as Hotel;
         });
