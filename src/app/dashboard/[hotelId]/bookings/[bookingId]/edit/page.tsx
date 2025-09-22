@@ -1,5 +1,5 @@
 
-import { CreateBookingClientPage } from '../../../create/create-booking-client-page';
+import { CreateBookingClientPage } from '../../create/create-booking-client-page';
 import { db } from '@/lib/firebase/client';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
