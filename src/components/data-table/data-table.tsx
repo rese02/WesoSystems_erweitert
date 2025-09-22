@@ -35,6 +35,7 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: RowSelectionState;
   setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
   toolbarContent?: React.ReactNode;
+  initialSorting?: SortingState;
 }
 
 export function DataTable<TData, TValue>({
@@ -46,8 +47,9 @@ export function DataTable<TData, TValue>({
   rowSelection: controlledRowSelection,
   setRowSelection: controlledSetRowSelection,
   toolbarContent,
+  initialSorting = [],
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
     

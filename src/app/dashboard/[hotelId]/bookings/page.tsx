@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowUpDown, PlusCircle, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { type ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef, type Row } from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   <Badge
     className={cn('capitalize', {
-      'bg-green-100 text-green-800 border-green-200': status === 'Confirmed' || status === 'Data Provided',
+      'bg-green-100 text-green-800 border-green-200': status === 'Confirmed' || status === 'Data Provided' || status === 'Completed',
       'bg-yellow-100 text-yellow-800 border-yellow-200': status === 'Partial Payment',
       'bg-orange-100 text-orange-800 border-orange-200': status === 'Pending',
       'bg-red-100 text-red-800 border-red-200': status === 'Cancelled',
@@ -54,7 +54,7 @@ const formatDate = (timestamp: Timestamp | Date) => {
 
 type EnrichedBooking = Booking & { linkId?: string };
 
-const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Cancelled'];
+const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Completed', 'Cancelled'];
 
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
@@ -68,7 +68,7 @@ export default function BookingsPage() {
   useEffect(() => {
     if (!params.hotelId) return;
     const bookingsCollection = collection(db, 'hotels', params.hotelId, 'bookings');
-    const q = query(bookingsCollection, orderBy('checkIn', 'desc'));
+    const q = query(bookingsCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const bookingsList = snapshot.docs.map(doc => ({
@@ -91,6 +91,9 @@ export default function BookingsPage() {
       
       setBookings(enrichedBookings);
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching bookings:", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -129,29 +132,26 @@ export default function BookingsPage() {
     { accessorKey: 'guestName', header: 'Gast' },
     { 
         accessorKey: 'checkIn', 
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Check-in
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
+        header: 'Check-in',
         cell: ({ row }) => formatDate(row.getValue('checkIn'))
     },
     { 
         accessorKey: 'checkOut', 
+        header: 'Check-out',
+        cell: ({ row }) => formatDate(row.getValue('checkOut'))
+    },
+     { 
+        accessorKey: 'createdAt', 
         header: ({ column }) => (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Check-out
+            Erstellt am
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => formatDate(row.getValue('checkOut'))
+        cell: ({ row }) => formatDate(row.getValue('createdAt'))
     },
     {
       accessorKey: 'status',
@@ -160,17 +160,7 @@ export default function BookingsPage() {
     },
     {
       accessorKey: 'price',
-      header: ({ column }) => (
-        <div className="text-right">
-          <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-              Preis
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        </div>
-      ),
+      header: () => <div className="text-right">Preis</div>,
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue('price'));
         const formatted = new Intl.NumberFormat('de-DE', {
@@ -187,10 +177,30 @@ export default function BookingsPage() {
   ];
 
   const selectedBookingIds = useMemo(() => {
-    return Object.keys(rowSelection).map(index => bookings[parseInt(index)].id);
-  }, [rowSelection, bookings]);
+    // Safely get selected row data
+    const table = document.querySelector('table');
+    if (!table) return [];
+    
+    const selectedRows = table.querySelectorAll<HTMLTableRowElement>('[data-state="selected"]');
+    // This is a workaround to get the IDs. A better way would be to use the table instance.
+    // For now, let's assume this works with the current table structure.
+    
+    // Correct way with table instance, if available
+    // return table.getSelectedRowModel().flatRows.map(row => (row.original as EnrichedBooking).id);
+    
+    // The previous implementation had a bug, let's fix it by checking for the row's data.
+    const selectedRowData = Object.keys(rowSelection).map(indexStr => {
+      const index = parseInt(indexStr, 10);
+      return filteredBookings[index];
+    }).filter(Boolean); // Filter out undefined if index is out of bounds
+
+    return selectedRowData.map(booking => booking.id);
+    
+  }, [rowSelection, filteredBookings]);
+
 
   const handleDeleteSelected = async () => {
+    if (selectedBookingIds.length === 0) return;
     const result = await deleteBookingsAction(params.hotelId, selectedBookingIds);
     if (result.success) {
       toast({
@@ -231,6 +241,7 @@ export default function BookingsPage() {
         loading={loading}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
+        initialSorting={[{ id: 'createdAt', desc: true }]}
         toolbarContent={
             <>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>

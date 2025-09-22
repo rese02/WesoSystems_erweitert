@@ -46,7 +46,8 @@ export type BookingStatus =
   | 'Data Provided'
   | 'Partial Payment'
   | 'Confirmed'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'Completed';
 
 export type Room = {
   type: string;
@@ -69,7 +70,8 @@ export type Booking = {
   language: 'de' | 'en' | 'it';
   rooms: Room[];
   internalNotes?: string;
-  createdAt: Date | Timestamp; 
+  createdAt: Date | Timestamp;
+  updatedAt?: Date | Timestamp;
   guestDetails?: GuestData;
   paymentOption?: 'deposit' | 'full';
   amountPaid?: number;
