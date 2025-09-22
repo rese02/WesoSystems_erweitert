@@ -46,10 +46,11 @@ const BookingStatusBadge = ({ status }: { status: Booking['status'] }) => (
   </Badge>
 );
 
-const formatDate = (timestamp: Timestamp | Date) => {
+const formatDate = (timestamp: Timestamp | Date, includeTime: boolean = false) => {
     if (!timestamp) return 'N/A';
     const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
-    return format(date, 'dd.MM.yyyy', { locale: de });
+    const formatString = includeTime ? 'dd.MM.yyyy, HH:mm \'Uhr\'' : 'dd.MM.yyyy';
+    return format(date, formatString, { locale: de });
 };
 
 type EnrichedBooking = Booking & { linkId?: string };
@@ -151,7 +152,17 @@ export default function BookingsPage() {
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => formatDate(row.getValue('createdAt'))
+        cell: ({ row }) => {
+            const date = row.getValue('createdAt') as Timestamp | Date;
+            if (!date) return 'N/A';
+            const d = date instanceof Timestamp ? date.toDate() : date;
+            return (
+                <div>
+                    <div>{format(d, 'dd.MM.yyyy', { locale: de })}</div>
+                    <div className="text-xs text-muted-foreground">{format(d, 'HH:mm', { locale: de })} Uhr</div>
+                </div>
+            )
+        }
     },
     {
       accessorKey: 'status',
@@ -176,26 +187,15 @@ export default function BookingsPage() {
     },
   ];
 
-  const selectedBookingIds = useMemo(() => {
-    // Safely get selected row data
-    const table = document.querySelector('table');
-    if (!table) return [];
-    
-    const selectedRows = table.querySelectorAll<HTMLTableRowElement>('[data-state="selected"]');
-    // This is a workaround to get the IDs. A better way would be to use the table instance.
-    // For now, let's assume this works with the current table structure.
-    
-    // Correct way with table instance, if available
-    // return table.getSelectedRowModel().flatRows.map(row => (row.original as EnrichedBooking).id);
-    
-    // The previous implementation had a bug, let's fix it by checking for the row's data.
-    const selectedRowData = Object.keys(rowSelection).map(indexStr => {
-      const index = parseInt(indexStr, 10);
-      return filteredBookings[index];
-    }).filter(Boolean); // Filter out undefined if index is out of bounds
-
-    return selectedRowData.map(booking => booking.id);
-    
+ const selectedBookingIds = useMemo(() => {
+    return Object.keys(rowSelection)
+      .map(indexStr => {
+        const index = parseInt(indexStr, 10);
+        // Greife auf die gefilterten Buchungen zu, die in der Tabelle angezeigt werden
+        const booking = filteredBookings[index];
+        return booking ? booking.id : null;
+      })
+      .filter((id): id is string => id !== null);
   }, [rowSelection, filteredBookings]);
 
 
@@ -283,3 +283,5 @@ export default function BookingsPage() {
     </div>
   );
 }
+
+    
