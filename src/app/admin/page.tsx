@@ -20,7 +20,7 @@ export default function AgencyDashboardPage() {
 
     const unsubscribe = onSnapshot(
       q,
-      async (snapshot) => {
+      (snapshot) => {
         const hotelsList = snapshot.docs.map((doc) => {
           const data = doc.data();
 
@@ -29,10 +29,11 @@ export default function AgencyDashboardPage() {
             ? data.createdAt.toDate().toISOString() 
             : new Date().toISOString();
 
+          // WICHTIG: Stelle sicher, dass das gesamte hotelier-Objekt (inkl. Passwort) übergeben wird.
           return {
             id: doc.id,
             ...data,
-            hotelier: data.hotelier || {}, // ensure hotelier object exists
+            hotelier: data.hotelier, // Dies schließt E-Mail und Passwort ein.
             createdAt: createdAt,
           } as Hotel;
         });
