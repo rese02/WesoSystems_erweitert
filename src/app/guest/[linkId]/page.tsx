@@ -90,9 +90,6 @@ export default async function GuestBookingPage({
         <div className="text-center p-10 flex flex-col items-center justify-center min-h-[60vh]">
             <h1 className="text-2xl font-bold">Dieser Buchungslink wurde bereits verwendet.</h1>
             <p className="text-muted-foreground mt-2">Ihre Daten wurden bereits erfolgreich übermittelt.</p>
-             <Button asChild variant="link" className="mt-4">
-              <Link href="/">Zur Startseite</Link>
-            </Button>
         </div>
     );
   }
