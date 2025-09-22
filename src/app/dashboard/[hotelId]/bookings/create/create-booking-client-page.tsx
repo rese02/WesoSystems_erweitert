@@ -25,7 +25,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { CalendarIcon, PlusCircle, Trash2, Loader2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -36,7 +36,6 @@ import { createBookingAction, updateBookingAction } from '@/actions/hotel-action
 import { useRouter } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IdUploadRequirement } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
 
 type RoomState = Room & { id: number };
 
@@ -52,23 +51,25 @@ type CreateBookingClientPageProps = {
 export function CreateBookingClientPage({ hotelId, booking, config }: CreateBookingClientPageProps) {
   const router = useRouter();
   const isEditMode = !!booking;
-
-  // Safely initialize dates on the client to avoid hydration mismatch
-  const getInitialDate = () => {
-    if (booking?.checkIn && booking?.checkOut) {
-      // Data from server is already a Date object
-      return { from: new Date(booking.checkIn), to: new Date(booking.checkOut) };
-    }
-    return undefined;
-  }
   
-  const [date, setDate] = useState<DateRange | undefined>(getInitialDate());
+  const [date, setDate] = useState<DateRange | undefined>();
   const [rooms, setRooms] = useState<RoomState[]>(
     booking?.rooms.map((r, i) => ({ ...r, id: i })) ||
     [{ id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
   );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // This effect runs only on the client, ensuring `new Date()` is safe
+    if (booking?.checkIn && booking?.checkOut) {
+      setDate({
+        from: new Date(booking.checkIn as any),
+        to: new Date(booking.checkOut as any)
+      });
+    }
+  }, [booking]);
+
 
   const addRoom = () => {
     setRooms([

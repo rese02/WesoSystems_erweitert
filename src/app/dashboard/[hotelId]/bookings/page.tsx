@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowUpDown, PlusCircle, Trash2, Clock, CheckCircle2, FileText, PieChart, XCircle, Ban, BadgeCheck } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, Trash2, Clock, CheckCircle2, FileText, PieChart, Ban, BadgeCheck } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { type ColumnDef, useReactTable, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -91,8 +91,6 @@ const formatDate = (timestamp: Timestamp | Date | undefined, includeTime: boolea
 };
 
 type EnrichedBooking = Booking & { linkId?: string };
-
-const ALL_STATUSES: BookingStatus[] = ['Pending', 'Data Provided', 'Partial Payment', 'Confirmed', 'Completed', 'Cancelled'];
 
 export default function BookingsPage() {
   const params = useParams<{ hotelId: string }>();
@@ -227,12 +225,15 @@ export default function BookingsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      sorting: [{ id: 'lastChange', desc: true }]
+    }
   });
   
   const selectedBookingIds = useMemo(() => {
     const selectedRows = table.getSelectedRowModel().flatRows;
     return selectedRows.map(row => (row.original as Booking).id);
-  }, [rowSelection, table.getSelectedRowModel()]);
+  }, [rowSelection, table]);
 
   const handleDeleteSelected = async () => {
     if (selectedBookingIds.length === 0) return;
@@ -274,9 +275,7 @@ export default function BookingsPage() {
         filterColumnId="guestName"
         filterPlaceholder="Name, ID..."
         loading={loading}
-        rowSelection={rowSelection}
-        setRowSelection={setRowSelection}
-        initialSorting={[{ id: 'lastChange', desc: true }]}
+        table={table}
         toolbarContent={
             <>
                 {selectedBookingIds.length > 0 && (
@@ -309,8 +308,8 @@ export default function BookingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Alle Status</SelectItem>
-                            {Object.entries(statusConfig).map(([status, {label}]) => (
-                            <SelectItem key={status} value={status}>{label}</SelectItem>
+                            {Object.keys(statusConfig).map((status) => (
+                              <SelectItem key={status} value={status}>{statusConfig[status as BookingStatus].label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

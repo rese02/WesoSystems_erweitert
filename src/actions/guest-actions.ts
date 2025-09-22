@@ -107,7 +107,8 @@ export async function finalizeBookingAction(
 
     // Den Buchungslink als "verwendet" markieren
     await bookingLinkRef.update({
-        status: 'used'
+        status: 'used',
+        updatedAt: FieldValue.serverTimestamp(),
     });
     
     // E-Mail-Versand vorbereiten

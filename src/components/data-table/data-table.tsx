@@ -12,6 +12,7 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   useReactTable,
+  Table as TanstackTable
 } from '@tanstack/react-table';
 
 import {
@@ -32,10 +33,8 @@ interface DataTableProps<TData, TValue> {
   filterColumnId: string;
   filterPlaceholder: string;
   loading?: boolean;
-  rowSelection?: RowSelectionState;
-  setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  table?: TanstackTable<TData>;
   toolbarContent?: React.ReactNode;
-  initialSorting?: SortingState;
 }
 
 export function DataTable<TData, TValue>({
@@ -44,24 +43,15 @@ export function DataTable<TData, TValue>({
   filterColumnId,
   filterPlaceholder,
   loading = false,
-  rowSelection: controlledRowSelection,
-  setRowSelection: controlledSetRowSelection,
+  table: controlledTable,
   toolbarContent,
-  initialSorting = [],
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = React.useState({})
     
-  // Interne State-Verwaltung für die Zeilenauswahl
-  const [internalRowSelection, setInternalRowSelection] = React.useState({});
-  
-  // Bestimme, welcher State und Setter verwendet wird
-  const rowSelection = controlledRowSelection ?? internalRowSelection;
-  const setRowSelection = controlledSetRowSelection ?? setInternalRowSelection;
-
-
-  const table = useReactTable({
+  const internalTable = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -77,6 +67,8 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   });
+
+  const table = controlledTable ?? internalTable;
 
   return (
     <div className="space-y-4">
