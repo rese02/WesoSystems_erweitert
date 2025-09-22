@@ -1,6 +1,6 @@
 'use server';
 
-import {db} from '@/lib/firebase/admin';
+import {db, auth} from '@/lib/firebase/admin';
 import {Timestamp, FieldValue} from 'firebase-admin/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
@@ -10,6 +10,7 @@ import {DateRange} from 'react-day-picker';
 type CreateHotelState = {
   message: string;
   success: boolean;
+  errorType?: 'email' | null;
 };
 
 export async function createHotelAction(
@@ -17,19 +18,39 @@ export async function createHotelAction(
   formData: FormData
 ): Promise<CreateHotelState> {
   const hotelierEmail = formData.get('hotelierEmail') as string;
+  const hotelierPassword = formData.get('hotelierPassword') as string;
 
-  // Check if email already exists
-  const hotelsRef = db.collection('hotels');
-  const q = hotelsRef.where('hotelier.email', '==', hotelierEmail);
-  const querySnapshot = await q.get();
-
-  if (!querySnapshot.empty) {
+  if (!hotelierEmail || !hotelierPassword || hotelierPassword.length < 6) {
     return {
-      message: 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.',
-      success: false,
+        message: 'E-Mail und ein Passwort mit mindestens 6 Zeichen sind erforderlich.',
+        success: false
     };
   }
 
+
+  let userRecord;
+  try {
+      userRecord = await auth.createUser({
+          email: hotelierEmail,
+          password: hotelierPassword,
+          emailVerified: true,
+          disabled: false,
+      });
+  } catch (error: any) {
+      if (error.code === 'auth/email-already-exists') {
+          return {
+              message: 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.',
+              success: false,
+              errorType: 'email',
+          };
+      }
+      console.error('Error creating Firebase Auth user:', error);
+      return {
+          message: 'Fehler beim Erstellen des Authentifizierungsbenutzers.',
+          success: false
+      };
+  }
+  
 
   const mealTypes = formData.getAll('mealTypes') as string[];
   const roomCategories = formData.getAll('roomCategories') as string[];
@@ -41,9 +62,11 @@ export async function createHotelAction(
     logoUrl: formData.get('logoUrl') as string,
     createdAt: FieldValue.serverTimestamp(),
 
+    // Das Passwort wird NICHT mehr in Firestore gespeichert.
+    // Die UID des Auth-Users wird als Referenz gespeichert.
     hotelier: {
       email: hotelierEmail,
-      password: formData.get('hotelierPassword') as string,
+      uid: userRecord.uid,
     },
 
     contact: {
@@ -53,7 +76,7 @@ export async function createHotelAction(
 
     bankDetails: {
       accountHolder: formData.get('accountHolder') as string,
-      iban: formData.get('iban') as string,
+      iban: formData.gbt('iban') as string,
       bic: formData.get('bic') as string,
       bankName: formData.get('bankName') as string,
     },
@@ -76,9 +99,16 @@ export async function createHotelAction(
 
   try {
     const docRef = await db.collection('hotels').add(hotelData);
+    
+    // WICHTIG: Dem Auth-Benutzer die Hotel-ID als Custom Claim zuweisen
+    await auth.setCustomUserClaims(userRecord.uid, { role: 'hotelier', hotelId: docRef.id });
+
     console.log('Hotel created with ID: ', docRef.id);
   } catch (error) {
-    console.error('Error creating hotel:', error);
+    console.error('Error creating hotel or setting claims:', error);
+    // Wenn hier etwas schiefgeht, sollten wir den Auth-Benutzer wieder löschen,
+    // um "verwaiste" Benutzer zu vermeiden.
+    await auth.deleteUser(userRecord.uid);
     return {
       message: 'Hotel konnte nicht erstellt werden.',
       success: false,
@@ -91,10 +121,27 @@ export async function createHotelAction(
 
 export async function deleteHotelAction(hotelId: string) {
   try {
+    const hotelDoc = await db.collection('hotels').doc(hotelId).get();
+    const hotelData = hotelDoc.data();
+
+    // Zuerst den Firebase Auth Benutzer löschen, falls vorhanden
+    if (hotelData?.hotelier?.uid) {
+        try {
+            await auth.deleteUser(hotelData.hotelier.uid);
+        } catch (authError: any) {
+            // Wenn der Benutzer nicht gefunden wird, ist das okay, vielleicht wurde er manuell gelöscht.
+            if (authError.code !== 'auth/user-not-found') {
+                throw authError; // Andere Auth-Fehler weiterwerfen
+            }
+        }
+    }
+
+    // Dann das Hotel-Dokument aus Firestore löschen
     await db.collection('hotels').doc(hotelId).delete();
+
     revalidatePath('/admin');
     return {
-      message: 'Hotel erfolgreich gelöscht.',
+      message: 'Hotel und zugehöriger Benutzer erfolgreich gelöscht.',
       success: true,
     };
   } catch (error) {
@@ -244,28 +291,32 @@ export async function updateHotelierProfileAction(
   const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
-    // Wenn ein neues Passwort eingegeben wurde, muss es validiert werden
+    const hotelSnap = await hotelRef.get();
+    if (!hotelSnap.exists) throw new Error("Hotel not found");
+    const hotelData = hotelSnap.data();
+    if (!hotelData?.hotelier?.uid) throw new Error("Hotelier UID not found");
+    
+    const uid = hotelData.hotelier.uid;
+
+    const updates: any = { 'hotelier.email': email };
+    const authUpdates: any = { email: email };
+
     if (newPassword) {
-      if (newPassword.length < 8) {
-        return { message: 'Das neue Passwort muss mindestens 8 Zeichen lang sein.', success: false };
+      if (newPassword.length < 6) {
+        return { message: 'Das neue Passwort muss mindestens 6 Zeichen lang sein.', success: false };
       }
       if (newPassword !== confirmPassword) {
         return { message: 'Die Passwörter stimmen nicht überein.', success: false };
       }
-      
-      await hotelRef.update({
-        'hotelier.email': email,
-        'hotelier.password': newPassword,
-      });
-
-    } else {
-      // Nur E-Mail aktualisieren
-      await hotelRef.update({
-        'hotelier.email': email,
-      });
+      authUpdates.password = newPassword;
     }
     
-    // Return success but let the client handle revalidation
+    await auth.updateUser(uid, authUpdates);
+    await hotelRef.update(updates);
+    
+    revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
+    
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
   } catch (error) {

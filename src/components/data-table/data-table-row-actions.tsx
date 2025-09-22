@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, KeyRound, MoreHorizontal } from 'lucide-react';
+import { Copy, KeyRound, MoreHorizontal, UserX } from 'lucide-react';
 import { type Row } from '@tanstack/react-table';
 
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ export function HotelDataTableRowActions<TData>({
     if (result.success) {
       toast({
         title: 'Hotel gelöscht',
-        description: 'Das Hotel wurde erfolgreich entfernt.',
+        description: result.message,
       });
     } else {
       toast({
@@ -66,8 +66,8 @@ export function HotelDataTableRowActions<TData>({
   const copyCredentials = () => {
     if (!hotel.hotelier?.email || !hotel.hotelier?.password) {
       toast({
-        title: 'Fehler',
-        description: 'Zugangsdaten unvollständig oder nicht vorhanden.',
+        title: 'Passwort nicht verfügbar',
+        description: 'Das Passwort wurde bei der Erstellung generiert und wird aus Sicherheitsgründen nicht erneut angezeigt. Sie können im Profil ein neues setzen.',
         variant: 'destructive',
       });
       return;
@@ -107,22 +107,22 @@ export function HotelDataTableRowActions<TData>({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyCredentials}>
              <KeyRound className="mr-2 h-4 w-4" />
-            <span>Zugangsdaten kopieren</span>
+            <span>Initiale Zugangsdaten kopieren</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:text-destructive">
-              Löschen
+             <UserX className="mr-2 h-4 w-4" />
+              Hotel & Benutzer löschen
             </DropdownMenuItem>
           </AlertDialogTrigger>
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+          <AlertDialogTitle>Sind Sie absolut sicher?</AlertDialogTitle>
           <AlertDialogDescription>
-            Diese Aktion kann nicht rückgängig gemacht werden. Das Hotel und
-            alle zugehörigen Daten werden dauerhaft gelöscht.
+            Diese Aktion kann nicht rückgängig gemacht werden. Das Hotel, alle Buchungen und der zugehörige Hotelier-Benutzeraccount werden dauerhaft gelöscht.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -131,7 +131,7 @@ export function HotelDataTableRowActions<TData>({
             className="bg-destructive hover:bg-destructive/90"
             onClick={handleDelete}
           >
-            Fortfahren
+            Fortfahren und löschen
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

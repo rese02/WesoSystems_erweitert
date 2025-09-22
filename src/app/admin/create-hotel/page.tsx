@@ -21,6 +21,7 @@ import Image from 'next/image';
 const initialState = {
   message: '',
   success: false,
+  errorType: null,
 };
 
 export default function CreateHotelPage() {
@@ -35,7 +36,7 @@ export default function CreateHotelPage() {
   const [state, action] = useActionState(createHotelAction, initialState);
   
   useEffect(() => {
-    if (state.message && !state.success && state.message !== 'Diese E-Mail-Adresse wird bereits für ein anderes Hotel verwendet.') {
+    if (state.message && !state.success) {
       toast({
         title: 'Fehler bei der Erstellung',
         description: state.message,
@@ -45,7 +46,7 @@ export default function CreateHotelPage() {
   }, [state, toast]);
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!?@';
     let password = '';
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -132,9 +133,9 @@ export default function CreateHotelPage() {
                   type="email"
                   placeholder="Ihre E-Mail für den Hotel-Login"
                   required
-                  className={cn({ 'border-destructive': state.message && !state.success && state.message.includes('E-Mail') })}
+                  className={cn({ 'border-destructive': state.errorType === 'email' })}
                 />
-                 {state.message && !state.success && state.message.includes('E-Mail') && (
+                 {state.errorType === 'email' && (
                     <p className="flex items-center text-sm text-destructive">
                         <AlertCircle className="mr-2 h-4 w-4" />
                         {state.message}
@@ -149,7 +150,7 @@ export default function CreateHotelPage() {
                     name="hotelierPassword"
                     value={hotelierPassword}
                     readOnly
-                    placeholder="Sicheres Passwort generieren"
+                    placeholder="Sicheres Passwort generieren oder eingeben"
                     required
                   />
                   <Button type="button" variant="outline" onClick={generatePassword}>

@@ -9,7 +9,8 @@ export type Hotel = {
 
   hotelier: {
     email: string;
-    password?: string;
+    uid: string; // Firebase Auth User ID
+    password?: string; // Passwort wird nicht mehr in Firestore gespeichert, nur für Typ-Kompatibilität beibehalten
   };
 
   contact: {
