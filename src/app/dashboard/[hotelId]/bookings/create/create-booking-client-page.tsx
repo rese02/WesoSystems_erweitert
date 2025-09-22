@@ -55,9 +55,9 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
 
   const getInitialDate = () => {
     if (booking?.checkIn && booking?.checkOut) {
-      const checkInDate = booking.checkIn instanceof Timestamp ? booking.checkIn.toDate() : new Date(booking.checkIn);
-      const checkOutDate = booking.checkOut instanceof Timestamp ? booking.checkOut.toDate() : new Date(booking.checkOut);
-      return { from: checkInDate, to: checkOutDate };
+      // Safely convert Timestamps to Dates on the client
+      const toDate = (ts: any) => ts instanceof Timestamp ? ts.toDate() : new Date(ts);
+      return { from: toDate(booking.checkIn), to: toDate(booking.checkOut) };
     }
     return undefined;
   }

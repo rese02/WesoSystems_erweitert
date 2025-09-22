@@ -31,17 +31,12 @@ async function getBooking(hotelId: string, bookingId: string): Promise<Booking> 
   
   const data = bookingSnap.data();
 
-  // Convert Timestamps to serializable Dates before passing to client component
-  const toDate = (ts: any) => (ts instanceof Timestamp ? ts.toDate() : new Date(ts || Date.now()));
-
+  // IMPORTANT: Keep Timestamps as they are for the client component to handle.
+  // The client component will convert them to Date objects to avoid hydration errors.
   return { 
       ...data, 
       id: bookingSnap.id,
       hotelId: hotelId,
-      checkIn: toDate(data.checkIn),
-      checkOut: toDate(data.checkOut),
-      createdAt: toDate(data.createdAt),
-      updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
   } as Booking;
 }
 
