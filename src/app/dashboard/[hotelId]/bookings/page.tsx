@@ -26,6 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { deleteBookingsAction } from '@/actions/hotel-actions';
 import { useToast } from '@/hooks/use-toast';
