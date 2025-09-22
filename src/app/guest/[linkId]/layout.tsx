@@ -21,9 +21,10 @@ async function getHotelData(linkId: string): Promise<Hotel | null> {
     }
     
     const hotelRef = doc(db, 'hotels', booking.hotelId);
-    const hotelSnap = await getDoc(hotelRef);
+    const hotelSnap = await getDoc(hotelRef); // KORREKTUR: getDoc statt getDocs
 
     if (hotelSnap.exists()) {
+        // KORREKTUR: hotelSnap.data() direkt verwenden
         return hotelSnap.data() as Hotel;
     }
 
