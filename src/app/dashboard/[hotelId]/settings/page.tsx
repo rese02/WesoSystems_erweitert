@@ -1,5 +1,7 @@
 'use client';
 
+import { useActionState, useEffect, useState } from 'react';
+import { updateHotelSettingsAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +17,21 @@ import { Hotel } from '@/lib/types';
 import { doc, getDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+const initialState = {
+  message: '',
+  success: false,
+};
 
 export default function HotelSettingsPage() {
   const params = useParams<{ hotelId: string }>();
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const boundUpdateAction = updateHotelSettingsAction.bind(null, params.hotelId);
+  const [state, formAction, isPending] = useActionState(boundUpdateAction, initialState);
 
   useEffect(() => {
     async function fetchHotel() {
@@ -35,6 +46,16 @@ export default function HotelSettingsPage() {
     }
     fetchHotel();
   }, [params.hotelId]);
+
+  useEffect(() => {
+    if (state.message) {
+      toast({
+        title: state.success ? 'Erfolg!' : 'Fehler',
+        description: state.message,
+        variant: state.success ? 'default' : 'destructive',
+      });
+    }
+  }, [state, toast]);
 
   if (loading || !hotel) {
     return (
@@ -55,7 +76,7 @@ export default function HotelSettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-8">
+      <form action={formAction} className="grid gap-8">
         <Card>
           <CardHeader>
             <CardTitle>Basisinformationen</CardTitle>
@@ -66,19 +87,19 @@ export default function HotelSettingsPage() {
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="hotelName">Hotelname</Label>
-              <Input id="hotelName" name="hotelName" defaultValue={hotel.hotelName} />
+              <Input id="hotelName" name="hotelName" defaultValue={hotel.hotelName} required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="domain">Domain</Label>
-              <Input id="domain" name="domain" defaultValue={hotel.domain} />
+              <Input id="domain" name="domain" defaultValue={hotel.domain} required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactEmail">Kontakt E-Mail</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" defaultValue={hotel.contact.email} />
+              <Input id="contactEmail" name="contactEmail" type="email" defaultValue={hotel.contact.email} required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contactPhone">Kontakt Telefon</Label>
-              <Input id="contactPhone" name="contactPhone" type="tel" defaultValue={hotel.contact.phone} />
+              <Input id="contactPhone" name="contactPhone" type="tel" defaultValue={hotel.contact.phone} required />
             </div>
           </CardContent>
         </Card>
@@ -93,27 +114,30 @@ export default function HotelSettingsPage() {
           <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="grid gap-2 md:col-span-2">
               <Label htmlFor="accountHolder">Kontoinhaber</Label>
-              <Input id="accountHolder" name="accountHolder" defaultValue={hotel.bankDetails.accountHolder} disabled={!canEditBankDetails}/>
+              <Input id="accountHolder" name="accountHolder" defaultValue={hotel.bankDetails.accountHolder} disabled={!canEditBankDetails} required={canEditBankDetails} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="iban">IBAN</Label>
-              <Input id="iban" name="iban" defaultValue={hotel.bankDetails.iban} disabled={!canEditBankDetails}/>
+              <Input id="iban" name="iban" defaultValue={hotel.bankDetails.iban} disabled={!canEditBankDetails} required={canEditBankDetails} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="bic">BIC/SWIFT</Label>
-              <Input id="bic" name="bic" defaultValue={hotel.bankDetails.bic} disabled={!canEditBankDetails}/>
+              <Input id="bic" name="bic" defaultValue={hotel.bankDetails.bic} disabled={!canEditBankDetails} required={canEditBankDetails} />
             </div>
             <div className="grid gap-2 md:col-span-2">
               <Label htmlFor="bankName">Bank</Label>
-              <Input id="bankName" name="bankName" defaultValue={hotel.bankDetails.bankName} disabled={!canEditBankDetails}/>
+              <Input id="bankName" name="bankName" defaultValue={hotel.bankDetails.bankName} disabled={!canEditBankDetails} required={canEditBankDetails} />
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end">
-            <Button>Änderungen speichern</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+              Änderungen speichern
+            </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

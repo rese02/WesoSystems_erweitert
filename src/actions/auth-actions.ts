@@ -1,7 +1,7 @@
 'use server';
 
-import { db } from '@/lib/firebase/client'; // Umstellung auf die Client-SDK
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase/admin'; // Umstellung auf die Admin-SDK
+import { collection, query, where, getDocs, limit } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 
 type LoginState = {

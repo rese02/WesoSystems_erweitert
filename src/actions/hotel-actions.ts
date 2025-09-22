@@ -1,6 +1,6 @@
 'use server';
 
-import {db} from '@/lib/firebase/client';
+import {db} from '@/lib/firebase/admin';
 import {
   addDoc,
   collection,
@@ -12,7 +12,8 @@ import {
   getDocs,
   updateDoc,
   writeBatch,
-} from 'firebase/firestore';
+  FieldValue,
+} from 'firebase-admin/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {Booking, Room, IdUploadRequirement, BookingStatus} from '@/lib/types';
@@ -50,7 +51,7 @@ export async function createHotelAction(
     hotelName: formData.get('hotelName') as string,
     domain: formData.get('domain') as string,
     logoUrl: formData.get('logoUrl') as string,
-    createdAt: new Date(),
+    createdAt: FieldValue.serverTimestamp(),
 
     hotelier: {
       email: hotelierEmail,
@@ -197,7 +198,7 @@ export async function updateBookingAction(
     idUploadRequirement: formData.get('idUploadRequirement') as IdUploadRequirement || 'choice',
     internalNotes: (formData.get('internalNotes') as string) || '',
     rooms: rooms,
-    updatedAt: Timestamp.now(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 
   try {
@@ -311,6 +312,7 @@ export async function updateBookingStatus(
     const bookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingId);
     await updateDoc(bookingRef, {
       status: status,
+      updatedAt: FieldValue.serverTimestamp(),
     });
     revalidatePath(`/dashboard/${hotelId}/bookings`);
     return { success: true, message: 'Status erfolgreich aktualisiert.' };
@@ -351,5 +353,70 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
   } catch (error) {
     console.error('Error deleting bookings:', error);
     return { success: false, message: 'Fehler beim Löschen der Buchungen.' };
+  }
+}
+
+type UpdateSettingsState = {
+  message: string;
+  success: boolean;
+};
+
+export async function updateHotelSettingsAction(
+  hotelId: string,
+  prevState: UpdateSettingsState,
+  formData: FormData
+): Promise<UpdateSettingsState> {
+
+  const hotelRef = doc(db, 'hotels', hotelId);
+
+  try {
+    const hotelSnap = await hotelRef.get();
+    if (!hotelSnap.exists()) {
+      return { message: 'Hotel nicht gefunden.', success: false };
+    }
+    const hotelData = hotelSnap.data();
+    const canEditBankDetails = hotelData?.permissions?.canEditBankDetails ?? false;
+
+    // Basisdaten validieren
+    const hotelName = formData.get('hotelName') as string;
+    const domain = formData.get('domain') as string;
+    const contactEmail = formData.get('contactEmail') as string;
+    const contactPhone = formData.get('contactPhone') as string;
+
+    if (!hotelName || !domain || !contactEmail || !contactPhone) {
+      return { message: 'Alle Basis- und Kontaktdaten sind erforderlich.', success: false };
+    }
+
+    const updates: {[key: string]: any} = {
+      hotelName,
+      domain,
+      'contact.email': contactEmail,
+      'contact.phone': contactPhone,
+    };
+
+    // Bankdaten nur aktualisieren, wenn die Berechtigung vorhanden ist
+    if (canEditBankDetails) {
+      const accountHolder = formData.get('accountHolder') as string;
+      const iban = formData.get('iban') as string;
+      const bic = formData.get('bic') as string;
+      const bankName = formData.get('bankName') as string;
+
+      if (!accountHolder || !iban || !bic || !bankName) {
+         return { message: 'Alle Bankdaten sind erforderlich, wenn sie bearbeitet werden.', success: false };
+      }
+
+      updates['bankDetails.accountHolder'] = accountHolder;
+      updates['bankDetails.iban'] = iban;
+      updates['bankDetails.bic'] = bic;
+      updates['bankDetails.bankName'] = bankName;
+    }
+
+    await updateDoc(hotelRef, updates);
+
+    revalidatePath(`/dashboard/${hotelId}/settings`);
+    return { message: 'Einstellungen erfolgreich aktualisiert!', success: true };
+  } catch (error) {
+    console.error('Error updating hotel settings:', error);
+    return { message: 'Die Einstellungen konnten nicht gespeichert werden.', success: false };
   }
 }
