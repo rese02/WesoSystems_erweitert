@@ -38,8 +38,8 @@ export async function loginHotelAction(
     const hotelDoc = querySnapshot.docs[0];
     const hotelData = hotelDoc.data();
     
-    // Passwort-Vergleich serverseitig durchführen
-    if (hotelData.hotelier.password !== password) {
+    // WICHTIG: Sichere Überprüfung, ob das Passwort-Feld existiert, bevor darauf zugegriffen wird.
+    if (!hotelData.hotelier || !hotelData.hotelier.password || hotelData.hotelier.password !== password) {
          return {
             message: 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.',
             success: false,
