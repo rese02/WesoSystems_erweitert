@@ -1,7 +1,6 @@
 'use server';
 
 import { db } from '@/lib/firebase/admin';
-import { collection, query, where, getDocs, limit } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 
 type LoginState = {
@@ -24,14 +23,10 @@ export async function loginHotelAction(
   }
 
   try {
-    const hotelsRef = collection(db, 'hotels');
-    const q = query(
-        hotelsRef,
-        where('hotelier.email', '==', email),
-        limit(1)
-    );
+    const hotelsRef = db.collection('hotels');
+    const q = hotelsRef.where('hotelier.email', '==', email).limit(1);
 
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await q.get();
 
     if (querySnapshot.empty) {
       return {
