@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowUpDown, PlusCircle, Trash2, Clock, CheckCircle2, FileText, PieChart, XCircle, Ban, BadgeCheck } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { type ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef, useReactTable, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel } from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -216,20 +216,6 @@ export default function BookingsPage() {
     },
   ];
 
-  const selectedBookingIds = useMemo(() => {
-    const selectedRows = table.getSelectedRowModel().flatRows;
-    return selectedRows.map(row => (row.original as Booking).id);
-  }, [rowSelection, table.getSelectedRowModel()]);
-
-  const { getTableProps, getHeaderGroups, getRowModel, getSelectedRowModel } = useReactTable({
-        data: filteredBookings,
-        columns: bookingColumns,
-        state: { rowSelection },
-        onRowSelectionChange: setRowSelection,
-        getCoreRowModel: getCoreRowModel(),
-        enableRowSelection: true,
-  });
-
   const table = useReactTable({
     data: filteredBookings,
     columns: bookingColumns,
@@ -241,7 +227,11 @@ export default function BookingsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
-
+  
+  const selectedBookingIds = useMemo(() => {
+    const selectedRows = table.getSelectedRowModel().flatRows;
+    return selectedRows.map(row => (row.original as Booking).id);
+  }, [rowSelection, table.getSelectedRowModel()]);
 
   const handleDeleteSelected = async () => {
     if (selectedBookingIds.length === 0) return;
@@ -293,7 +283,7 @@ export default function BookingsPage() {
                         <AlertDialogTrigger asChild>
                             <Button variant="outline" className="ml-auto">
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Löschen
+                                Löschen ({selectedBookingIds.length})
                             </Button>
                         </AlertDialogTrigger>
                          <AlertDialogContent>
