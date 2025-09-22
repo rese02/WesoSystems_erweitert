@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowUpDown, PlusCircle, Trash2, Clock, CheckCircle2, FileText, PieChart, Ban, BadgeCheck } from 'lucide-react';
 import { DataTable } from '@/components/data-table/data-table';
-import { type ColumnDef } from '@tanstack/react-table';
+import { 
+  type ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+} from '@tanstack/react-table';
 import { Booking, BookingStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
