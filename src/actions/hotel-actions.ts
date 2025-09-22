@@ -1,19 +1,7 @@
 'use server';
 
 import {db} from '@/lib/firebase/admin';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  Timestamp,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  writeBatch,
-  FieldValue,
-} from 'firebase-admin/firestore';
+import {Timestamp, FieldValue} from 'firebase-admin/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {Booking, Room, IdUploadRequirement, BookingStatus} from '@/lib/types';
@@ -31,9 +19,9 @@ export async function createHotelAction(
   const hotelierEmail = formData.get('hotelierEmail') as string;
 
   // Check if email already exists
-  const hotelsRef = collection(db, 'hotels');
-  const q = query(hotelsRef, where('hotelier.email', '==', hotelierEmail));
-  const querySnapshot = await getDocs(q);
+  const hotelsRef = db.collection('hotels');
+  const q = hotelsRef.where('hotelier.email', '==', hotelierEmail);
+  const querySnapshot = await q.get();
 
   if (!querySnapshot.empty) {
     return {
@@ -87,7 +75,7 @@ export async function createHotelAction(
   };
 
   try {
-    const docRef = await addDoc(collection(db, 'hotels'), hotelData);
+    const docRef = await db.collection('hotels').add(hotelData);
     console.log('Hotel created with ID: ', docRef.id);
   } catch (error) {
     console.error('Error creating hotel:', error);
@@ -103,7 +91,7 @@ export async function createHotelAction(
 
 export async function deleteHotelAction(hotelId: string) {
   try {
-    await deleteDoc(doc(db, 'hotels', hotelId));
+    await db.collection('hotels').doc(hotelId).delete();
     revalidatePath('/admin');
     return {
       message: 'Hotel erfolgreich gelöscht.',
@@ -143,8 +131,8 @@ export async function createBookingAction(
   };
 
   try {
-    const bookingCollection = collection(db, 'hotels', hotelId, 'bookings');
-    const docRef = await addDoc(bookingCollection, bookingData);
+    const bookingCollection = db.collection('hotels').doc(hotelId).collection('bookings');
+    const docRef = await bookingCollection.add(bookingData);
 
     // This is the crucial part: create the full booking object to store in the link
     const fullBookingData: Booking = {
@@ -154,7 +142,7 @@ export async function createBookingAction(
     }
 
     // Now, create the booking link document with ALL the necessary data
-    const linkRef = await addDoc(collection(db, 'bookingLinks'), {
+    const linkRef = await db.collection('bookingLinks').add({
       hotelId: hotelId,
       bookingId: docRef.id,
       createdAt: Timestamp.now(),
@@ -186,7 +174,7 @@ export async function updateBookingAction(
     return {success: false, message: 'An- und Abreisedatum sind erforderlich.'};
   }
   
-  const bookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingId);
+  const bookingRef = db.collection('hotels').doc(hotelId).collection('bookings').doc(bookingId);
 
   const updatedBookingData = {
     guestName: `${formData.get('firstName')} ${formData.get('lastName')}`,
@@ -202,16 +190,16 @@ export async function updateBookingAction(
   };
 
   try {
-    await updateDoc(bookingRef, updatedBookingData);
+    await bookingRef.update(updatedBookingData);
     
     // Also update the booking data in the corresponding link document if it exists
-    const linksCollection = collection(db, 'bookingLinks');
-    const linkQuery = query(linksCollection, where('bookingId', '==', bookingId), where('hotelId', '==', hotelId));
-    const linkSnapshot = await getDocs(linkQuery);
+    const linksCollection = db.collection('bookingLinks');
+    const linkQuery = linksCollection.where('bookingId', '==', bookingId).where('hotelId', '==', hotelId);
+    const linkSnapshot = await linkQuery.get();
 
     if (!linkSnapshot.empty) {
       const linkDocRef = linkSnapshot.docs[0].ref;
-      await updateDoc(linkDocRef, {
+      await linkDocRef.update({
         'booking.guestName': updatedBookingData.guestName,
         'booking.checkIn': updatedBookingData.checkIn,
         'booking.checkOut': updatedBookingData.checkOut,
@@ -253,7 +241,7 @@ export async function updateHotelierProfileAction(
     return { message: 'E-Mail ist erforderlich.', success: false };
   }
 
-  const hotelRef = doc(db, 'hotels', hotelId);
+  const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
     // Wenn ein neues Passwort eingegeben wurde, muss es validiert werden
@@ -265,18 +253,19 @@ export async function updateHotelierProfileAction(
         return { message: 'Die Passwörter stimmen nicht überein.', success: false };
       }
       
-      await updateDoc(hotelRef, {
+      await hotelRef.update({
         'hotelier.email': email,
         'hotelier.password': newPassword,
       });
 
     } else {
       // Nur E-Mail aktualisieren
-      await updateDoc(hotelRef, {
+      await hotelRef.update({
         'hotelier.email': email,
       });
     }
-
+    
+    // Return success but let the client handle revalidation
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
   } catch (error) {
@@ -285,10 +274,17 @@ export async function updateHotelierProfileAction(
   }
 }
 
+export async function revalidateHotelierProfile(hotelId: string) {
+    'use server'
+    revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
+}
+
+
 export async function updateHotelLogo(hotelId: string, logoUrl: string) {
   try {
-    const hotelRef = doc(db, 'hotels', hotelId);
-    await updateDoc(hotelRef, {
+    const hotelRef = db.collection('hotels').doc(hotelId);
+    await hotelRef.update({
       logoUrl: logoUrl,
     });
     revalidatePath(`/dashboard/${hotelId}`);
@@ -306,8 +302,8 @@ export async function updateBookingStatus(
   status: BookingStatus
 ) {
   try {
-    const bookingRef = doc(db, 'hotels', hotelId, 'bookings', bookingId);
-    await updateDoc(bookingRef, {
+    const bookingRef = db.collection('hotels').doc(hotelId).collection('bookings').doc(bookingId);
+    await bookingRef.update({
       status: status,
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -324,13 +320,13 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
     return { success: false, message: 'Keine Buchungen zum Löschen ausgewählt.' };
   }
 
-  const batch = writeBatch(db);
+  const batch = db.batch();
 
   try {
     // Get all booking links associated with the booking IDs to delete them as well
-    const linksCollection = collection(db, 'bookingLinks');
-    const linkQuery = query(linksCollection, where('bookingId', 'in', bookingIds));
-    const linkSnapshot = await getDocs(linkQuery);
+    const linksCollection = db.collection('bookingLinks');
+    const linkQuery = linksCollection.where('bookingId', 'in', bookingIds);
+    const linkSnapshot = await linkQuery.get();
 
     linkSnapshot.forEach(linkDoc => {
       batch.delete(linkDoc.ref);
@@ -338,7 +334,7 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
 
     // Delete the bookings themselves
     bookingIds.forEach(id => {
-      const bookingRef = doc(db, 'hotels', hotelId, 'bookings', id);
+      const bookingRef = db.collection('hotels').doc(hotelId).collection('bookings').doc(id);
       batch.delete(bookingRef);
     });
 
@@ -364,11 +360,11 @@ export async function updateHotelSettingsAction(
   formData: FormData
 ): Promise<UpdateSettingsState> {
 
-  const hotelRef = doc(db, 'hotels', hotelId);
+  const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
     const hotelSnap = await hotelRef.get();
-    if (!hotelSnap.exists()) {
+    if (!hotelSnap.exists) {
       return { message: 'Hotel nicht gefunden.', success: false };
     }
     const hotelData = hotelSnap.data();
@@ -408,7 +404,7 @@ export async function updateHotelSettingsAction(
       updates['bankDetails.bankName'] = bankName;
     }
 
-    await updateDoc(hotelRef, updates);
+    await hotelRef.update(updates);
 
     revalidatePath(`/dashboard/${hotelId}/settings`);
     return { message: 'Einstellungen erfolgreich aktualisiert!', success: true };
