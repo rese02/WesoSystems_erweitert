@@ -1,4 +1,3 @@
-
 import { CreateBookingClientPage } from '../../create/create-booking-client-page';
 import { db } from '@/lib/firebase/client';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
@@ -31,12 +30,16 @@ async function getBooking(hotelId: string, bookingId: string): Promise<Booking> 
   
   const data = bookingSnap.data();
 
-  // IMPORTANT: Keep Timestamps as they are for the client component to handle.
-  // The client component will convert them to Date objects to avoid hydration errors.
+  // Convert Timestamps to serializable Dates for the client component.
+  // This prevents hydration errors.
   return { 
       ...data, 
       id: bookingSnap.id,
       hotelId: hotelId,
+      checkIn: data.checkIn?.toDate(),
+      checkOut: data.checkOut?.toDate(),
+      createdAt: data.createdAt?.toDate(),
+      updatedAt: data.updatedAt?.toDate(),
   } as Booking;
 }
 

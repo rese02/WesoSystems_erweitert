@@ -42,7 +42,7 @@ type RoomState = Room & { id: number };
 
 type CreateBookingClientPageProps = {
     hotelId: string;
-    booking?: Booking | null; // Make booking optional for create mode
+    booking?: Booking | null;
     config: {
         roomCategories: string[];
         mealTypes: string[];
@@ -53,11 +53,11 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
   const router = useRouter();
   const isEditMode = !!booking;
 
+  // Safely initialize dates on the client to avoid hydration mismatch
   const getInitialDate = () => {
     if (booking?.checkIn && booking?.checkOut) {
-      // Safely convert Timestamps to Dates on the client
-      const toDate = (ts: any) => ts instanceof Timestamp ? ts.toDate() : new Date(ts);
-      return { from: toDate(booking.checkIn), to: toDate(booking.checkOut) };
+      // Data from server is already a Date object
+      return { from: new Date(booking.checkIn), to: new Date(booking.checkOut) };
     }
     return undefined;
   }
@@ -65,7 +65,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
   const [date, setDate] = useState<DateRange | undefined>(getInitialDate());
   const [rooms, setRooms] = useState<RoomState[]>(
     booking?.rooms.map((r, i) => ({ ...r, id: i })) ||
-    [{ id: 1, type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
+    [{ id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
   );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -82,32 +82,37 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
   };
   
   const handleSubmit = async (formData: FormData) => {
+    if (!date?.from || !date?.to) {
+        toast({
+            title: 'Fehler',
+            description: 'Bitte wählen Sie einen gültigen Zeitraum aus.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
     setLoading(true);
+    const roomsToSave = rooms.map(({ id, ...rest }) => rest);
     let result;
+
     if (isEditMode && booking) {
-      result = await updateBookingAction(hotelId, booking.id, formData, rooms, date);
+      result = await updateBookingAction(hotelId, booking.id, formData, roomsToSave, date);
     } else {
-      result = await createBookingAction(hotelId, formData, rooms, date);
+      result = await createBookingAction(hotelId, formData, roomsToSave, date);
     }
     setLoading(false);
 
     if (result.success) {
-      if (isEditMode) {
-         toast({
-            title: 'Buchung aktualisiert!',
-            description: 'Die Buchungsdaten wurden erfolgreich gespeichert.'
-         });
-         router.push(`/dashboard/${hotelId}/bookings`);
-      } else {
-        toast({
-            title: 'Buchungslink erstellt!',
-            description: 'Der Link kann an den Gast gesendet werden. Er wurde in die Zwischenablage kopiert.'
-        });
-        if (result.link) {
-            navigator.clipboard.writeText(result.link);
-        }
-        router.push(`/dashboard/${hotelId}/bookings`);
+      toast({
+        title: isEditMode ? 'Buchung aktualisiert!' : 'Buchungslink erstellt!',
+        description: isEditMode 
+            ? 'Die Buchungsdaten wurden erfolgreich gespeichert.'
+            : 'Der Link wurde in die Zwischenablage kopiert und kann an den Gast gesendet werden.'
+      });
+      if (!isEditMode && result.link) {
+          navigator.clipboard.writeText(result.link);
       }
+      router.push(`/dashboard/${hotelId}/bookings`);
     } else {
       toast({
         title: 'Fehler',
@@ -116,21 +121,15 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
       });
     }
   };
-
-  const getFirstName = () => {
-    if (!booking?.guestName) return '';
-    return booking.guestName.split(' ')[0] || '';
-  }
-
-  const getLastName = () => {
-    if (!booking?.guestName) return '';
-    const parts = booking.guestName.split(' ');
-    if (parts.length > 1) {
+  
+  const getInitialName = (part: 'first' | 'last') => {
+      if (!booking?.guestName) return '';
+      const parts = booking.guestName.split(' ');
+      if (part === 'first') {
+          return parts[0] || '';
+      }
       return parts.slice(1).join(' ');
-    }
-    return '';
   }
-
 
   return (
     <form action={handleSubmit} className="space-y-6">
@@ -141,7 +140,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
             {isEditMode ? 'Ändern Sie die Details dieser Buchung.' : 'Bereiten Sie eine Buchung vor und generieren Sie einen Link für den Gast.'}
             </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <Button type="button" variant="ghost" size="icon" onClick={() => router.back()}>
             <X className="h-5 w-5"/>
         </Button>
       </div>
@@ -155,11 +154,11 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                 <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="firstName">Vorname</Label>
-                    <Input id="firstName" name="firstName" required placeholder="Vorname des Hauptgastes" defaultValue={getFirstName()}/>
+                    <Input id="firstName" name="firstName" required placeholder="Vorname des Hauptgastes" defaultValue={getInitialName('first')}/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="lastName">Nachname</Label>
-                    <Input id="lastName" name="lastName" required placeholder="Nachname des Hauptgastes" defaultValue={getLastName()}/>
+                    <Input id="lastName" name="lastName" required placeholder="Nachname des Hauptgastes" defaultValue={getInitialName('last')}/>
                 </div>
                 </CardContent>
             </Card>
@@ -304,7 +303,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                     </div>
                     <div className="col-span-1 flex items-center justify-end">
                         {rooms.length > 1 && (
-                        <Button variant="ghost" size="icon" onClick={() => removeRoom(room.id)}>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeRoom(room.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                         )}

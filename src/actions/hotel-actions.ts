@@ -211,8 +211,6 @@ export async function updateBookingAction(
 
     if (!linkSnapshot.empty) {
       const linkDocRef = linkSnapshot.docs[0].ref;
-      // Get existing booking data from link and merge with new data
-      const existingLinkData = (await getDocs(linkQuery)).docs[0].data().booking;
       await updateDoc(linkDocRef, {
         'booking.guestName': updatedBookingData.guestName,
         'booking.checkIn': updatedBookingData.checkIn,
