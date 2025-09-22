@@ -96,8 +96,8 @@ export function BookingDataTableRowActions<TData>({
           <DropdownMenuItem asChild>
              <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}`}>Buchung ansehen</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Buchung bearbeiten
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/${params.hotelId}/bookings/create`}>Buchung bearbeiten</Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyBookingLink}>
             Buchungslink kopieren
