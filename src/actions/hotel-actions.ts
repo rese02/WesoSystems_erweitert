@@ -277,7 +277,6 @@ export async function updateHotelierProfileAction(
       });
     }
 
-    revalidatePath(`/dashboard/${hotelId}`);
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
   } catch (error) {

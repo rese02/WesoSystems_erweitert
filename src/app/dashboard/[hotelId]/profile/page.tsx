@@ -15,18 +15,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { Hotel } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { FileUpload } from '@/components/guest/file-upload';
 import Image from 'next/image';
+import { revalidatePath } from 'next/cache';
 
 const initialState = {
   message: '',
   success: false,
 };
+
+async function revalidateHotelierProfile(hotelId: string) {
+    'use server'
+    revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
+}
 
 export default function HotelierProfilePage() {
   const params = useParams<{ hotelId: string }>();
@@ -55,8 +62,12 @@ export default function HotelierProfilePage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
+      if (state.success) {
+        // Trigger revalidation on the server after successful update
+        revalidateHotelierProfile(params.hotelId);
+      }
     }
-  }, [state, toast]);
+  }, [state, toast, params.hotelId]);
 
   if (!hotel) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>;
