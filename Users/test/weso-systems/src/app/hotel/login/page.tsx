@@ -84,7 +84,7 @@ export default function HotelLoginPage() {
               <Label htmlFor="hotel-email">E-Mail</Label>
               <Input
                   id="hotel-email"
-                  name="hotel-email"
+                  name="email"
                   type="email"
                   placeholder="Ihre E-Mail"
                   required
@@ -98,7 +98,7 @@ export default function HotelLoginPage() {
               <Label htmlFor="hotel-password">Passwort</Label>
               <Input 
                 id="hotel-password" 
-                name="hotel-password" 
+                name="password" 
                 type="password" 
                 required 
                 className="h-12 text-base" 
