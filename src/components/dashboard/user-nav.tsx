@@ -14,12 +14,24 @@ import {
 import { LogOut, User, Building } from 'lucide-react';
 import Link from 'next/link';
 import { Hotel } from '@/lib/types';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase/client';
 
 export function UserNav({ hotelData }: { hotelData?: Hotel }) {
   const params = useParams();
+  const router = useRouter();
   const hotelId = params.hotelId as string;
   
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      // Redirect to the homepage after successful logout
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
   // Bestimme den Link für das Profil basierend darauf, ob es ein Hotelier oder Admin ist
   const profileLink = hotelId ? `/dashboard/${hotelId}/profile` : '/admin/profile';
   const displayName = hotelData?.hotelName || 'Agentur';
@@ -59,11 +71,9 @@ export function UserNav({ hotelData }: { hotelData?: Hotel }) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Abmelden</span>
-          </Link>
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Abmelden</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

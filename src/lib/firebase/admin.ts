@@ -2,22 +2,40 @@
 import admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
 
-// WICHTIG: Dieser Code versucht jetzt, die Datei zu laden,
-// die im Hauptverzeichnis des Projekts liegt.
+// This is the recommended way for production environments
+// It uses environment variables that are securely stored by App Hosting
+// The service account key is parsed from a JSON string in the env variable
 try {
-  // Der Pfad navigiert vom `src/lib/firebase`-Ordner vier Ebenen nach oben ins Hauptverzeichnis.
-  const serviceAccount = require('../../../serviceAccountKey.json');
-
   if (!getApps().length) {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountString) {
+        throw new Error("The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. The value should be the JSON content of your service account key file.");
+    }
+    
+    const serviceAccount = JSON.parse(serviceAccountString);
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      // Der Storage Bucket Name wird aus der Umgebungsvariable gelesen, die bereits für die Client-Seite konfiguriert ist.
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     });
-    console.log('Firebase Admin SDK erfolgreich initialisiert.');
+    console.log('Firebase Admin SDK for production successfully initialized.');
   }
 } catch (error) {
-  console.error("KRITISCHER FEHLER: Die 'serviceAccountKey.json' konnte nicht geladen werden. Stelle sicher, dass sie im Hauptverzeichnis deines Projekts liegt und korrekt formatiert ist.", error);
+  console.error("CRITICAL ERROR: Firebase Admin SDK initialization failed.", error);
+  // Fallback for local development if the primary method fails
+  // This allows running the app locally using a file
+  try {
+     const serviceAccount = require('../../../serviceAccountKey.json');
+      if (!getApps().length) {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        });
+        console.log('Firebase Admin SDK for local development successfully initialized.');
+      }
+  } catch (localError) {
+      console.error("CRITICAL ERROR: Fallback local initialization also failed. Ensure 'serviceAccountKey.json' is in the root directory for local development or FIREBASE_SERVICE_ACCOUNT_KEY is set for production.", localError);
+  }
 }
 
 const db = admin.firestore();

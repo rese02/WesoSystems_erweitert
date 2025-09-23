@@ -1,8 +1,5 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
-# minInstances: 1
 runConfig:
-  # Begrenzt die maximale Anzahl der gleichzeitig laufenden Server-Instanzen.
-  # Dies bietet einen Basisschutz gegen ressourcenintensive Angriffe und Kostenexplosionen.
   maxInstances: 5
