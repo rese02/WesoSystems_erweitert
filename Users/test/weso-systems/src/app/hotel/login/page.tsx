@@ -89,7 +89,7 @@ export default function HotelLoginPage() {
                   placeholder="Ihre E-Mail"
                   required
                   className="h-12 text-base"
-                  autoComplete="email"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
               />
@@ -132,5 +132,3 @@ export default function HotelLoginPage() {
     </AuthLayout>
   );
 }
-
-    

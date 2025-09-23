@@ -44,9 +44,9 @@ export default function AgencyLoginPage() {
               </CardDescription>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">E-Mail</Label>
+              <Label htmlFor="agency-email">E-Mail</Label>
               <Input
-                id="email"
+                id="agency-email"
                 name="email"
                 type="email"
                 placeholder="Ihre E-Mail"
@@ -56,9 +56,9 @@ export default function AgencyLoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="agency-password">Passwort</Label>
               <Input
-                id="password"
+                id="agency-password"
                 name="password"
                 type="password"
                 required
