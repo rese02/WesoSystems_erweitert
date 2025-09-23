@@ -314,18 +314,13 @@ export async function updateHotelierProfileAction(
     await auth.updateUser(uid, authUpdates);
     await hotelRef.update(updates);
     
+    revalidatePath(`/dashboard/${hotelId}/profile`);
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
   } catch (error) {
     console.error('Error updating profile:', error);
     return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
   }
-}
-
-export async function revalidateHotelierProfile(hotelId: string) {
-    'use server'
-    revalidatePath(`/dashboard/${hotelId}/profile`);
-    revalidatePath(`/dashboard/${hotelId}`);
 }
 
 
@@ -462,4 +457,49 @@ export async function updateHotelSettingsAction(
   }
 }
 
+export async function updateHotelByAgencyAction(
+  hotelId: string,
+  prevState: UpdateSettingsState,
+  formData: FormData
+): Promise<UpdateSettingsState> {
+  
+  const hotelRef = db.collection('hotels').doc(hotelId);
+
+  try {
+     const mealTypes = formData.getAll('mealTypes') as string[];
+    const roomCategories = formData.getAll('roomCategories') as string[];
+    const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
+
+    const updates = {
+        hotelName: formData.get('hotelName') as string,
+        domain: formData.get('domain') as string,
+        logoUrl: formData.get('logoUrl') as string,
+        'contact.email': formData.get('contactEmail') as string,
+        'contact.phone': formData.get('contactPhone') as string,
+        'bankDetails.accountHolder': formData.get('accountHolder') as string,
+        'bankDetails.iban': formData.get('iban') as string,
+        'bankDetails.bic': formData.get('bic') as string,
+        'bankDetails.bankName': formData.get('bankName') as string,
+        'smtp.host': formData.get('smtpHost') as string,
+        'smtp.port': Number(formData.get('smtpPort')),
+        'smtp.user': formData.get('smtpUser') as string,
+        'smtp.appPass': formData.get('smtpPass') as string,
+        'bookingConfig.mealTypes': mealTypes,
+        'bookingConfig.roomCategories': roomCategories,
+        'permissions.canEditBankDetails': canEditBankDetails,
+    };
+
+    await hotelRef.update(updates);
+
+    revalidatePath('/admin');
+    revalidatePath(`/admin/hotel/${hotelId}/edit`);
+    
+    return { success: true, message: 'Hotel erfolgreich aktualisiert!' };
+
+  } catch (error) {
+    console.error('Error updating hotel by agency:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Serverfehler';
+    return { success: false, message: `Hotel konnte nicht aktualisiert werden. Fehler: ${errorMessage}` };
+  }
+}
     

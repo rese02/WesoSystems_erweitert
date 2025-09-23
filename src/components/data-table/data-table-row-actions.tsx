@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, KeyRound, MoreHorizontal, UserX } from 'lucide-react';
+import { Copy, KeyRound, MoreHorizontal, UserX, Settings } from 'lucide-react';
 import { type Row } from '@tanstack/react-table';
 
 import { Button } from '@/components/ui/button';
@@ -98,7 +98,10 @@ export function HotelDataTableRowActions<TData>({
             <Link href={`/dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-             <Link href={`/dashboard/${hotel.id}/settings`}>Einstellungen</Link>
+             <Link href={`/admin/hotel/${hotel.id}/edit`}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Einstellungen</span>
+             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
            <DropdownMenuItem onClick={copyLoginLink}>
