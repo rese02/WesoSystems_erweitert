@@ -8,11 +8,15 @@ import {DataTable} from '@/components/data-table/data-table';
 import {db} from '@/lib/firebase/client';
 import {collection, onSnapshot, orderBy, query, Timestamp} from 'firebase/firestore';
 import {Hotel} from '@/lib/types';
-import {useEffect, useState} from 'react';
+import {useEffect, useState, Suspense} from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function AgencyDashboardPage() {
+function AgencyDashboard() {
+  const searchParams = useSearchParams();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
+  const newPassword = searchParams.get('newPassword');
+
 
   useEffect(() => {
     const hotelsCollection = collection(db, 'hotels');
@@ -29,11 +33,18 @@ export default function AgencyDashboardPage() {
             ? data.createdAt.toDate().toISOString() 
             : new Date().toISOString();
 
-          // WICHTIG: Stelle sicher, dass das gesamte hotelier-Objekt (inkl. Passwort) übergeben wird.
+          // After creating a new hotel, we get the password passed as a search param.
+          // We find the corresponding hotel (most recent one) and attach the password to it
+          // so it can be copied. This only happens once.
+          let hotelier = data.hotelier;
+          if (newPassword && snapshot.docs[0].id === doc.id) {
+             hotelier = { ...hotelier, password: newPassword };
+          }
+          
           return {
             id: doc.id,
             ...data,
-            hotelier: data.hotelier, // Dies schließt E-Mail und Passwort ein.
+            hotelier: hotelier,
             createdAt: createdAt,
           } as Hotel;
         });
@@ -47,7 +58,7 @@ export default function AgencyDashboardPage() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [newPassword]);
 
   return (
     <div className="space-y-6">
@@ -74,4 +85,12 @@ export default function AgencyDashboardPage() {
       />
     </div>
   );
+}
+
+export default function AgencyDashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AgencyDashboard />
+    </Suspense>
+  )
 }

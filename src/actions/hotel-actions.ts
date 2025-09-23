@@ -116,7 +116,7 @@ export async function createHotelAction(
   }
 
   revalidatePath('/admin');
-  redirect('/admin');
+  return { success: true, message: 'Hotel erfolgreich erstellt!' };
 }
 
 export async function deleteHotelAction(hotelId: string) {
@@ -313,9 +313,6 @@ export async function updateHotelierProfileAction(
     
     await auth.updateUser(uid, authUpdates);
     await hotelRef.update(updates);
-    
-    revalidatePath(`/dashboard/${hotelId}/profile`);
-    revalidatePath(`/dashboard/${hotelId}`);
     
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
