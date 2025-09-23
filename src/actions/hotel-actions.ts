@@ -76,7 +76,7 @@ export async function createHotelAction(
 
     bankDetails: {
       accountHolder: formData.get('accountHolder') as string,
-      iban: formData.gbt('iban') as string,
+      iban: formData.get('iban') as string,
       bic: formData.get('bic') as string,
       bankName: formData.get('bankName') as string,
     },
@@ -464,3 +464,5 @@ export async function updateHotelSettingsAction(
     return { message: 'Die Einstellungen konnten nicht gespeichert werden.', success: false };
   }
 }
+
+    
