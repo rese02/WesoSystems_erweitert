@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { timingSafeEqual } from 'crypto';
 
 type LoginState = {
   message: string;
@@ -37,12 +38,26 @@ export async function loginAgencyAction(
     };
   }
 
-  // Sichere Überprüfung der Anmeldedaten.
-  // Verhindert Timing-Angriffe durch konstante Ausführungszeit.
-  const isEmailValid = email === AGENCY_EMAIL;
-  const isPasswordValid = password === AGENCY_PASSWORD;
+  // Sichere Überprüfung der Anmeldedaten mit timingSafeEqual, um Timing-Angriffe zu verhindern.
+  // Wichtig: Die zu vergleichenden Puffer müssen die gleiche Länge haben.
+  const inputEmailBuffer = Buffer.from(email);
+  const storedEmailBuffer = Buffer.from(AGENCY_EMAIL);
+  const inputPasswordBuffer = Buffer.from(password);
+  const storedPasswordBuffer = Buffer.from(AGENCY_PASSWORD);
+
+  let isEmailValid = false;
+  if (inputEmailBuffer.length === storedEmailBuffer.length) {
+    isEmailValid = timingSafeEqual(inputEmailBuffer, storedEmailBuffer);
+  }
+
+  let isPasswordValid = false;
+  if (inputPasswordBuffer.length === storedPasswordBuffer.length) {
+    isPasswordValid = timingSafeEqual(inputPasswordBuffer, storedPasswordBuffer);
+  }
+
 
   if (!isEmailValid || !isPasswordValid) {
+    // Generische Fehlermeldung, um das Enumerieren von Benutzern zu erschweren
     return {
       message: 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.',
       success: false,
