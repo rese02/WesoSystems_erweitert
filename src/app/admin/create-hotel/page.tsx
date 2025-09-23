@@ -236,11 +236,11 @@ export default function CreateHotelPage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="smtpHost">Host</Label>
-                    <Input id="smtpHost" name="smtpHost" placeholder="Ihr Host" required/>
+                    <Input id="smtpHost" name="smtpHost" placeholder="Ihr Host" defaultValue="smtp.gmail.com" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpPort">Port</Label>
-                    <Input id="smtpPort" name="smtpPort" type="number" placeholder="Ihr Port" required/>
+                    <Input id="smtpPort" name="smtpPort" type="number" placeholder="Ihr Port" defaultValue="587" required/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="smtpUser">E-Mail-Benutzer</Label>
