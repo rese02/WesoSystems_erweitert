@@ -8,7 +8,7 @@ type LoginState = {
 };
 
 // Diese Server-Action wird sicher auf dem Server ausgeführt.
-// Die Anmeldedaten sind hier sicher, da dieser Code niemals im Browser des Benutzers ankommt.
+// Die Anmeldedaten sind hier sicher, da sie aus Umgebungsvariablen gelesen werden.
 export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
@@ -16,9 +16,17 @@ export async function loginAgencyAction(
   const email = formData.get('email');
   const password = formData.get('password');
 
-  // Sichere, serverseitige Definition der Anmeldedaten
-  const AGENCY_EMAIL = 'hallo@agentur-weso.it';
-  const AGENCY_PASSWORD = 'Hallo-weso.2025!';
+  // Sichere, serverseitige Definition der Anmeldedaten aus Umgebungsvariablen
+  const AGENCY_EMAIL = process.env.AGENCY_EMAIL;
+  const AGENCY_PASSWORD = process.env.AGENCY_PASSWORD;
+
+  if (!AGENCY_EMAIL || !AGENCY_PASSWORD) {
+    console.error('Agency credentials are not set in environment variables.');
+    return {
+      message: 'Die Serverkonfiguration ist unvollständig. Bitte kontaktieren Sie den Support.',
+      success: false,
+    };
+  }
 
   // Strikte Validierung der Eingabe-Typen und des Inhalts.
   // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
