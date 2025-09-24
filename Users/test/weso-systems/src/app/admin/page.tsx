@@ -10,6 +10,8 @@ import {collection, onSnapshot, orderBy, query, Timestamp} from 'firebase/firest
 import {Hotel} from '@/lib/types';
 import {useEffect, useState, Suspense} from 'react';
 import { useSearchParams } from 'next/navigation';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function AgencyDashboard() {
   const searchParams = useSearchParams();
@@ -72,7 +74,11 @@ function AgencyDashboard() {
 
       },
       (error) => {
-        console.error('Error fetching hotels:', error);
+        const permissionError = new FirestorePermissionError({
+          path: hotelsCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
         setLoading(false);
       }
     );

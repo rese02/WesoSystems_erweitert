@@ -37,6 +37,8 @@ import {
 import { deleteBookingsAction } from '@/actions/hotel-actions';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const statusConfig: Record<BookingStatus, { label: string; icon: React.ElementType; color: string }> = {
@@ -143,9 +145,14 @@ export default function BookingsPage() {
       
       setBookings(enrichedBookings);
       setLoading(false);
-    }, (error) => {
-        console.error("Error fetching bookings:", error);
-        setLoading(false);
+    }, 
+    (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: bookingsCollection.path,
+        operation: 'list',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setLoading(false);
     });
 
     return () => unsubscribe();
