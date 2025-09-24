@@ -2,17 +2,64 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Hotels and their subcollections are only accessible by authenticated users (agency/hotelier)
-    match /hotels/{hotelId}/{document=**} {
-      allow read, write: if request.auth != null;
+
+    // =============================================
+    // HOTELS
+    // Hotels können nur von der Agentur gelesen und geschrieben werden.
+    // =============================================
+    match /hotels/{hotelId} {
+      allow read, write: if request.auth.token.role == 'agency';
+
+      // =============================================
+      // BOOKINGS (Subcollection of Hotels)
+      // =============================================
+      match /bookings/{bookingId} {
+        // LESEN:
+        // 1. Die Agentur darf alles lesen.
+        // 2. Ein Hotelier darf nur Buchungen lesen, die zu seiner Hotel-ID gehören.
+        allow read: if request.auth.token.role == 'agency'
+                    || (request.auth.token.role == 'hotelier' && request.auth.token.hotelId == hotelId);
+
+        // SCHREIBEN (ERSTELLEN & AKTUALISIEREN):
+        // 1. Die Agentur darf alles erstellen/ändern.
+        // 2. Ein Hotelier darf nur Buchungen in seinem Hotel erstellen/ändern.
+        allow write: if request.auth.token.role == 'agency'
+                     || (request.auth.token.role == 'hotelier' && request.auth.token.hotelId == hotelId);
+                     
+        // LÖSCHEN:
+        // 1. Die Agentur darf alles löschen.
+        // 2. Ein Hotelier darf nur Buchungen in seinem Hotel löschen.
+        allow delete: if request.auth.token.role == 'agency'
+                      || (request.auth.token.role == 'hotelier' && request.auth.token.hotelId == hotelId);
+      }
     }
 
-    // Booking links can be updated by anyone to prevent reuse
+    // =============================================
+    // BOOKING LINKS
+    // Diese Links enthalten die Gast- und Buchungsdaten.
+    // =============================================
     match /bookingLinks/{linkId} {
+      // LESEN:
+      // Jeder darf den Link lesen, um auf die Gast-Seite zu gelangen. Die ID ist ein Geheimnis.
       allow read: if true;
-      allow update: if true; // Allow guests to mark the link as 'used'
-      allow create, delete: if request.auth != null;
+
+      // ERSTELLEN:
+      // Darf nur von einem eingeloggten Benutzer (Agentur oder Hotelier) erstellt werden.
+      allow create: if request.auth != null;
+      
+      // AKTUALISIEREN:
+      // 1. Die Agentur darf alles ändern.
+      // 2. Ein Hotelier darf nur Links ändern, die zu seinem Hotel gehören.
+      // 3. Ein Gast (nicht eingeloggt) darf den Link-Status auf 'used' setzen,
+      //    um das Formular abzuschließen. Dies ist die Kernfunktion für den Gast.
+      allow update: if request.auth.token.role == 'agency'
+                    || (request.auth.token.role == 'hotelier' && request.auth.token.hotelId == resource.data.hotelId)
+                    || (request.auth == null && request.resource.data.status == 'used');
+                    
+      // LÖSCHEN:
+      // Dürfen nur Agentur oder der zuständige Hotelier
+      allow delete: if request.auth.token.role == 'agency'
+                    || (request.auth.token.role == 'hotelier' && request.auth.token.hotelId == resource.data.hotelId);
     }
   }
 }
