@@ -273,7 +273,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {config.roomCategories.map((cat, index) => <SelectItem key={cat + index} value={cat}>{cat}</SelectItem>)}
+                                {config.roomCategories.map((cat, catIndex) => <SelectItem key={cat + catIndex} value={cat}>{cat}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         </div>
