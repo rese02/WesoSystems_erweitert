@@ -114,10 +114,10 @@ export default function BookingsPage() {
   useEffect(() => {
     if (!params.hotelId) return;
 
-    // Fetch all relevant booking links for the hotel in one go
+    // 1. Eine Abfrage, um alle relevanten Links für das Hotel auf einmal zu holen
     const linksQuery = query(collection(db, 'bookingLinks'), where('hotelId', '==', params.hotelId));
 
-    // Listen for changes on bookings for the hotel
+    // 2. Ein Listener für die Buchungs-Änderungen
     const bookingsCollection = collection(db, 'hotels', params.hotelId, 'bookings');
     const bookingsQuery = query(bookingsCollection, orderBy('createdAt', 'desc'));
 
@@ -127,7 +127,7 @@ export default function BookingsPage() {
         ...doc.data()
       })) as Booking[];
 
-      // Fetch links only once when bookings change or on initial load
+      // 3. Hole die Links nur einmal und erstelle eine Map für schnellen Zugriff
       const linkSnapshot = await getDocs(linksQuery);
       const linksMap = new Map<string, string>(); // Map<bookingId, linkId>
       linkSnapshot.forEach(doc => {
@@ -137,7 +137,7 @@ export default function BookingsPage() {
         }
       });
 
-      // Enrich bookings with linkId from the map
+      // 4. Reichere die Buchungen im Speicher an (keine weiteren DB-Abfragen hier)
       const enrichedBookings: EnrichedBooking[] = bookingsList.map(booking => ({
         ...booking,
         linkId: linksMap.get(booking.id),
@@ -147,6 +147,7 @@ export default function BookingsPage() {
       setLoading(false);
     }, 
     (error) => {
+      // Fehlerbehandlung für den Listener
       const permissionError = new FirestorePermissionError({
         path: bookingsCollection.path,
         operation: 'list',
@@ -155,6 +156,7 @@ export default function BookingsPage() {
       setLoading(false);
     });
 
+    // Aufräumen, wenn die Komponente unmounted wird
     return () => unsubscribe();
   }, [params.hotelId]);
   
