@@ -273,13 +273,13 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {config.roomCategories.map((cat, catIndex) => <SelectItem key={cat + catIndex} value={cat}>{cat}</SelectItem>)}
+                                {config.roomCategories.map((cat, catIndex) => <SelectItem key={`${cat}-${catIndex}`} value={cat}>{cat}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         </div>
                         <div className="grid gap-2">
                         <Label>Erwachsene</Label>
-                        <Input type="number" min="1" defaultValue={room.adults} onChange={(e) => {
+                        <Input key={`adults-${room.id}`} type="number" min="1" defaultValue={room.adults} onChange={(e) => {
                             const newRooms = [...rooms];
                             newRooms[index].adults = parseInt(e.target.value);
                             setRooms(newRooms);
@@ -287,7 +287,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         </div>
                         <div className="grid gap-2">
                         <Label>Kinder (3+)</Label>
-                        <Input type="number" min="0" defaultValue={room.children} onChange={(e) => {
+                        <Input key={`children-${room.id}`} type="number" min="0" defaultValue={room.children} onChange={(e) => {
                             const newRooms = [...rooms];
                             newRooms[index].children = parseInt(e.target.value);
                             setRooms(newRooms);
@@ -295,7 +295,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         </div>
                         <div className="grid gap-2">
                         <Label>Kleinkinder (0-2J)</Label>
-                        <Input type="number" min="0" defaultValue={room.infants} onChange={(e) => {
+                        <Input key={`infants-${room.id}`} type="number" min="0" defaultValue={room.infants} onChange={(e) => {
                             const newRooms = [...rooms];
                             newRooms[index].infants = parseInt(e.target.value);
                             setRooms(newRooms);
