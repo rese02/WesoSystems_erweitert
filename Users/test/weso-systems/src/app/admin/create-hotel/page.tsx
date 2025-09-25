@@ -1,5 +1,5 @@
 'use client';
-import { useActionState, useState, useEffect, useRef } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { createHotelAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,12 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FileUpload } from '@/components/guest/file-upload';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
+type RoomCategory = {
+  id: number;
+  name: string;
+};
 
 const initialState = {
   message: '',
@@ -25,9 +31,10 @@ const initialState = {
 };
 
 export default function CreateHotelPage() {
-  const [roomCategories, setRoomCategories] = useState<string[]>([
-    'Einzelzimmer',
-    'Doppelzimmer',
+  const router = useRouter();
+  const [roomCategories, setRoomCategories] = useState<RoomCategory[]>([
+    { id: 1, name: 'Einzelzimmer' },
+    { id: 2, name: 'Doppelzimmer' },
   ]);
   const [hotelierPassword, setHotelierPassword] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
@@ -37,14 +44,24 @@ export default function CreateHotelPage() {
   const [state, action, isPending] = useActionState(createHotelAction, initialState);
   
   useEffect(() => {
-    if (state.message && !state.success) {
-      toast({
-        title: 'Fehler bei der Erstellung',
-        description: state.message,
-        variant: 'destructive',
-      });
+    if (state.message) {
+      if (state.success) {
+        toast({
+          title: 'Hotel erstellt!',
+          description: state.message,
+        });
+        // Die Weiterleitung wird jetzt serverseitig in der Action gehandhabt
+        // router.push(`/admin?newPassword=${encodeURIComponent(hotelierPassword)}`);
+      } else {
+        toast({
+          title: 'Fehler bei der Erstellung',
+          description: state.message,
+          variant: 'destructive',
+        });
+      }
     }
-  }, [state, toast]);
+  }, [state, toast, router, hotelierPassword]);
+
 
   const generatePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!?@';
@@ -54,6 +71,22 @@ export default function CreateHotelPage() {
     }
     setHotelierPassword(password);
     toast({ title: 'Neues Passwort generiert!' });
+  };
+  
+  const handleCategoryChange = (id: number, newName: string) => {
+    setRoomCategories(
+      roomCategories.map((category) =>
+        category.id === id ? { ...category, name: newName } : category
+      )
+    );
+  };
+  
+  const addCategory = () => {
+    setRoomCategories([...roomCategories, { id: Date.now(), name: 'Neue Kategorie' }]);
+  };
+
+  const removeCategory = (id: number) => {
+    setRoomCategories(roomCategories.filter((category) => category.id !== id));
   };
 
 
@@ -270,25 +303,21 @@ export default function CreateHotelPage() {
 
                     <div className="space-y-2">
                     <Label>Zimmerkategorien</Label>
-                    {roomCategories.map((category, index) => (
-                        <div key={index} className="flex items-center gap-2">
+                    {roomCategories.map((category) => (
+                        <div key={category.id} className="flex items-center gap-2">
                         <Input
                             name="roomCategories"
-                            defaultValue={category}
-                            onChange={(e) => {
-                                const newCategories = [...roomCategories];
-                                newCategories[index] = e.target.value;
-                                setRoomCategories(newCategories);
-                            }}
+                            value={category.name}
+                            onChange={(e) => handleCategoryChange(category.id, e.target.value)}
                         />
                         {roomCategories.length > 1 && (
-                            <Button type="button" variant="outline" size="icon" onClick={() => setRoomCategories(roomCategories.filter((_, i) => i !== index))}>
+                            <Button type="button" variant="outline" size="icon" onClick={() => removeCategory(category.id)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         )}
                         </div>
                     ))}
-                    <Button type="button" variant="outline" onClick={() => setRoomCategories([...roomCategories, 'Neue Kategorie'])}>
+                    <Button type="button" variant="outline" onClick={addCategory}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Zimmerkategorie hinzufügen
                     </Button>
                     </div>
