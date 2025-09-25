@@ -54,7 +54,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
   
   const [date, setDate] = useState<DateRange | undefined>();
   const [rooms, setRooms] = useState<RoomState[]>(
-    booking?.rooms.map((r, i) => ({ ...r, id: i })) ||
+    booking?.rooms.map((r, i) => ({ ...r, id: i + 1 })) || // Start with IDs > 0
     [{ id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
   );
   const [loading, setLoading] = useState(false);
@@ -72,8 +72,8 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
 
 
   const addRoom = () => {
-    setRooms([
-      ...rooms,
+    setRooms(prevRooms => [
+      ...prevRooms,
       { id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 1, children: 0, infants: 0 },
     ]);
   };
@@ -82,7 +82,6 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
     setRooms(rooms.filter((room) => room.id !== id));
   };
   
-  // Vereinfachte, stabile Funktion zum Aktualisieren eines Raums
   const handleRoomChange = (id: number, field: keyof Room, value: string | number) => {
     setRooms(prevRooms => 
       prevRooms.map(room => 
@@ -267,7 +266,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                 <CardTitle>Zimmerdetails</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                {rooms.map((room, index) => (
+                {rooms.map((room) => (
                     <div key={room.id} className="grid grid-cols-12 gap-2 rounded-md border p-4">
                     <div className="col-span-11 grid gap-4 sm:grid-cols-4">
                         <div className="grid gap-2">
