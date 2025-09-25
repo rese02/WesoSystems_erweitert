@@ -82,6 +82,15 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
     setRooms(rooms.filter((room) => room.id !== id));
   };
   
+  // Vereinfachte, stabile Funktion zum Aktualisieren eines Raums
+  const handleRoomChange = (id: number, field: keyof Room, value: string | number) => {
+    setRooms(prevRooms => 
+      prevRooms.map(room => 
+        room.id === id ? { ...room, [field]: value } : room
+      )
+    );
+  };
+
   const handleSubmit = async (formData: FormData) => {
     if (!date?.from || !date?.to) {
         toast({
@@ -220,7 +229,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         <SelectValue placeholder="Verpflegung auswählen" />
                     </SelectTrigger>
                     <SelectContent>
-                        {config.mealTypes.map((type, index) => <SelectItem key={type + index} value={type}>{type}</SelectItem>)}
+                        {config.mealTypes.map((type, index) => <SelectItem key={`${type}-${index}`} value={type}>{type}</SelectItem>)}
                     </SelectContent>
                     </Select>
                 </div>
@@ -265,11 +274,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         <Label>Zimmertyp</Label>
                         <Select 
                             defaultValue={room.type} 
-                            onValueChange={(value) => {
-                            const newRooms = [...rooms];
-                            newRooms[index].type = value;
-                            setRooms(newRooms);
-                            }}
+                            onValueChange={(value) => handleRoomChange(room.id, 'type', value)}
                         >
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
@@ -279,27 +284,15 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         </div>
                         <div className="grid gap-2">
                         <Label>Erwachsene</Label>
-                        <Input key={`adults-${room.id}`} type="number" min="1" defaultValue={room.adults} onChange={(e) => {
-                            const newRooms = [...rooms];
-                            newRooms[index].adults = parseInt(e.target.value);
-                            setRooms(newRooms);
-                            }}/>
+                        <Input key={`adults-${room.id}`} type="number" min="1" defaultValue={room.adults} onBlur={(e) => handleRoomChange(room.id, 'adults', parseInt(e.target.value))}/>
                         </div>
                         <div className="grid gap-2">
                         <Label>Kinder (3+)</Label>
-                        <Input key={`children-${room.id}`} type="number" min="0" defaultValue={room.children} onChange={(e) => {
-                            const newRooms = [...rooms];
-                            newRooms[index].children = parseInt(e.target.value);
-                            setRooms(newRooms);
-                            }}/>
+                        <Input key={`children-${room.id}`} type="number" min="0" defaultValue={room.children} onBlur={(e) => handleRoomChange(room.id, 'children', parseInt(e.target.value))}/>
                         </div>
                         <div className="grid gap-2">
                         <Label>Kleinkinder (0-2J)</Label>
-                        <Input key={`infants-${room.id}`} type="number" min="0" defaultValue={room.infants} onChange={(e) => {
-                            const newRooms = [...rooms];
-                            newRooms[index].infants = parseInt(e.target.value);
-                            setRooms(newRooms);
-                            }}/>
+                        <Input key={`infants-${room.id}`} type="number" min="0" defaultValue={room.infants} onBlur={(e) => handleRoomChange(room.id, 'infants', parseInt(e.target.value))}/>
                         </div>
                     </div>
                     <div className="col-span-1 flex items-center justify-end">
