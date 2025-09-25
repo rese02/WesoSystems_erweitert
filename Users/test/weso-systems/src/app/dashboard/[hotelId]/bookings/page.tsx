@@ -332,8 +332,8 @@ export default function BookingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Alle Status</SelectItem>
-                            {Object.keys(statusConfig).map((status) => (
-                              <SelectItem key={status} value={status}>{statusConfig[status as BookingStatus].label}</SelectItem>
+                            {Object.keys(statusConfig).map((status, index) => (
+                              <SelectItem key={status + index} value={status}>{statusConfig[status as BookingStatus].label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
