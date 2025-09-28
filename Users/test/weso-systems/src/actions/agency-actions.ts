@@ -64,6 +64,10 @@ export async function loginAgencyAction(
     };
   }
 
-  // Bei Erfolg: Weiterleitung zum Admin-Dashboard.
-  redirect('/admin');
+  // Bei Erfolg wird die Client-Seite die Weiterleitung nach dem Setzen des Cookies übernehmen.
+  // Wir geben hier nur den Erfolgsstatus zurück.
+  return {
+    message: 'Anmeldung erfolgreich.',
+    success: true,
+  }
 }

@@ -283,15 +283,15 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
                         </div>
                         <div className="grid gap-2">
                         <Label>Erwachsene</Label>
-                        <Input key={`adults-${room.id}`} type="number" min="1" defaultValue={room.adults} onBlur={(e) => handleRoomChange(room.id, 'adults', parseInt(e.target.value))}/>
+                        <Input type="number" min="1" defaultValue={room.adults} onBlur={(e) => handleRoomChange(room.id, 'adults', parseInt(e.target.value))}/>
                         </div>
                         <div className="grid gap-2">
                         <Label>Kinder (3+)</Label>
-                        <Input key={`children-${room.id}`} type="number" min="0" defaultValue={room.children} onBlur={(e) => handleRoomChange(room.id, 'children', parseInt(e.target.value))}/>
+                        <Input type="number" min="0" defaultValue={room.children} onBlur={(e) => handleRoomChange(room.id, 'children', parseInt(e.target.value))}/>
                         </div>
                         <div className="grid gap-2">
                         <Label>Kleinkinder (0-2J)</Label>
-                        <Input key={`infants-${room.id}`} type="number" min="0" defaultValue={room.infants} onBlur={(e) => handleRoomChange(room.id, 'infants', parseInt(e.target.value))}/>
+                        <Input type="number" min="0" defaultValue={room.infants} onBlur={(e) => handleRoomChange(room.id, 'infants', parseInt(e.target.value))}/>
                         </div>
                     </div>
                     <div className="col-span-1 flex items-center justify-end">

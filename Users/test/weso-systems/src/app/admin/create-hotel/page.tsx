@@ -1,5 +1,5 @@
 'use client';
-import { useActionState, useState, useEffect } from 'react';
+import { useActionState, useState, useEffect, useRef } from 'react';
 import { createHotelAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound, AlertCircle, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Trash2, KeyRound, AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FileUpload } from '@/components/guest/file-upload';
@@ -37,6 +37,7 @@ export default function CreateHotelPage() {
     { id: 2, name: 'Doppelzimmer' },
   ]);
   const [hotelierPassword, setHotelierPassword] = useState('');
+  const passwordRef = useRef(''); // Ref to hold the password for redirection
   const [logoUrl, setLogoUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -50,8 +51,8 @@ export default function CreateHotelPage() {
           title: 'Hotel erstellt!',
           description: state.message,
         });
-        // Die Weiterleitung wird jetzt serverseitig in der Action gehandhabt
-        // router.push(`/admin?newPassword=${encodeURIComponent(hotelierPassword)}`);
+        // Redirect with password in search params for the admin page to pick up
+        router.push(`/admin?newPassword=${encodeURIComponent(passwordRef.current)}`);
       } else {
         toast({
           title: 'Fehler bei der Erstellung',
@@ -60,7 +61,7 @@ export default function CreateHotelPage() {
         });
       }
     }
-  }, [state, toast, router, hotelierPassword]);
+  }, [state, toast, router]);
 
 
   const generatePassword = () => {
@@ -70,6 +71,7 @@ export default function CreateHotelPage() {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setHotelierPassword(password);
+    passwordRef.current = password; // Store in ref
     toast({ title: 'Neues Passwort generiert!' });
   };
   
@@ -336,6 +338,7 @@ export default function CreateHotelPage() {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={isPending || isUploading}
               >
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Hotel erstellen
               </Button>
             </CardContent>
