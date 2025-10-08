@@ -320,7 +320,7 @@ export async function updateHotelierProfileAction(
 
   try {
     const hotelSnap = await hotelRef.get();
-    if (!hotelSnap.exists) throw new Error("Hotel not found");
+    if (!hotelSnap.exists()) throw new Error("Hotel not found");
     const hotelData = hotelSnap.data();
     if (!hotelData?.hotelier?.uid) throw new Error("Hotelier UID not found");
     
