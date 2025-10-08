@@ -11,7 +11,7 @@ interface EmailPayload {
 }
 
 export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) {
-    initializeAdminApp();
+    initializeAdminApp(); // Ensures admin app is initialized
 
     if (!booking.guestDetails?.email) {
         console.error("E-Mail-Versand fehlgeschlagen: Gast-E-Mail ist nicht verfügbar.", {bookingId: booking.id});

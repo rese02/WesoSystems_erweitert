@@ -2,12 +2,14 @@
 import admin from 'firebase-admin';
 import { getApps, initializeApp, getApp, App } from 'firebase-admin/app';
 
+// This function ensures that Firebase Admin is initialized only once.
 export const initializeAdminApp = (): App => {
   const apps = getApps();
   if (apps.length > 0) {
     return apps[0]!;
   }
 
+  // If no app is initialized, create a new one.
   try {
     const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     if (!serviceAccountString) {
@@ -24,6 +26,7 @@ export const initializeAdminApp = (): App => {
   } catch (error: any) {
     console.error('CRITICAL ERROR: Firebase Admin SDK initialization failed.', error.message);
     // This fallback is for local development environments where the ENV VAR might not be set.
+    // In a real production environment, this part should ideally not be needed.
     try {
       const serviceAccount = require('../../../serviceAccountKey.json');
       return initializeApp({
