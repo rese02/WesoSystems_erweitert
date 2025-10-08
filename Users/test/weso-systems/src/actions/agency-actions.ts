@@ -1,15 +1,14 @@
 'use server';
 
-import { redirect } from 'next/navigation';
+import { auth } from '@/lib/firebase/admin';
 import { timingSafeEqual } from 'crypto';
 
 type LoginState = {
   message: string;
   success: boolean;
+  token?: string;
 };
 
-// Diese Server-Action wird sicher auf dem Server ausgeführt.
-// Die Anmeldedaten sind hier sicher, da sie aus Umgebungsvariablen gelesen werden.
 export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
@@ -17,7 +16,6 @@ export async function loginAgencyAction(
   const email = formData.get('email');
   const password = formData.get('password');
 
-  // Sichere, serverseitige Definition der Anmeldedaten aus Umgebungsvariablen
   const AGENCY_EMAIL = process.env.AGENCY_EMAIL;
   const AGENCY_PASSWORD = process.env.AGENCY_PASSWORD;
 
@@ -29,8 +27,6 @@ export async function loginAgencyAction(
     };
   }
 
-  // Strikte Validierung der Eingabe-Typen und des Inhalts.
-  // Schützt vor unerwarteten Eingaben oder Injektionsversuchen.
   if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return {
       message: 'E-Mail und Passwort sind erforderlich.',
@@ -38,8 +34,6 @@ export async function loginAgencyAction(
     };
   }
 
-  // Sichere Überprüfung der Anmeldedaten mit timingSafeEqual, um Timing-Angriffe zu verhindern.
-  // Wichtig: Die zu vergleichenden Puffer müssen die gleiche Länge haben.
   const inputEmailBuffer = Buffer.from(email);
   const storedEmailBuffer = Buffer.from(AGENCY_EMAIL);
   const inputPasswordBuffer = Buffer.from(password);
@@ -55,19 +49,30 @@ export async function loginAgencyAction(
     isPasswordValid = timingSafeEqual(inputPasswordBuffer, storedPasswordBuffer);
   }
 
-
   if (!isEmailValid || !isPasswordValid) {
-    // Generische Fehlermeldung, um das Enumerieren von Benutzern zu erschweren
     return {
       message: 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.',
       success: false,
     };
   }
 
-  // Bei Erfolg wird die Client-Seite die Weiterleitung nach dem Setzen des Cookies übernehmen.
-  // Wir geben hier nur den Erfolgsstatus zurück.
-  return {
-    message: 'Anmeldung erfolgreich.',
-    success: true,
+  try {
+    // This is a placeholder UID for the agency user. 
+    // In a real multi-agency scenario, you'd have a proper user management system.
+    const agencyUid = 'agency_user_main'; 
+    await auth.setCustomUserClaims(agencyUid, { role: 'agency' });
+    const customToken = await auth.createCustomToken(agencyUid);
+
+    return {
+      message: 'Anmeldung erfolgreich.',
+      success: true,
+      token: customToken,
+    };
+  } catch (error) {
+    console.error('Error creating custom token for agency:', error);
+    return {
+      message: 'Ein Fehler bei der Authentifizierung ist aufgetreten.',
+      success: false,
+    };
   }
 }

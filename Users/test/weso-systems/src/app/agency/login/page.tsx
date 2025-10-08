@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2, MountainIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useActionState, useEffect } from 'react';
+import { useActionState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithCustomToken } from 'firebase/auth';
 import { auth as clientAuth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 import { loginAgencyAction } from '@/actions/agency-actions';
@@ -39,49 +39,34 @@ async function setTokenCookie(token: string) {
 const initialState = {
   message: '',
   success: false,
+  token: undefined,
 };
 
 export default function AgencyLoginPage() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(loginAgencyAction, initialState);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    // This effect handles the successful server-side validation
-    if (state.success) {
+    if (state.success && state.token) {
       const performFirebaseLogin = async () => {
-        const email = process.env.NEXT_PUBLIC_AGENCY_EMAIL;
-        const password = process.env.NEXT_PUBLIC_AGENCY_PASSWORD;
-
-        if (!email || !password) {
-          setFormError('Client-side Firebase credentials are not configured.');
-          return;
-        }
-
         try {
-          // Sign in to Firebase on the client to get an ID token
-          const userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
-          const token = await userCredential.user.getIdToken();
-          
-          // Send the token to the server to be set as an httpOnly cookie
-          const cookieSet = await setTokenCookie(token);
+          const userCredential = await signInWithCustomToken(clientAuth, state.token!);
+          const idToken = await userCredential.user.getIdToken();
+          const cookieSet = await setTokenCookie(idToken);
           
           if (cookieSet) {
             router.push('/admin');
           } else {
-            setFormError('Failed to set authentication session. Please try again.');
+            // Handle cookie setting failure
+            console.error('Failed to set authentication session.');
           }
         } catch (error) {
-          console.error("Firebase login failed on client:", error);
-          setFormError('Authentication with Firebase services failed.');
+          console.error("Firebase custom token sign-in failed on client:", error);
         }
       };
-
       performFirebaseLogin();
     }
-  }, [state.success, state.message, router]);
-
-  const displayError = formError || (state.message && !state.success ? state.message : null);
+  }, [state.success, state.token, router]);
 
   return (
     <AuthLayout>
@@ -126,12 +111,12 @@ export default function AgencyLoginPage() {
               />
             </div>
             
-             {displayError && (
-                   <Alert variant="destructive" className="mt-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Fehler</AlertTitle>
-                      <AlertDescription>{displayError}</AlertDescription>
-                  </Alert>
+             {state.message && !state.success && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Fehler</AlertTitle>
+                  <AlertDescription>{state.message}</AlertDescription>
+              </Alert>
               )}
 
             <div className="grid gap-3 pt-4">

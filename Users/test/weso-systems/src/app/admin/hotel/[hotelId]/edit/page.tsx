@@ -1,5 +1,5 @@
 'use client';
-import { useActionState, useState, useEffect, useRef } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { updateHotelByAgencyAction } from '@/actions/hotel-actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,9 +12,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle, Trash2, KeyRound, AlertCircle, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
+import { PlusCircle, Trash2, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { FileUpload } from '@/components/guest/file-upload';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
@@ -147,11 +146,10 @@ export default function EditHotelPage() {
                 {logoUrl ? (
                    <div className='relative h-32 w-full rounded-md border p-2'>
                         <Image src={logoUrl} alt="Hotel Logo Vorschau" fill className="object-contain" />
-                        <input type="hidden" name="logoUrl" value={logoUrl} />
                    </div>
                 ) : (
                     <FileUpload 
-                        bookingId="new-hotel-logo" 
+                        bookingId={hotel.id}
                         fileType="logo"
                         uploadedFileUrl={null}
                         onUploadStart={() => setIsUploading(true)}
@@ -168,7 +166,7 @@ export default function EditHotelPage() {
             <CardHeader>
               <CardTitle>Hotelier-Zugang & Berechtigungen</CardTitle>
               <CardDescription>
-                Sie können das Passwort für den Hotelier zurücksetzen. Die E-Mail kann hier nicht geändert werden.
+                Die E-Mail des Hoteliers ist mit dem Login verknüpft und kann nicht geändert werden.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
@@ -180,6 +178,7 @@ export default function EditHotelPage() {
                   type="email"
                   defaultValue={hotel.hotelier.email}
                   disabled
+                  readOnly
                 />
               </div>
                <div className="flex items-start space-x-3 rounded-md border p-4">
@@ -274,13 +273,13 @@ export default function EditHotelPage() {
                         {['Frühstück', 'Halbpension', 'Vollpension', 'Ohne Verpflegung'].map(meal => (
                              <div key={meal} className="flex items-center space-x-2">
                                 <Checkbox 
-                                    id={meal.toLowerCase().replace(' ', '')} 
+                                    id={meal.toLowerCase().replace(/\s/g, '')} 
                                     name="mealTypes" 
                                     value={meal} 
                                     checked={mealTypes.has(meal)}
                                     onCheckedChange={(checked) => handleMealTypeChange(meal, !!checked)}
                                 />
-                                <Label htmlFor={meal.toLowerCase().replace(' ', '')}>{meal}</Label>
+                                <Label htmlFor={meal.toLowerCase().replace(/\s/g, '')}>{meal}</Label>
                             </div>
                         ))}
                     </div>

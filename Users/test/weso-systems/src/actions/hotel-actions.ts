@@ -4,7 +4,7 @@ import {db, auth} from '@/lib/firebase/admin';
 import {Timestamp, FieldValue} from 'firebase-admin/firestore';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {Booking, Room, IdUploadRequirement, BookingStatus} from '@/lib/types';
+import {Booking, Room, IdUploadRequirement, BookingStatus, Hotel} from '@/lib/types';
 import {DateRange} from 'react-day-picker';
 
 type CreateHotelState = {
@@ -51,19 +51,21 @@ export async function createHotelAction(
       };
   }
   
+  const smtpPortString = formData.get('smtpPort') as string;
+  const smtpPort = parseInt(smtpPortString, 10);
+  if (isNaN(smtpPort)) {
+    return { success: false, message: 'Ungültiger SMTP Port. Bitte geben Sie eine Zahl ein.' };
+  }
 
   const mealTypes = formData.getAll('mealTypes') as string[];
   const roomCategories = formData.getAll('roomCategories') as string[];
   const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
-  const hotelData = {
+  const hotelData: Omit<Hotel, 'id' | 'createdAt'> = {
     hotelName: formData.get('hotelName') as string,
     domain: formData.get('domain') as string,
     logoUrl: formData.get('logoUrl') as string,
-    createdAt: FieldValue.serverTimestamp(),
 
-    // Das Passwort wird NICHT mehr in Firestore gespeichert.
-    // Die UID des Auth-Users wird als Referenz gespeichert.
     hotelier: {
       email: hotelierEmail,
       uid: userRecord.uid,
@@ -83,7 +85,7 @@ export async function createHotelAction(
 
     smtp: {
       host: formData.get('smtpHost') as string,
-      port: Number(formData.get('smtpPort')),
+      port: smtpPort,
       user: formData.get('smtpUser') as string,
       appPass: formData.get('smtpPass') as string,
     },
@@ -98,16 +100,16 @@ export async function createHotelAction(
   };
 
   try {
-    const docRef = await db.collection('hotels').add(hotelData);
+    const docRef = await db.collection('hotels').add({
+        ...hotelData,
+        createdAt: FieldValue.serverTimestamp(),
+    });
     
-    // WICHTIG: Dem Auth-Benutzer die Hotel-ID als Custom Claim zuweisen
     await auth.setCustomUserClaims(userRecord.uid, { role: 'hotelier', hotelId: docRef.id });
 
     console.log('Hotel created with ID: ', docRef.id);
   } catch (error) {
     console.error('Error creating hotel or setting claims:', error);
-    // Wenn hier etwas schiefgeht, sollten wir den Auth-Benutzer wieder löschen,
-    // um "verwaiste" Benutzer zu vermeiden.
     await auth.deleteUser(userRecord.uid);
     return {
       message: 'Hotel konnte nicht erstellt werden.',
@@ -124,19 +126,16 @@ export async function deleteHotelAction(hotelId: string) {
     const hotelDoc = await db.collection('hotels').doc(hotelId).get();
     const hotelData = hotelDoc.data();
 
-    // Zuerst den Firebase Auth Benutzer löschen, falls vorhanden
     if (hotelData?.hotelier?.uid) {
         try {
             await auth.deleteUser(hotelData.hotelier.uid);
         } catch (authError: any) {
-            // Wenn der Benutzer nicht gefunden wird, ist das okay, vielleicht wurde er manuell gelöscht.
             if (authError.code !== 'auth/user-not-found') {
-                throw authError; // Andere Auth-Fehler weiterwerfen
+                throw authError; 
             }
         }
     }
 
-    // Dann das Hotel-Dokument aus Firestore löschen
     await db.collection('hotels').doc(hotelId).delete();
 
     revalidatePath('/admin');
@@ -170,7 +169,7 @@ export async function createBookingAction(
       return { success: false, message: 'Ungültiger Preis. Bitte geben Sie eine gültige Zahl ein.' };
   }
 
-  const bookingData: Omit<Booking, 'id' | 'hotelId'> = {
+  const bookingData: Omit<Booking, 'id' | 'hotelId' | 'createdAt'> = {
     guestName: `${formData.get('firstName')} ${formData.get('lastName')}`,
     checkIn: Timestamp.fromDate(date.from),
     checkOut: Timestamp.fromDate(date.to),
@@ -181,32 +180,32 @@ export async function createBookingAction(
     internalNotes: (formData.get('internalNotes') as string) || '',
     rooms: rooms,
     status: 'Pending',
-    createdAt: Timestamp.now(),
   };
 
   try {
     const bookingCollection = db.collection('hotels').doc(hotelId).collection('bookings');
-    const docRef = await bookingCollection.add(bookingData);
+    const docRef = await bookingCollection.add({
+        ...bookingData,
+        createdAt: FieldValue.serverTimestamp(),
+    });
 
-    // This is the crucial part: create the full booking object to store in the link
     const fullBookingData: Booking = {
         ...bookingData,
-        id: docRef.id, // The ID of the booking document itself
+        id: docRef.id,
         hotelId: hotelId,
+        createdAt: Timestamp.now(), // Use a new timestamp for the link
     }
 
-    // Now, create the booking link document with ALL the necessary data
     const linkRef = await db.collection('bookingLinks').add({
       hotelId: hotelId,
       bookingId: docRef.id,
-      createdAt: Timestamp.now(),
-      status: 'active', // 'active' means the link can be used
-      booking: fullBookingData // Embed the full booking data
+      createdAt: FieldValue.serverTimestamp(),
+      status: 'active',
+      booking: fullBookingData 
     });
 
     revalidatePath(`/dashboard/${hotelId}/bookings`);
 
-    // Use NEXT_PUBLIC_APP_URL for the domain to ensure it works in all environments
     const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const bookingLink = `${domain}/guest/${linkRef.id}`;
 
@@ -253,24 +252,20 @@ export async function updateBookingAction(
   try {
     await bookingRef.update(updatedBookingData);
     
-    // Also update the booking data in the corresponding link document if it exists
     const linksCollection = db.collection('bookingLinks');
     const linkQuery = linksCollection.where('bookingId', '==', bookingId).where('hotelId', '==', hotelId);
     const linkSnapshot = await linkQuery.get();
 
     if (!linkSnapshot.empty) {
       const linkDocRef = linkSnapshot.docs[0].ref;
-      await linkDocRef.update({
-        'booking.guestName': updatedBookingData.guestName,
-        'booking.checkIn': updatedBookingData.checkIn,
-        'booking.checkOut': updatedBookingData.checkOut,
-        'booking.price': updatedBookingData.price,
-        'booking.mealType': updatedBookingData.mealType,
-        'booking.language': updatedBookingData.language,
-        'booking.idUploadRequirement': updatedBookingData.idUploadRequirement,
-        'booking.internalNotes': updatedBookingData.internalNotes,
-        'booking.rooms': updatedBookingData.rooms,
-      });
+      // Update only the booking part of the link
+      const updateObject: { [key: string]: any } = {};
+      for (const [key, value] of Object.entries(updatedBookingData)) {
+          if (key !== 'updatedAt') { // don't update the link's own timestamp here
+            updateObject[`booking.${key}`] = value;
+          }
+      }
+      await linkDocRef.update(updateObject);
     }
 
     revalidatePath(`/dashboard/${hotelId}/bookings`);
@@ -382,7 +377,7 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
   try {
     // Get all booking links associated with the booking IDs to delete them as well
     const linksCollection = db.collection('bookingLinks');
-    const linkQuery = linksCollection.where('bookingId', 'in', bookingIds);
+    const linkQuery = linksCollection.where('bookingId', 'in', bookingIds).where('hotelId', '==', hotelId);
     const linkSnapshot = await linkQuery.get();
 
     linkSnapshot.forEach(linkDoc => {
@@ -480,7 +475,7 @@ export async function updateHotelByAgencyAction(
   const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
-     const mealTypes = formData.getAll('mealTypes') as string[];
+    const mealTypes = formData.getAll('mealTypes') as string[];
     const roomCategories = formData.getAll('roomCategories') as string[];
     const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
@@ -495,7 +490,6 @@ export async function updateHotelByAgencyAction(
     const updates: any = {
         hotelName: formData.get('hotelName') as string,
         domain: formData.get('domain') as string,
-        logoUrl: formData.get('logoUrl') as string,
         'contact.email': formData.get('contactEmail') as string,
         'contact.phone': formData.get('contactPhone') as string,
         'bankDetails.accountHolder': formData.get('accountHolder') as string,
@@ -510,11 +504,15 @@ export async function updateHotelByAgencyAction(
         'permissions.canEditBankDetails': canEditBankDetails,
     };
     
-    // Update smtpPass only if a new value is provided
+    // Only update fields that are not empty
+    const logoUrl = formData.get('logoUrl') as string;
+    if (logoUrl) {
+      updates.logoUrl = logoUrl;
+    }
+    
     if (smtpPass) {
         updates['smtp.appPass'] = smtpPass;
     }
-
 
     await hotelRef.update(updates);
 
@@ -529,4 +527,3 @@ export async function updateHotelByAgencyAction(
     return { success: false, message: `Hotel konnte nicht aktualisiert werden. Fehler: ${errorMessage}` };
   }
 }
-    

@@ -37,7 +37,7 @@ export default function CreateHotelPage() {
     { id: 2, name: 'Doppelzimmer' },
   ]);
   const [hotelierPassword, setHotelierPassword] = useState('');
-  const passwordRef = useRef(''); // Ref to hold the password for redirection
+  const passwordRef = useRef('');
   const [logoUrl, setLogoUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -51,7 +51,6 @@ export default function CreateHotelPage() {
           title: 'Hotel erstellt!',
           description: state.message,
         });
-        // Redirect with password in search params for the admin page to pick up
         router.push(`/admin?newPassword=${encodeURIComponent(passwordRef.current)}`);
       } else {
         toast({
@@ -71,7 +70,7 @@ export default function CreateHotelPage() {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setHotelierPassword(password);
-    passwordRef.current = password; // Store in ref
+    passwordRef.current = password;
     toast({ title: 'Neues Passwort generiert!' });
   };
   
@@ -149,6 +148,7 @@ export default function CreateHotelPage() {
                         onDelete={() => setLogoUrl('')}
                     />
                 )}
+                 <input type="hidden" name="logoUrl" value={logoUrl} />
               </div>
             </CardContent>
           </Card>

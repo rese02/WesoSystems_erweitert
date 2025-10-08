@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Building } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { Hotel } from '@/lib/types';
 import { useParams, useRouter } from 'next/navigation';
@@ -34,18 +34,19 @@ export function UserNav({ hotelData }: { hotelData?: Hotel }) {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      await clearTokenCookie();
-      // Redirect to the homepage after successful logout
+      if (!hotelId) { // Only clear cookie for agency logout
+          await clearTokenCookie();
+      }
       router.push('/');
     } catch (error) {
       console.error('Logout failed', error);
     }
   };
 
-  // Bestimme den Link für das Profil basierend darauf, ob es ein Hotelier oder Admin ist
-  const profileLink = hotelId ? `/dashboard/${hotelId}/profile` : '/admin/profile';
+  const isAgency = !hotelId;
+  const profileLink = isAgency ? '/admin/profile' : `/dashboard/${hotelId}/profile`;
   const displayName = hotelData?.hotelName || 'Agentur';
-  const displayEmail = hotelData?.hotelier?.email || 'hallo@agentur-weso.it';
+  const displayEmail = hotelData?.hotelier?.email || process.env.NEXT_PUBLIC_AGENCY_EMAIL || 'agentur@weso.it';
   const displayAvatarSrc = hotelData?.logoUrl;
   const displayAvatarFallback = displayName.charAt(0).toUpperCase();
 
