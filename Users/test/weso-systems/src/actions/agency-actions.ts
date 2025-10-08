@@ -4,9 +4,6 @@ import { initializeAdminApp } from '@/lib/firebase/admin';
 import { getAuth } from 'firebase-admin/auth';
 import { timingSafeEqual } from 'crypto';
 
-const adminApp = initializeAdminApp();
-const auth = getAuth(adminApp);
-
 type LoginState = {
   message: string;
   success: boolean;
@@ -17,6 +14,9 @@ export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
+  const adminApp = initializeAdminApp();
+  const auth = getAuth(adminApp);
+  
   const email = formData.get('email');
   const password = formData.get('password');
 

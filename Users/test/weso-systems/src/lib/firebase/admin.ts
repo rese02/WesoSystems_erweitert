@@ -1,10 +1,11 @@
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
-import { getApps, initializeApp, getApp } from 'firebase-admin/app';
+import { getApps, initializeApp, getApp, App } from 'firebase-admin/app';
 
-export const initializeAdminApp = () => {
-  if (getApps().length > 0) {
-    return getApp();
+export const initializeAdminApp = (): App => {
+  const apps = getApps();
+  if (apps.length > 0) {
+    return apps[0]!;
   }
 
   try {
@@ -20,23 +21,22 @@ export const initializeAdminApp = () => {
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
-  } catch (error) {
-    console.error('CRITICAL ERROR: Firebase Admin SDK initialization failed.', error);
-    // Fallback for local development if the primary method fails
-    // This allows running the app locally using a file
+  } catch (error: any) {
+    console.error('CRITICAL ERROR: Firebase Admin SDK initialization failed.', error.message);
+    // This fallback is for local development environments where the ENV VAR might not be set.
     try {
       const serviceAccount = require('../../../serviceAccountKey.json');
       return initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
-    } catch (localError) {
+    } catch (localError: any) {
       console.error(
         "CRITICAL ERROR: Fallback local initialization also failed. Ensure 'serviceAccountKey.json' is in the root directory for local development or FIREBASE_SERVICE_ACCOUNT_KEY is set for production.",
-        localError
+        localError.message
       );
       // Re-throw the error to prevent the app from continuing with a non-initialized Firebase instance
-      throw new Error('Firebase Admin SDK could not be initialized.');
+      throw new Error('Firebase Admin SDK could not be initialized. See server logs for details.');
     }
   }
 };

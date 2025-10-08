@@ -7,9 +7,6 @@ import { revalidatePath } from 'next/cache';
 import { Booking, FellowTravelerData, GuestData, Hotel } from '@/lib/types';
 import { sendBookingConfirmation } from '@/lib/email';
 
-const adminApp = initializeAdminApp();
-const db = getFirestore(adminApp);
-
 type FormState = {
   message: string;
   errors?: string[] | null;
@@ -22,6 +19,8 @@ export async function finalizeBookingAction(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const adminApp = initializeAdminApp();
+  const db = getFirestore(adminApp);
     
   const bookingLinkRef = db.collection('bookingLinks').doc(linkId);
   
