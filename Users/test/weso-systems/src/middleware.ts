@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from '@/lib/firebase/admin';
+import { initializeAdminApp } from '@/lib/firebase/admin';
+import { getAuth } from 'firebase-admin/auth';
 
 async function verifyToken(token: string) {
   try {
+    const adminApp = initializeAdminApp();
+    const auth = getAuth(adminApp);
     const decodedToken = await auth.verifyIdToken(token);
     return decodedToken;
   } catch (error) {

@@ -2,7 +2,7 @@
 import admin from 'firebase-admin';
 import { getApps, initializeApp, getApp } from 'firebase-admin/app';
 
-const initializeAdminApp = () => {
+export const initializeAdminApp = () => {
   if (getApps().length > 0) {
     return getApp();
   }
@@ -15,7 +15,7 @@ const initializeAdminApp = () => {
       );
     }
     const serviceAccount = JSON.parse(serviceAccountString);
-    console.log('Attempting to initialize Firebase Admin SDK for production...');
+    
     return initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
@@ -25,7 +25,6 @@ const initializeAdminApp = () => {
     // Fallback for local development if the primary method fails
     // This allows running the app locally using a file
     try {
-      console.log('Attempting to initialize Firebase Admin SDK for local development...');
       const serviceAccount = require('../../../serviceAccountKey.json');
       return initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -41,11 +40,3 @@ const initializeAdminApp = () => {
     }
   }
 };
-
-// Initialize the app and then export the services
-const adminApp = initializeAdminApp();
-const db = admin.firestore(adminApp);
-const auth = admin.auth(adminApp);
-const storage = admin.storage(adminApp);
-
-export { db, auth, storage };

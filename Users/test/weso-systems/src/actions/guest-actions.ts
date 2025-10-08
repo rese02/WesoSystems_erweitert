@@ -1,12 +1,14 @@
 'use server';
 
-import { db } from '@/lib/firebase/admin'; // Nutzt die stabile Admin-Verbindung
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { initializeAdminApp } from '@/lib/firebase/admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { Booking, FellowTravelerData, GuestData, Hotel } from '@/lib/types';
 import { sendBookingConfirmation } from '@/lib/email';
 
+const adminApp = initializeAdminApp();
+const db = getFirestore(adminApp);
 
 type FormState = {
   message: string;

@@ -1,11 +1,16 @@
 'use server';
 
-import {db, auth} from '@/lib/firebase/admin';
-import {Timestamp, FieldValue} from 'firebase-admin/firestore';
-import {revalidatePath} from 'next/cache';
-import {redirect} from 'next/navigation';
-import {Booking, Room, IdUploadRequirement, BookingStatus, Hotel} from '@/lib/types';
-import {DateRange} from 'react-day-picker';
+import { initializeAdminApp } from '@/lib/firebase/admin';
+import { Timestamp, FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel } from '@/lib/types';
+import { DateRange } from 'react-day-picker';
+
+const adminApp = initializeAdminApp();
+const db = getFirestore(adminApp);
+const auth = getAuth(adminApp);
 
 type CreateHotelState = {
   message: string;
