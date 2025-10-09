@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
-import { updateHotelierProfileAction, updateHotelLogo, revalidateHotelierProfileAction } from '@/actions/hotel-actions';
+import { updateHotelierProfileAction, updateHotelLogo } from '@/actions/hotel-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useParams } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { Hotel } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -56,10 +56,6 @@ export default function HotelierProfilePage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      if (state.success) {
-        // Trigger revalidation on the server after successful update
-        revalidateHotelierProfileAction(params.hotelId);
-      }
     }
   }, [state, toast, params.hotelId]);
 

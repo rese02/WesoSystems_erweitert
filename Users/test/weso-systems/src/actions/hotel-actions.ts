@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { initializeAdminApp } from '@/lib/firebase/admin';
@@ -356,6 +354,8 @@ export async function updateHotelierProfileAction(
     await hotelRef.update(updates);
     
     revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
+
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
   } catch (error) {
