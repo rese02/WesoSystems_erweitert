@@ -10,6 +10,8 @@ type LoginState = {
   token?: string;
 };
 
+// This server action is now deprecated and will be removed.
+// The logic is moved to the middleware for a more secure and direct session handling.
 export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
@@ -61,9 +63,11 @@ export async function loginAgencyAction(
   }
 
   try {
-    // This is a placeholder UID for the agency user. 
+    // This is a placeholder UID for the agency user.
     // In a real multi-agency scenario, you'd have a proper user management system.
     const agencyUid = 'agency_user_main'; 
+    // We create a token that the client can use to sign in with Firebase Auth client-side
+    // and then the client will post the ID token to our API route to set the cookie.
     await auth.setCustomUserClaims(agencyUid, { role: 'agency' });
     const customToken = await auth.createCustomToken(agencyUid);
 

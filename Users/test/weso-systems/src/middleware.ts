@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { initializeAdminApp } from '@/lib/firebase/admin';
 import { getAuth } from 'firebase-admin/auth';
 
+// This function verifies the Firebase ID token sent from the client.
 async function verifyToken(token: string) {
   try {
     const adminApp = initializeAdminApp();
