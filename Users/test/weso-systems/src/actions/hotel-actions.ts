@@ -1,3 +1,4 @@
+
 'use server';
 
 import { initializeAdminApp } from '@/lib/firebase/admin';
@@ -62,8 +63,8 @@ export async function createHotelAction(
     return { success: false, message: 'Ungültiger SMTP Port. Bitte geben Sie eine Zahl ein.' };
   }
 
-  const mealTypes = formData.getAll('mealTypes') as string[];
-  const roomCategories = formData.getAll('roomCategories') as string[];
+  const mealTypes = formData.getAll('mealTypes').filter(m => typeof m === 'string') as string[];
+  const roomCategories = formData.getAll('roomCategories').filter(rc => typeof rc === 'string') as string[];
   const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
   const hotelData: Omit<Hotel, 'id' | 'createdAt'> = {
