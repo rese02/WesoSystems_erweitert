@@ -19,6 +19,23 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth as clientAuth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 
+
+async function setTokenCookie(token: string) {
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to set auth cookie:', error);
+    return false;
+  }
+}
+
 export default function HotelLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -34,20 +51,23 @@ export default function HotelLoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
       const user = userCredential.user;
-
-      // ID-Token mit den Custom Claims holen
-      const idTokenResult = await user.getIdTokenResult(true); // forceRefresh = true
+      const idToken = await user.getIdToken();
+      const idTokenResult = await user.getIdTokenResult();
       const hotelId = idTokenResult.claims.hotelId as string | undefined;
 
       if (idTokenResult.claims.role === 'hotelier' && hotelId) {
-        // Erfolgreich! Leite zum Dashboard weiter.
-        router.push(`/dashboard/${hotelId}`);
+        const cookieSet = await setTokenCookie(idToken);
+        if (cookieSet) {
+          router.push(`/dashboard/${hotelId}`);
+        } else {
+          setError('Sitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.');
+          await clientAuth.signOut();
+        }
       } else {
         setError('Sie haben keine Berechtigung, auf dieses Dashboard zuzugreifen.');
-        await clientAuth.signOut(); // Sicherheitshalber ausloggen
+        await clientAuth.signOut();
       }
     } catch (err: any) {
-      setIsPending(false);
       switch (err.code) {
         case 'auth/user-not-found':
         case 'auth/wrong-password':
@@ -59,6 +79,8 @@ export default function HotelLoginPage() {
           break;
       }
       console.error(err);
+    } finally {
+        setIsPending(false);
     }
   };
 

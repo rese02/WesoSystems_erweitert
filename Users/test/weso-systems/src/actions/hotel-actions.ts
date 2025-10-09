@@ -63,8 +63,8 @@ export async function createHotelAction(
     return { success: false, message: 'Ungültiger SMTP Port. Bitte geben Sie eine Zahl ein.' };
   }
 
-  const mealTypes = formData.getAll('mealTypes').filter(m => typeof m === 'string') as string[];
-  const roomCategories = formData.getAll('roomCategories').filter(rc => typeof rc === 'string') as string[];
+  const mealTypes = formData.getAll('mealTypes').filter(m => typeof m === 'string' && m.trim() !== '') as string[];
+  const roomCategories = formData.getAll('roomCategories').filter(rc => typeof rc === 'string' && rc.trim() !== '') as string[];
   const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
   const hotelData: Omit<Hotel, 'id' | 'createdAt'> = {
@@ -136,27 +136,38 @@ export async function deleteHotelAction(hotelId: string) {
     const hotelDoc = await db.collection('hotels').doc(hotelId).get();
     const hotelData = hotelDoc.data();
 
+    // 1. Delete the Firebase Auth user
     if (hotelData?.hotelier?.uid) {
         try {
             await auth.deleteUser(hotelData.hotelier.uid);
         } catch (authError: any) {
             if (authError.code !== 'auth/user-not-found') {
-                throw authError; 
+                console.error(`Could not delete auth user ${hotelData.hotelier.uid}, but proceeding.`, authError);
             }
         }
     }
 
+    // 2. Delete all booking links associated with the hotel
+    const linksQuery = db.collection('bookingLinks').where('hotelId', '==', hotelId);
+    const linksSnapshot = await linksQuery.get();
+    const batch = db.batch();
+    linksSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+
+    // 3. Delete the hotel document itself (this also deletes all subcollections like 'bookings')
     await db.collection('hotels').doc(hotelId).delete();
 
     revalidatePath('/admin');
     return {
-      message: 'Hotel und zugehöriger Benutzer erfolgreich gelöscht.',
+      message: 'Hotel und alle zugehörigen Daten (Benutzer, Links) erfolgreich gelöscht.',
       success: true,
     };
   } catch (error) {
-    console.error('Error deleting hotel:', error);
+    console.error('Error deleting hotel and associated data:', error);
     return {
-      message: 'Fehler beim Löschen des Hotels.',
+      message: 'Fehler beim Löschen des Hotels und seiner Daten.',
       success: false,
     };
   }
@@ -422,7 +433,7 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
     await batch.commit();
     
     revalidatePath(`/dashboard/${hotelId}/bookings`);
-    return { success: true, message: 'Ausgewählte Buchungen erfolgreich gelöscht.' };
+    return { success: true, message: 'Ausgewählte Buchungen und zugehörige Links erfolgreich gelöscht.' };
 
   } catch (error) {
     console.error('Error deleting bookings:', error);
@@ -509,8 +520,8 @@ export async function updateHotelByAgencyAction(
   const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
-    const mealTypes = formData.getAll('mealTypes') as string[];
-    const roomCategories = formData.getAll('roomCategories') as string[];
+    const mealTypes = (formData.getAll('mealTypes') as string[]).filter(Boolean);
+    const roomCategories = (formData.getAll('roomCategories') as string[]).filter(Boolean);
     const canEditBankDetails = formData.get('canEditBankDetails') === 'on';
 
     const smtpPortString = formData.get('smtpPort') as string;
