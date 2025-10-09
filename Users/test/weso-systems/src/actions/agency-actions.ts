@@ -10,8 +10,7 @@ type LoginState = {
   token?: string;
 };
 
-// This server action is now deprecated and will be removed.
-// The logic is moved to the middleware for a more secure and direct session handling.
+// Diese Server-Aktion wird für den neuen, Cookie-basierten Flow verwendet.
 export async function loginAgencyAction(
   prevState: LoginState,
   formData: FormData
@@ -40,6 +39,7 @@ export async function loginAgencyAction(
     };
   }
 
+  // Timing-sichere Überprüfung, um Timing-Angriffe zu verhindern.
   const inputEmailBuffer = Buffer.from(email);
   const storedEmailBuffer = Buffer.from(AGENCY_EMAIL);
   const inputPasswordBuffer = Buffer.from(password);
@@ -63,12 +63,13 @@ export async function loginAgencyAction(
   }
 
   try {
-    // This is a placeholder UID for the agency user.
-    // In a real multi-agency scenario, you'd have a proper user management system.
+    // Dies ist eine statische UID für den Agentur-Benutzer.
+    // In einem Szenario mit mehreren Agenturen müsste dies dynamisch sein.
     const agencyUid = 'agency_user_main'; 
-    // We create a token that the client can use to sign in with Firebase Auth client-side
-    // and then the client will post the ID token to our API route to set the cookie.
+    // Wir setzen eine benutzerdefinierte Rolle, um die Berechtigungen in den Firestore-Regeln zu steuern.
     await auth.setCustomUserClaims(agencyUid, { role: 'agency' });
+    // Wir erstellen ein benutzerdefiniertes Token, das der Client verwendet, um sich bei Firebase anzumelden.
+    // Der Client sendet dann das ID-Token an unsere API-Route, um das Sitzungscookie zu setzen.
     const customToken = await auth.createCustomToken(agencyUid);
 
     return {

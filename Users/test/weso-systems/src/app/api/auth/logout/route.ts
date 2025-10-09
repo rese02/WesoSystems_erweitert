@@ -4,9 +4,9 @@ export async function POST() {
   try {
     const response = NextResponse.json({ success: true });
     
-    // Instruct the browser to delete the cookie
+    // Das Session-Cookie löschen
     response.cookies.set({
-      name: 'firebaseIdToken',
+      name: 'session',
       value: '',
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',

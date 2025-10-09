@@ -4,7 +4,6 @@ import { initializeAdminApp } from '@/lib/firebase/admin';
 import { Timestamp, FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
 
@@ -135,7 +134,6 @@ export async function deleteHotelAction(hotelId: string) {
     const hotelDoc = await db.collection('hotels').doc(hotelId).get();
     const hotelData = hotelDoc.data();
 
-    // 1. Delete the Firebase Auth user
     if (hotelData?.hotelier?.uid) {
         try {
             await auth.deleteUser(hotelData.hotelier.uid);
@@ -146,7 +144,6 @@ export async function deleteHotelAction(hotelId: string) {
         }
     }
 
-    // 2. Delete all booking links associated with the hotel
     const linksQuery = db.collection('bookingLinks').where('hotelId', '==', hotelId);
     const linksSnapshot = await linksQuery.get();
     const batch = db.batch();
@@ -155,7 +152,6 @@ export async function deleteHotelAction(hotelId: string) {
     });
     await batch.commit();
 
-    // 3. Delete the hotel document itself (this also deletes all subcollections like 'bookings')
     await db.collection('hotels').doc(hotelId).delete();
 
     revalidatePath('/admin');
@@ -216,7 +212,7 @@ export async function createBookingAction(
         ...bookingData,
         id: docRef.id,
         hotelId: hotelId,
-        createdAt: Timestamp.now(), // Use a new timestamp for the link
+        createdAt: Timestamp.now(), 
     }
 
     const linkRef = await db.collection('bookingLinks').add({
@@ -284,10 +280,9 @@ export async function updateBookingAction(
 
     if (!linkSnapshot.empty) {
       const linkDocRef = linkSnapshot.docs[0].ref;
-      // Update only the booking part of the link
       const updateObject: { [key: string]: any } = {};
       for (const [key, value] of Object.entries(updatedBookingData)) {
-          if (key !== 'updatedAt') { // don't update the link's own timestamp here
+          if (key !== 'updatedAt') { 
             updateObject[`booking.${key}`] = value;
           }
       }
@@ -421,7 +416,6 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
   const batch = db.batch();
 
   try {
-    // Get all booking links associated with the booking IDs to delete them as well
     const linksCollection = db.collection('bookingLinks');
     const linkQuery = linksCollection.where('bookingId', 'in', bookingIds).where('hotelId', '==', hotelId);
     const linkSnapshot = await linkQuery.get();
@@ -430,7 +424,6 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
       batch.delete(linkDoc.ref);
     });
 
-    // Delete the bookings themselves
     bookingIds.forEach(id => {
       const bookingRef = db.collection('hotels').doc(hotelId).collection('bookings').doc(id);
       batch.delete(bookingRef);
@@ -471,7 +464,6 @@ export async function updateHotelSettingsAction(
     const hotelData = hotelSnap.data();
     const canEditBankDetails = hotelData?.permissions?.canEditBankDetails ?? false;
 
-    // Basisdaten validieren
     const hotelName = formData.get('hotelName') as string;
     const domain = formData.get('domain') as string;
     const contactEmail = formData.get('contactEmail') as string;
@@ -488,7 +480,6 @@ export async function updateHotelSettingsAction(
       'contact.phone': contactPhone,
     };
 
-    // Bankdaten nur aktualisieren, wenn die Berechtigung vorhanden ist
     if (canEditBankDetails) {
       const accountHolder = formData.get('accountHolder') as string;
       const iban = formData.get('iban') as string;
@@ -555,7 +546,6 @@ export async function updateHotelByAgencyAction(
         'permissions.canEditBankDetails': canEditBankDetails,
     };
     
-    // Only update fields that are not empty
     const logoUrl = formData.get('logoUrl') as string;
     if (logoUrl) {
       updates.logoUrl = logoUrl;

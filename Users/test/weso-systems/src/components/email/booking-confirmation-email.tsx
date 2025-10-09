@@ -20,18 +20,13 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       name: "Name",
       checkIn: "Anreise",
       checkOut: "Abreise",
-      checkInTime: "ab 15:00",
-      checkOutTime: "bis 11:00",
-      timeSuffix: "Uhr",
+      checkInTime: "ab 15:00 Uhr",
+      checkOutTime: "bis 11:00 Uhr",
       room: "Zimmer",
       guests: "Gäste",
       adults: "Erwachsene",
       children: "Kinder",
       meal: "Verpflegung",
-      breakfast: "Frühstück",
-      half_board: "Halbpension",
-      full_board: "Vollpension",
-      no_meal: "Ohne Verpflegung",
       payment: "Zahlungsinformationen",
       totalPrice: "Gesamtpreis",
       amountPaid: "Geleistete Zahlung",
@@ -45,6 +40,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Herzliche Grüße,",
       team: "Das Team vom",
       contact: "Kontakt",
+      // Meal Types
+      'Frühstück': 'Frühstück',
+      'Halbpension': 'Halbpension',
+      'Vollpension': 'Vollpension',
+      'Ohne Verpflegung': 'Ohne Verpflegung',
     },
     en: {
       title: "Your Booking Confirmation",
@@ -58,16 +58,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       checkOut: "Departure",
       checkInTime: "from 3:00 PM",
       checkOutTime: "until 11:00 AM",
-      timeSuffix: "",
       room: "Room",
       guests: "Guests",
       adults: "Adults",
       children: "Children",
       meal: "Board",
-      breakfast: "Breakfast",
-      half_board: "Half-board",
-      full_board: "Full-board",
-      no_meal: "No meal plan",
       payment: "Payment Information",
       totalPrice: "Total Price",
       amountPaid: "Amount Paid",
@@ -81,6 +76,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Kind regards,",
       team: "The team at",
       contact: "Contact",
+      // Meal Types
+      'Frühstück': 'Breakfast',
+      'Halbpension': 'Half Board',
+      'Vollpension': 'Full Board',
+      'Ohne Verpflegung': 'No Meal Plan',
     },
     it: {
       title: "La Sua Conferma di Prenotazione",
@@ -94,16 +94,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       checkOut: "Partenza",
       checkInTime: "dalle 15:00",
       checkOutTime: "fino alle 11:00",
-      timeSuffix: "",
       room: "Camera",
       guests: "Ospiti",
       adults: "Adulti",
       children: "Bambini",
       meal: "Pensione",
-      breakfast: "Colazione",
-      half_board: "Mezza pensione",
-      full_board: "Pensione completa",
-      no_meal: "Senza vitto",
       payment: "Informazioni sul Pagamento",
       totalPrice: "Prezzo Totale",
       amountPaid: "Importo Pagato",
@@ -117,6 +112,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
       regards: "Cordiali saluti,",
       team: "Il team dell'Hotel",
       contact: "Contatto",
+      // Meal Types
+      'Frühstück': 'Colazione',
+      'Halbpension': 'Mezza Pensione',
+      'Vollpension': 'Pensione Completa',
+      'Ohne Verpflegung': 'Senza Vitto',
     },
   };
   return translations[lang][key] || key;
@@ -152,20 +152,7 @@ export const bookingConfirmationEmailTemplate = ({
   const amountPaid = booking.amountPaid || 0;
   const amountDue = booking.price - amountPaid;
 
-  const translatedMealType = () => {
-    switch (booking.mealType) {
-        case 'Frühstück':
-            return T('breakfast');
-        case 'Halbpension':
-            return T('half_board');
-        case 'Vollpension':
-            return T('full_board');
-        case 'Ohne Verpflegung':
-            return T('no_meal');
-        default:
-            return booking.mealType;
-    }
-  }
+  const translatedMealType = T(booking.mealType);
 
 
   return `
@@ -230,7 +217,7 @@ export const bookingConfirmationEmailTemplate = ({
                     </div>
                      <div>
                         <strong>${T('meal')}</strong>
-                        <p>${translatedMealType()}</p>
+                        <p>${translatedMealType}</p>
                     </div>
                 </div>
 

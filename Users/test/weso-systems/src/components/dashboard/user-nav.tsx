@@ -18,7 +18,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase/client';
 
 
-async function clearTokenCookie() {
+async function clearSessionCookie() {
   try {
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (error) {
@@ -34,9 +34,7 @@ export function UserNav({ hotelData }: { hotelData?: Hotel }) {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      if (!hotelId) { // Only clear cookie for agency logout
-          await clearTokenCookie();
-      }
+      await clearSessionCookie();
       router.push('/');
     } catch (error) {
       console.error('Logout failed', error);

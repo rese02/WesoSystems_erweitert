@@ -20,15 +20,12 @@ import { auth as clientAuth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 import { loginAgencyAction } from '@/actions/agency-actions';
 
-// This function sets the session cookie by calling our API route.
-async function setTokenCookie(token: string) {
+async function setSessionCookie(idToken: string) {
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: idToken }),
     });
     return response.ok;
   } catch (error) {
@@ -51,18 +48,13 @@ export default function AgencyLoginPage() {
     if (state.success && state.token) {
       const performFirebaseLogin = async () => {
         try {
-          // 1. Sign in with the custom token from the server action
           const userCredential = await signInWithCustomToken(clientAuth, state.token!);
-          // 2. Get the ID token from the signed-in user
           const idToken = await userCredential.user.getIdToken();
-          // 3. Send this ID token to our API to set the session cookie
-          const cookieSet = await setTokenCookie(idToken);
+          const cookieSet = await setSessionCookie(idToken);
           
           if (cookieSet) {
-            // 4. Redirect to the admin dashboard
             router.push('/admin');
           } else {
-            // Handle cookie setting failure
             console.error('Failed to set authentication session.');
           }
         } catch (error) {
@@ -71,7 +63,7 @@ export default function AgencyLoginPage() {
       };
       performFirebaseLogin();
     }
-  }, [state.success, state.token, router]);
+  }, [state, router]);
 
   return (
     <AuthLayout>

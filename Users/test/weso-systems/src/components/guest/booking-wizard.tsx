@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, AlertCircle, CalendarIcon, Loader2, Copy, Check } from 'lucide-react';
+import { AlertCircle, CalendarIcon, Loader2, Copy, Check } from 'lucide-react';
 import { FileUpload } from './file-upload';
 import { finalizeBookingAction } from '@/actions/guest-actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -28,8 +28,22 @@ const locales = {
   it: it,
 };
 
-const t = (lang: 'de' | 'en' | 'it', key: string): string => {
-  const translations = {
+type TranslationKey = 
+  | 'steps' | 'mainGuestTitle' | 'firstNameLabel' | 'lastNameLabel' | 'emailLabel' | 'phoneLabel' 
+  | 'streetLabel' | 'zipLabel' | 'cityLabel' | 'birthDateLabel' | 'selectDate' | 'idDocsLabel' 
+  | 'idDocsDescription' | 'idDocsDescriptionRequired' | 'uploadNow' | 'uploadLater' | 'idFrontLabel' 
+  | 'idBackLabel' | 'fileTypeHint' | 'notesLabel' | 'notesPlaceholder' | 'fellowTravelersTitle' 
+  | 'fellowTravelersDescription' | 'fellowTravelerLabel' | 'fellowTravelerPlaceholder' | 'noFellowTravelers' 
+  | 'addPerson' | 'paymentOptionTitle' | 'paymentOptionDescription' | 'depositLabel' | 'fullPaymentLabel' 
+  | 'paymentDetailsTitle' | 'paymentDetailsDescription' | 'hotelBankDetails' | 'amountToPay' 
+  | 'accountHolder' | 'iban' | 'bic' | 'bank' | 'uploadProofLabel' | 'uploadProofDescription' 
+  | 'reviewTitle' | 'reviewDescription' | 'agb' | 'agbHint' | 'validationErrorTitle' 
+  | 'serverErrorTitle' | 'submitButton' | 'backButton' | 'nextButton' | 'uploading' 
+  | 'requiredField' | 'copyToastTitle';
+
+
+const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): string | string[] => {
+    const translations = {
     de: {
         steps: ['Gast', 'Mitreiser', 'Zahlung', 'Details', 'Prüfung'],
         mainGuestTitle: "Ihre Kontaktdaten (Hauptbucher)",
@@ -196,7 +210,11 @@ const t = (lang: 'de' | 'en' | 'it', key: string): string => {
         copyToastTitle: (field: string) => `${field} copiato!`,
     },
   };
-  return translations[lang][key] || key;
+  const value = translations[lang][key];
+  if (typeof value === 'function') {
+      return value(...args);
+  }
+  return value || key;
 };
 
 type BookingWizardProps = {
@@ -218,14 +236,8 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const { toast } = useToast();
 
   const lang = initialData.booking.language || 'de';
-  const T = (key: string, ...args: any[]) => {
-    const value = t(lang, key);
-    if (typeof value === 'function') {
-      return value(...args);
-    }
-    return value;
-  };
-  const steps = [T('steps', 0), T('steps', 1), T('steps', 2), T('steps', 3), T('steps', 4)];
+  const T = (key: TranslationKey, ...args: any[]): string => t(lang, key, ...args) as string;
+  const steps = t(lang, 'steps') as string[];
   const locale = locales[lang];
   const idUploadRequirement = initialData.booking.idUploadRequirement || 'choice';
 
@@ -310,14 +322,6 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
     setFellowTravelers(prev => prev.map(t => t.id === id ? { ...t, name } : t));
   };
 
-
-  const addTraveler = () => {
-    setFellowTravelers([...fellowTravelers, { id: Date.now(), name: '', idFrontUrl: '', idBackUrl: '' }]);
-  };
-
-  const removeTraveler = (id: number) => {
-    setFellowTravelers(fellowTravelers.filter((t) => t.id !== id));
-  };
 
   const isStep1Valid = () => {
     const requiredFields = [formData.firstName, formData.lastName, formData.email, formData.phone, formData.street, formData.zip, formData.city];
@@ -663,7 +667,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                 <input type="hidden" name="city" value={formData.city} />
                 <input type="hidden" name="specialRequests" value={formData.specialRequests} />
                 
-                {fellowTravelers.map((t, i) => (
+                {fellowTravelers.map((t) => (
                     <Fragment key={t.id}>
                         <input type="hidden" name={`fellowTraveler_${t.id}_name`} value={t.name} />
                         <input type="hidden" name={`fellowTraveler_${t.id}_idFrontUrl`} value={t.idFrontUrl} />
@@ -724,7 +728,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
 
   return (
     <div className="space-y-4 md:space-y-8">
-       <div className="flex justify-center pt-4 pb-8 sm:pb-12 overflow-x-auto">
+       <div className="flex justify-center pt-2 pb-8 sm:pb-12 overflow-x-auto">
         <Stepper steps={steps} currentStep={currentStep} />
       </div>
 

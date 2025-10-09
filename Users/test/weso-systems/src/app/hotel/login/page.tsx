@@ -20,7 +20,7 @@ import { auth as clientAuth } from '@/lib/firebase/client';
 import { useRouter } from 'next/navigation';
 
 
-async function setTokenCookie(token: string) {
+async function setSessionCookie(token: string) {
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -56,7 +56,7 @@ export default function HotelLoginPage() {
       const hotelId = idTokenResult.claims.hotelId as string | undefined;
 
       if (idTokenResult.claims.role === 'hotelier' && hotelId) {
-        const cookieSet = await setTokenCookie(idToken);
+        const cookieSet = await setSessionCookie(idToken);
         if (cookieSet) {
           router.push(`/dashboard/${hotelId}`);
         } else {

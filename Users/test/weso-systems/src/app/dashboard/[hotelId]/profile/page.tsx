@@ -16,18 +16,16 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { Hotel } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { FileUpload } from '@/components/guest/file-upload';
-import Image from 'next/image';
 
 const initialState = {
   message: '',
   success: false,
 };
-
 
 export default function HotelierProfilePage() {
   const params = useParams<{ hotelId: string }>();
@@ -39,14 +37,14 @@ export default function HotelierProfilePage() {
   const [state, formAction, isPending] = useActionState(updateAction, initialState);
 
   useEffect(() => {
-    async function fetchHotel() {
-      const hotelRef = doc(db, 'hotels', params.hotelId);
-      const hotelSnap = await getDoc(hotelRef);
-      if (hotelSnap.exists()) {
-        setHotel({ id: hotelSnap.id, ...hotelSnap.data() } as Hotel);
-      }
-    }
-    fetchHotel();
+    if (!params.hotelId) return;
+    const hotelRef = doc(db, 'hotels', params.hotelId);
+    const unsubscribe = onSnapshot(hotelRef, (doc) => {
+        if (doc.exists()) {
+            setHotel({ id: doc.id, ...doc.data() } as Hotel);
+        }
+    });
+    return () => unsubscribe();
   }, [params.hotelId]);
 
   useEffect(() => {
@@ -57,7 +55,7 @@ export default function HotelierProfilePage() {
         variant: state.success ? 'default' : 'destructive',
       });
     }
-  }, [state, toast, params.hotelId]);
+  }, [state, toast]);
 
   if (!hotel) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>;
@@ -68,7 +66,6 @@ export default function HotelierProfilePage() {
     if (hotel) {
         const result = await updateHotelLogo(hotel.id, url);
         if (result.success) {
-            setHotel(prev => prev ? {...prev, logoUrl: url} : null);
             toast({ title: 'Logo aktualisiert!' });
         } else {
              toast({ title: 'Fehler', description: result.message, variant: 'destructive'});
@@ -76,11 +73,10 @@ export default function HotelierProfilePage() {
     }
   };
   
-  const handleLogoDelete = async (fileType: string) => {
+  const handleLogoDelete = async () => {
     if (hotel) {
         const result = await updateHotelLogo(hotel.id, '');
         if (result.success) {
-            setHotel(prev => prev ? {...prev, logoUrl: ''} : null);
             toast({ title: 'Logo entfernt.'});
         } else {
              toast({ title: 'Fehler', description: result.message, variant: 'destructive'});
@@ -130,7 +126,7 @@ export default function HotelierProfilePage() {
             <CardHeader>
               <CardTitle>Zugangsdaten</CardTitle>
               <CardDescription>
-                Ändern Sie Ihre E-Mail-Adresse und Ihr Passwort. Die Agentur wird über die Änderung informiert.
+                Ändern Sie Ihre E-Mail-Adresse und Ihr Passwort.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

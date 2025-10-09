@@ -1,20 +1,20 @@
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
-import { getApps, initializeApp, getApp, App } from 'firebase-admin/app';
+import { getApps, initializeApp, App } from 'firebase-admin/app';
 
-// This function ensures that Firebase Admin is initialized only once.
+// Diese Funktion stellt sicher, dass die Firebase Admin-App nur einmal initialisiert wird (Singleton-Pattern).
 export const initializeAdminApp = (): App => {
   const apps = getApps();
   if (apps.length > 0) {
     return apps[0]!;
   }
 
-  // If no app is initialized, create a new one.
+  // Wenn keine App initialisiert ist, wird eine neue erstellt.
   try {
     const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     if (!serviceAccountString) {
       throw new Error(
-        'The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. The value should be the JSON content of your service account key file.'
+        'Die Umgebungsvariable FIREBASE_SERVICE_ACCOUNT_KEY ist nicht gesetzt. Der Wert sollte der JSON-Inhalt Ihrer Service-Account-Schlüsseldatei sein.'
       );
     }
     const serviceAccount = JSON.parse(serviceAccountString);
@@ -24,9 +24,8 @@ export const initializeAdminApp = (): App => {
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
   } catch (error: any) {
-    console.error('CRITICAL ERROR: Firebase Admin SDK initialization failed.', error.message);
-    // This fallback is for local development environments where the ENV VAR might not be set.
-    // In a real production environment, this part should ideally not be needed.
+    console.error('KRITISCHER FEHLER: Die Initialisierung des Firebase Admin SDK ist fehlgeschlagen.', error.message);
+    // Fallback für die lokale Entwicklung, falls die Umgebungsvariable nicht gesetzt ist.
     try {
       const serviceAccount = require('../../../serviceAccountKey.json');
       return initializeApp({
@@ -35,11 +34,11 @@ export const initializeAdminApp = (): App => {
       });
     } catch (localError: any) {
       console.error(
-        "CRITICAL ERROR: Fallback local initialization also failed. Ensure 'serviceAccountKey.json' is in the root directory for local development or FIREBASE_SERVICE_ACCOUNT_KEY is set for production.",
+        "KRITISCHER FEHLER: Auch die lokale Fallback-Initialisierung ist fehlgeschlagen. Stellen Sie sicher, dass 'serviceAccountKey.json' für die lokale Entwicklung im Stammverzeichnis vorhanden ist oder FIREBASE_SERVICE_ACCOUNT_KEY für die Produktion gesetzt ist.",
         localError.message
       );
-      // Re-throw the error to prevent the app from continuing with a non-initialized Firebase instance
-      throw new Error('Firebase Admin SDK could not be initialized. See server logs for details.');
+      // Erneutes Auslösen des Fehlers, um zu verhindern, dass die App mit einer nicht initialisierten Firebase-Instanz weiterläuft.
+      throw new Error('Firebase Admin SDK konnte nicht initialisiert werden. Siehe Server-Protokolle für Details.');
     }
   }
 };

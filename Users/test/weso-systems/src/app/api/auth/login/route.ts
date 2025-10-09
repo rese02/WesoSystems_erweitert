@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true });
     
-    // Set the token in an HttpOnly, secure cookie
+    // Session-Cookie für 1 Tag setzen
     response.cookies.set({
-      name: 'firebaseIdToken',
+      name: 'session',
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       path: '/',
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: 60 * 60 * 24, // 1 Tag
     });
 
     return response;

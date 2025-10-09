@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 
 function AgencyDashboard() {
@@ -54,12 +55,10 @@ function AgencyDashboard() {
             ? data.createdAt.toDate().toISOString() 
             : new Date().toISOString();
           
-          let hotelier = data.hotelier;
-          
           return {
             id: doc.id,
             ...data,
-            hotelier: hotelier,
+            hotelier: data.hotelier,
             createdAt: createdAt,
           } as Hotel;
         });
@@ -92,14 +91,14 @@ function AgencyDashboard() {
       <AlertDialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hotelier-Passwort</AlertDialogTitle>
+            <AlertDialogTitle>Passwort für neuen Hotelier</AlertDialogTitle>
             <AlertDialogDescription>
-              Das Passwort für den neuen Hotelier wurde generiert. Bitte kopieren und sicher an den Hotelier weitergeben. Dies ist die einzige Anzeige des Passworts.
+              WICHTIG: Dies ist die einzige Anzeige des Passworts. Kopieren Sie es und geben Sie es sicher an den Hotelier weiter.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="my-4 rounded-md bg-muted p-4 font-mono text-center text-lg tracking-wider">
+          <Badge variant="outline" className="my-4 justify-center rounded-md bg-muted p-4 font-mono text-center text-lg tracking-wider">
             {newPassword}
-          </div>
+          </Badge>
           <AlertDialogFooter>
             <Button variant="outline" onClick={() => setShowPasswordModal(false)}>Schließen</Button>
             <AlertDialogAction onClick={copyPasswordToClipboard}>Passwort kopieren</AlertDialogAction>
@@ -136,7 +135,7 @@ function AgencyDashboard() {
 
 export default function AgencyDashboardPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Loading...</div>}>
       <AgencyDashboard />
     </Suspense>
   )
