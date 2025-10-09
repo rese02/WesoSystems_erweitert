@@ -186,6 +186,7 @@ export default function CreateHotelPage() {
                     id="hotelierPassword"
                     name="hotelierPassword"
                     value={hotelierPassword}
+                    onChange={(e) => setHotelierPassword(e.target.value)}
                     readOnly
                     placeholder="Sicheres Passwort generieren oder eingeben"
                     required
@@ -349,3 +350,5 @@ export default function CreateHotelPage() {
     </div>
   );
 }
+
+    
