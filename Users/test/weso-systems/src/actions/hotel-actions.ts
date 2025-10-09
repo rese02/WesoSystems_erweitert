@@ -359,12 +359,6 @@ export async function updateHotelierProfileAction(
   }
 }
 
-export async function revalidateHotelierProfileAction(hotelId: string) {
-    revalidatePath(`/dashboard/${hotelId}/profile`);
-    revalidatePath(`/dashboard/${hotelId}`);
-}
-
-
 export async function updateHotelLogo(hotelId: string, logoUrl: string) {
   const adminApp = initializeAdminApp();
   const db = getFirestore(adminApp);
