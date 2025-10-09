@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { initializeAdminApp } from '@/lib/firebase/admin';
@@ -361,6 +362,11 @@ export async function updateHotelierProfileAction(
     console.error('Error updating profile:', error);
     return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
   }
+}
+
+export async function revalidateHotelierProfileAction(hotelId: string) {
+    revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
 }
 
 
