@@ -1,3 +1,4 @@
+
 'use server';
 
 import { initializeAdminApp } from '@/lib/firebase/admin';
@@ -562,3 +563,5 @@ export async function updateHotelByAgencyAction(
     return { success: false, message: `Hotel konnte nicht aktualisiert werden. Fehler: ${errorMessage}` };
   }
 }
+
+    
