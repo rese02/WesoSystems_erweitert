@@ -52,22 +52,22 @@ export function DashboardSidebar({ role, hotelId, hotelName }: DashboardSidebarP
   const hotelierLinks = hotelId
     ? [
         {
-          href: `/dashboard/${hotelId}`,
+          href: `/hotel-dashboard/${hotelId}`,
           icon: <LayoutDashboard />,
           label: 'Dashboard',
         },
         {
-          href: `/dashboard/${hotelId}/bookings`,
+          href: `/hotel-dashboard/${hotelId}/bookings`,
           icon: <BookOpen />,
           label: 'Buchungen',
         },
         {
-          href: `/dashboard/${hotelId}/settings`,
+          href: `/hotel-dashboard/${hotelId}/settings`,
           icon: <Settings />,
           label: 'Stammdaten',
         },
          {
-          href: `/dashboard/${hotelId}/profile`,
+          href: `/hotel-dashboard/${hotelId}/profile`,
           icon: <User />,
           label: 'Profil',
         },

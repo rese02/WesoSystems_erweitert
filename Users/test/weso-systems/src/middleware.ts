@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isAgencyRoute = pathname.startsWith('/admin');
-  const isHotelierRoute = pathname.startsWith('/dashboard');
+  const isHotelierRoute = pathname.startsWith('/hotel-dashboard');
 
   const targetLoginUrl = isAgencyRoute ? '/agency/login' : '/hotel/login';
   const loginUrl = new URL(targetLoginUrl, request.url);

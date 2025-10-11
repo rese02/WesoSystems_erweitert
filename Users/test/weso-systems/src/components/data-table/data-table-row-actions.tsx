@@ -95,7 +95,7 @@ export function HotelDataTableRowActions<TData>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[220px]">
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
+            <Link href={`/hotel-dashboard/${hotel.id}`}>Hotelier-Dashboard ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
              <Link href={`/admin/hotel/${hotel.id}/edit`}>

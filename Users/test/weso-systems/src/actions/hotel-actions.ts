@@ -224,7 +224,7 @@ export async function createBookingAction(
       booking: fullBookingData 
     });
 
-    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/bookings`);
 
     const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const bookingLink = `${domain}/guest/${linkRef.id}`;
@@ -290,8 +290,8 @@ export async function updateBookingAction(
       await linkDocRef.update(updateObject);
     }
 
-    revalidatePath(`/dashboard/${hotelId}/bookings`);
-    revalidatePath(`/dashboard/${hotelId}/bookings/${bookingId}`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/bookings`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/bookings/${bookingId}`);
 
     return { success: true };
   } catch (error) {
@@ -333,11 +333,12 @@ export async function updateHotelierProfileAction(
     
     const uid = hotelData.hotelier.uid;
 
-    const updates: any = { 'hotelier.email': email };
+    const updates: any = {};
     
     const authUpdates: any = {};
     if (email !== hotelData.hotelier.email) {
         authUpdates.email = email;
+        updates['hotelier.email'] = email;
     }
 
     if (newPassword) {
@@ -354,18 +355,22 @@ export async function updateHotelierProfileAction(
       await auth.updateUser(uid, authUpdates);
     }
     
-    if (email !== hotelData.hotelier.email) {
+    if (Object.keys(updates).length > 0) {
         await hotelRef.update(updates);
     }
     
-    revalidatePath(`/dashboard/${hotelId}/profile`);
-    revalidatePath(`/dashboard/${hotelId}`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/profile`);
+    revalidatePath(`/hotel-dashboard/${hotelId}`);
 
     return { message: 'Profil erfolgreich aktualisiert!', success: true };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating profile:', error);
-    return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
+    let message = 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.';
+    if(error.code === 'auth/email-already-exists') {
+      message = 'Diese E-Mail-Adresse wird bereits von einem anderen Benutzer verwendet.';
+    }
+    return { message, success: false };
   }
 }
 
@@ -379,8 +384,8 @@ export async function updateHotelLogo(hotelId: string, logoUrl: string) {
     await hotelRef.update({
       logoUrl: logoUrl,
     });
-    revalidatePath(`/dashboard/${hotelId}/profile`);
-    revalidatePath(`/dashboard/${hotelId}`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/profile`);
+    revalidatePath(`/hotel-dashboard/${hotelId}`);
     return { success: true, message: 'Logo updated successfully.' };
   } catch (error) {
     console.error('Error updating hotel logo:', error);
@@ -402,7 +407,7 @@ export async function updateBookingStatus(
       status: status,
       updatedAt: FieldValue.serverTimestamp(),
     });
-    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/bookings`);
     return { success: true, message: 'Status erfolgreich aktualisiert.' };
   } catch (error) {
     console.error('Error updating booking status:', error);
@@ -436,7 +441,7 @@ export async function deleteBookingsAction(hotelId: string, bookingIds: string[]
 
     await batch.commit();
     
-    revalidatePath(`/dashboard/${hotelId}/bookings`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/bookings`);
     return { success: true, message: 'Ausgewählte Buchungen und zugehörige Links erfolgreich gelöscht.' };
 
   } catch (error) {
@@ -503,7 +508,7 @@ export async function updateHotelSettingsAction(
 
     await hotelRef.update(updates);
 
-    revalidatePath(`/dashboard/${hotelId}/settings`);
+    revalidatePath(`/hotel-dashboard/${hotelId}/settings`);
     return { message: 'Einstellungen erfolgreich aktualisiert!', success: true };
   } catch (error) {
     console.error('Error updating hotel settings:', error);

@@ -168,6 +168,6 @@ export async function finalizeBookingAction(
 
   // Bei Erfolg zur Danke-Seite weiterleiten
   revalidatePath(`/guest/${linkId}`);
-  revalidatePath(`/dashboard/${hotelId}/bookings`);
+  revalidatePath(`/hotel-dashboard/${hotelId}/bookings`);
   redirect(`/guest/${linkId}/thank-you`);
 }

@@ -58,7 +58,7 @@ export default function HotelLoginPage() {
       if (idTokenResult.claims.role === 'hotelier' && hotelId) {
         const cookieSet = await setSessionCookie(idToken);
         if (cookieSet) {
-          router.push(`/dashboard/${hotelId}`);
+          router.push(`/hotel-dashboard/${hotelId}`);
         } else {
           setError('Sitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.');
           await clientAuth.signOut();

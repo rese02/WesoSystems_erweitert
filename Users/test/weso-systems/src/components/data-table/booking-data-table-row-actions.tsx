@@ -94,10 +94,10 @@ export function BookingDataTableRowActions<TData>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[180px]">
           <DropdownMenuItem asChild>
-             <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}`}>Buchung ansehen</Link>
+             <Link href={`/hotel-dashboard/${params.hotelId}/bookings/${booking.id}`}>Buchung ansehen</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/${params.hotelId}/bookings/${booking.id}/edit`}>Buchung bearbeiten</Link>
+            <Link href={`/hotel-dashboard/${params.hotelId}/bookings/${booking.id}/edit`}>Buchung bearbeiten</Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyBookingLink}>
             Buchungslink kopieren
