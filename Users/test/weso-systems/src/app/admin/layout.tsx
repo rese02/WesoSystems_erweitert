@@ -21,8 +21,8 @@ export default function AdminLayout({
       <DashboardSidebar role="agency" />
       <SidebarInset>
         <DashboardHeader />
-        <main className={isFormPage ? "p-4 sm:p-6" : "p-4 sm:p-6 lg:p-10"}>
-          <div className={isFormPage ? "mx-auto max-w-4xl" : ""}>
+        <main className="p-4 sm:p-6 lg:p-10">
+          <div className={isFormPage ? "mx-auto max-w-4xl" : "mx-auto max-w-7xl"}>
              {children}
           </div>
         </main>
