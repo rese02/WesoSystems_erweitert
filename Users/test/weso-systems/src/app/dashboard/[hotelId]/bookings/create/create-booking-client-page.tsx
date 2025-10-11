@@ -55,7 +55,7 @@ export function CreateBookingClientPage({ hotelId, booking, config }: CreateBook
   const [date, setDate] = useState<DateRange | undefined>();
   const [rooms, setRooms] = useState<RoomState[]>(
     booking?.rooms.map((r, i) => ({ ...r, id: i + 1 })) || // Start with IDs > 0
-    [{ id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 2, children: 0, infants: 0 }]
+    [{ id: Date.now(), type: config.roomCategories[0] || 'Standard', adults: 1, children: 0, infants: 0 }]
   );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
