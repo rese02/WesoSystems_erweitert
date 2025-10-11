@@ -563,5 +563,3 @@ export async function updateHotelByAgencyAction(
     return { success: false, message: `Hotel konnte nicht aktualisiert werden. Fehler: ${errorMessage}` };
   }
 }
-
-    
