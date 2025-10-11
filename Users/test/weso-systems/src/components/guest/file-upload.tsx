@@ -79,7 +79,7 @@ type FileUploadProps = {
   onUploadComplete: (fileType: string, downloadUrl: string) => void;
   onUploadStart: () => void;
   onDelete: (fileType: string) => void;
-  lang: 'de' | 'en' | 'it';
+  lang?: 'de' | 'en' | 'it';
 };
 
 export function FileUpload({
