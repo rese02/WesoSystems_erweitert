@@ -481,6 +481,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                         <div className="grid gap-2">
                             <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
                             <FileUpload
+                                lang={lang}
                                 bookingId={linkId}
                                 fileType="idFront"
                                 uploadedFileUrl={documentUrls.idFront || null}
@@ -493,6 +494,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                          <div className="grid gap-2">
                             <Label>{T('idBackLabel')} <span className="text-destructive">*</span></Label>
                              <FileUpload
+                                lang={lang}
                                 bookingId={linkId}
                                 fileType="idBack"
                                 uploadedFileUrl={documentUrls.idBack || null}
@@ -542,6 +544,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                              <div className="grid gap-2">
                                 <Label>{T('idFrontLabel')} <span className="text-destructive">*</span></Label>
                                 <FileUpload
+                                    lang={lang}
                                     bookingId={linkId}
                                     fileType={`fellowTraveler_${traveler.id}_idFront`}
                                     uploadedFileUrl={traveler.idFrontUrl || null}
@@ -553,6 +556,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                             <div className="grid gap-2">
                                 <Label>{T('idBackLabel')} <span className="text-destructive">*</span></Label>
                                 <FileUpload
+                                    lang={lang}
                                     bookingId={linkId}
                                     fileType={`fellowTraveler_${traveler.id}_idBack`}
                                     uploadedFileUrl={traveler.idBackUrl || null}
@@ -632,6 +636,7 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
               <div>
                 <Label className="mb-2 block font-medium">{T('uploadProofLabel')} <span className="text-destructive">*</span></Label>
                 <FileUpload
+                    lang={lang}
                     bookingId={linkId}
                     fileType="paymentProof"
                     uploadedFileUrl={documentUrls.paymentProof || null}
