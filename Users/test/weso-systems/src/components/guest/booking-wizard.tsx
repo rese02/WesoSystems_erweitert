@@ -39,7 +39,7 @@ type TranslationKey =
   | 'accountHolder' | 'iban' | 'bic' | 'bank' | 'uploadProofLabel' | 'uploadProofDescription' 
   | 'reviewTitle' | 'reviewDescription' | 'agb' | 'agbHint' | 'validationErrorTitle' 
   | 'serverErrorTitle' | 'submitButton' | 'backButton' | 'nextButton' | 'uploading' 
-  | 'requiredField' | 'copyToastTitle';
+  | 'requiredField' | 'copyToastTitle' | 'infantsTitle' | 'infantsDescription' | 'infantLabel';
 
 
 const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): string | string[] => {
@@ -66,7 +66,7 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         fileTypeHint: "JPG, PNG, PDF (max 5MB).",
         notesLabel: "Ihre Anmerkungen (optional)",
         notesPlaceholder: "Haben Sie besondere Wünsche oder Anmerkungen?",
-        fellowTravelersTitle: "Mitreisende Personen",
+        fellowTravelersTitle: "Mitreisende Personen (Erwachsene & Kinder)",
         fellowTravelersDescription: (count: number) => `Tragen Sie hier die Namen aller ${count} Mitreisenden ein.`,
         fellowTravelerLabel: (index: number) => `Mitreisender ${index + 1}: Vor- und Nachname`,
         fellowTravelerPlaceholder: "Vor- und Nachname",
@@ -98,6 +98,9 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         uploading: "Lädt hoch...",
         requiredField: "Pflichtfeld",
         copyToastTitle: (field: string) => `${field} kopiert!`,
+        infantsTitle: "Kleinkinder (0-2 Jahre)",
+        infantsDescription: (count: number) => `Bitte tragen Sie die Namen der ${count} Kleinkinder ein.`,
+        infantLabel: (index: number) => `Kleinkind ${index + 1}: Vor- und Nachname`,
     },
     en: {
         steps: ['Guest', 'Companions', 'Payment', 'Details', 'Review'],
@@ -121,7 +124,7 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         fileTypeHint: "JPG, PNG, PDF (max 5MB).",
         notesLabel: "Your Remarks (optional)",
         notesPlaceholder: "Do you have any special requests or remarks?",
-        fellowTravelersTitle: "Fellow Travelers",
+        fellowTravelersTitle: "Fellow Travelers (Adults & Children)",
         fellowTravelersDescription: (count: number) => `Please enter the names of all ${count} fellow travelers here.`,
         fellowTravelerLabel: (index: number) => `Fellow Traveler ${index + 1}: First and Last Name`,
         fellowTravelerPlaceholder: "First and Last Name",
@@ -153,6 +156,9 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         uploading: "Uploading...",
         requiredField: "Required",
         copyToastTitle: (field: string) => `${field} copied!`,
+        infantsTitle: "Infants (0-2 years)",
+        infantsDescription: (count: number) => `Please enter the names of the ${count} infants.`,
+        infantLabel: (index: number) => `Infant ${index + 1}: First and Last Name`,
     },
     it: {
         steps: ['Ospite', 'Accompagnatori', 'Pagamento', 'Dettagli', 'Verifica'],
@@ -176,7 +182,7 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         fileTypeHint: "JPG, PNG, PDF (max 5MB).",
         notesLabel: "Le Sue Note (opzionale)",
         notesPlaceholder: "Ha richieste o note particolari?",
-        fellowTravelersTitle: "Accompagnatori",
+        fellowTravelersTitle: "Accompagnatori (Adulti e Bambini)",
         fellowTravelersDescription: (count: number) => `Inserisca qui i nomi di tutti gli ${count} accompagnatori.`,
         fellowTravelerLabel: (index: number) => `Accompagnatore ${index + 1}: Nome e Cognome`,
         fellowTravelerPlaceholder: "Nome e Cognome",
@@ -208,6 +214,9 @@ const t = (lang: 'de' | 'en' | 'it', key: TranslationKey, ...args: any[]): strin
         uploading: "Caricamento...",
         requiredField: "Obbligatorio",
         copyToastTitle: (field: string) => `${field} copiato!`,
+        infantsTitle: "Neonati (0-2 anni)",
+        infantsDescription: (count: number) => `Si prega di inserire i nomi dei ${count} neonati.`,
+        infantLabel: (index: number) => `Neonato ${index + 1}: Nome e Cognome`,
     },
   };
   const value = translations[lang][key];
@@ -228,6 +237,10 @@ type FellowTraveler = {
     idFrontUrl: string;
     idBackUrl: string;
 };
+type Infant = {
+    id: number;
+    name: string;
+}
 type PaymentOption = 'deposit' | 'full';
 
 export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
@@ -262,13 +275,19 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const [uploadChoice, setUploadChoice] = useState(idUploadRequirement === 'required' ? 'now' : 'later');
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
 
-  const totalGuests = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
-  const numberOfFellowTravelers = totalGuests > 1 ? totalGuests - 1 : 0;
+  const totalAdultsAndChildren = initialData.booking.rooms.reduce((sum, room) => sum + room.adults + room.children, 0);
+  const numberOfFellowTravelers = totalAdultsAndChildren > 1 ? totalAdultsAndChildren - 1 : 0;
+  const numberOfInfants = initialData.booking.rooms.reduce((sum, room) => sum + room.infants, 0);
+
 
   const [fellowTravelers, setFellowTravelers] = useState<FellowTraveler[]>(
     Array.from({ length: numberOfFellowTravelers }, (_, i) => ({ id: i + 1, name: '', idFrontUrl: '', idBackUrl: '' }))
   );
   
+  const [infants, setInfants] = useState<Infant[]>(
+    Array.from({ length: numberOfInfants }, (_, i) => ({ id: i + 1, name: '' }))
+  );
+
   const [formState, formAction, isPending] = useActionState(
     finalizeBookingAction.bind(null, linkId),
     { message: '', errors: null, isValid: true }
@@ -321,6 +340,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
   const handleTravelerNameChange = (id: number, name: string) => {
     setFellowTravelers(prev => prev.map(t => t.id === id ? { ...t, name } : t));
   };
+  
+  const handleInfantNameChange = (id: number, name: string) => {
+    setInfants(prev => prev.map(i => i.id === id ? { ...i, name } : i));
+  };
 
 
   const isStep1Valid = () => {
@@ -339,6 +362,9 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
       if (uploadChoice === 'now' && !fellowTravelers.every(t => t.idFrontUrl && t.idBackUrl)) {
         return false;
       }
+    }
+    if (numberOfInfants > 0) {
+        if (!infants.every(i => i.name.trim() !== '')) return false;
     }
     return true;
   };
@@ -513,17 +539,17 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
             </CardContent>
           </Card>
         );
-      case 1: // Mitreiser
+      case 1: // Mitreiser & Kleinkinder
         return (
           <Card>
             <CardHeader>
               <CardTitle>{T('fellowTravelersTitle')}</CardTitle>
                <CardDescription>
-                {T('fellowTravelersDescription', numberOfFellowTravelers)}
+                {numberOfFellowTravelers > 0 ? T('fellowTravelersDescription', numberOfFellowTravelers) : T('noFellowTravelers')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {fellowTravelers.length > 0 ? fellowTravelers.map((traveler, index) => (
+              {fellowTravelers.length > 0 && fellowTravelers.map((traveler, index) => (
                 <div key={traveler.id} className="space-y-4 rounded-md border p-4">
                   <div className="flex items-end gap-2">
                     <div className="flex-grow">
@@ -569,7 +595,28 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                     </div>
                   )}
                 </div>
-              )) : <p className="text-muted-foreground">{T('noFellowTravelers')}</p>}
+              ))}
+              {numberOfInfants > 0 && (
+                <>
+                <Separator/>
+                <div className="space-y-4">
+                    <CardTitle className="text-lg">{T('infantsTitle')}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{T('infantsDescription', numberOfInfants)}</p>
+                    {infants.map((infant, index) => (
+                        <div key={infant.id} className="grid gap-2">
+                            <Label htmlFor={`infant-name-${infant.id}`}>{T('infantLabel', index)} <span className="text-destructive">*</span></Label>
+                            <Input
+                                id={`infant-name-${infant.id}`}
+                                placeholder={T('fellowTravelerPlaceholder')} 
+                                value={infant.name}
+                                onChange={(e) => handleInfantNameChange(infant.id, e.target.value)}
+                                required
+                            />
+                        </div>
+                    ))}
+                </div>
+                </>
+              )}
             </CardContent>
           </Card>
         );
@@ -678,6 +725,10 @@ export function BookingWizard({ linkId, initialData }: BookingWizardProps) {
                         <input type="hidden" name={`fellowTraveler_${t.id}_idFrontUrl`} value={t.idFrontUrl} />
                         <input type="hidden" name={`fellowTraveler_${t.id}_idBackUrl`} value={t.idBackUrl} />
                     </Fragment>
+                ))}
+                
+                {infants.map((infant) => (
+                    <input key={infant.id} type="hidden" name={`infant_${infant.id}_name`} value={infant.name} />
                 ))}
 
                  <input type="hidden" name="idFrontUrl" value={documentUrls.idFront} />

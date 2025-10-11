@@ -4,7 +4,7 @@ import { initializeAdminApp } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Booking, FellowTravelerData, GuestData, Hotel } from '@/lib/types';
+import { Booking, FellowTravelerData, GuestData, Hotel, InfantData } from '@/lib/types';
 import { sendBookingConfirmation } from '@/lib/email';
 
 type FormState = {
@@ -75,6 +75,23 @@ export async function finalizeBookingAction(
             idBackUrl: t.idBackUrl || '',
         }));
 
+    // Kleinkinder strukturiert extrahieren
+    const infantsMap = new Map<string, Partial<InfantData>>();
+    for (const [key, value] of formData.entries()) {
+        const match = key.match(/^infant_(\d+)_name$/);
+        if (match && typeof value === 'string') {
+            const [, id] = match;
+            if (!infantsMap.has(id)) {
+                infantsMap.set(id, {});
+            }
+            const infant = infantsMap.get(id)!;
+            infant.name = value;
+        }
+    }
+    const infants = Array.from(infantsMap.values())
+        .filter(i => i.name && i.name.trim() !== '')
+        .map(i => ({ name: i.name || '' }));
+
 
     const finalGuestData: GuestData = {
         firstName: rawData.firstName as string,
@@ -87,6 +104,7 @@ export async function finalizeBookingAction(
         city: rawData.city as string,
         specialRequests: (rawData.specialRequests as string) || '',
         fellowTravelers: fellowTravelers,
+        infants: infants,
         documentUrls: {
             idFront: rawData.idFrontUrl as string || '',
             idBack: rawData.idBackUrl as string || '',

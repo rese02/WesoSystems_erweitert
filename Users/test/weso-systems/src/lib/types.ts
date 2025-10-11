@@ -85,6 +85,10 @@ export type FellowTravelerData = {
   idBackUrl: string;
 };
 
+export type InfantData = {
+  name: string;
+};
+
 
 export type GuestData = {
   firstName: string;
@@ -96,6 +100,7 @@ export type GuestData = {
   zip: string;
   city: string;
   fellowTravelers: FellowTravelerData[];
+  infants: InfantData[];
   specialRequests?: string;
   documentUrls: {
     idFront: string;
