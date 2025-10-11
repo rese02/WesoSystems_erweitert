@@ -332,8 +332,14 @@ export async function updateHotelierProfileAction(
     
     const uid = hotelData.hotelier.uid;
 
+    // Nur die E-Mail im Firestore-Dokument aktualisieren
     const updates: any = { 'hotelier.email': email };
-    const authUpdates: any = { email: email };
+    
+    // Auth-Updates vorbereiten
+    const authUpdates: any = {};
+    if (email !== hotelData.hotelier.email) {
+        authUpdates.email = email;
+    }
 
     if (newPassword) {
       if (newPassword.length < 6) {
@@ -345,8 +351,15 @@ export async function updateHotelierProfileAction(
       authUpdates.password = newPassword;
     }
     
-    await auth.updateUser(uid, authUpdates);
-    await hotelRef.update(updates);
+    // Nur Auth aktualisieren, wenn es Änderungen gibt
+    if (Object.keys(authUpdates).length > 0) {
+      await auth.updateUser(uid, authUpdates);
+    }
+    
+    // Nur Firestore aktualisieren, wenn die E-Mail sich geändert hat
+    if (email !== hotelData.hotelier.email) {
+        await hotelRef.update(updates);
+    }
     
     revalidatePath(`/dashboard/${hotelId}/profile`);
     revalidatePath(`/dashboard/${hotelId}`);
@@ -358,6 +371,7 @@ export async function updateHotelierProfileAction(
     return { message: 'Ein Fehler ist aufgetreten. Das Profil konnte nicht aktualisiert werden.', success: false };
   }
 }
+
 
 export async function updateHotelLogo(hotelId: string, logoUrl: string) {
   const adminApp = initializeAdminApp();

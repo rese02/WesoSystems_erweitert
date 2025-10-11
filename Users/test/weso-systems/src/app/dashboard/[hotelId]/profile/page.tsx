@@ -29,23 +29,24 @@ const initialState = {
 
 export default function HotelierProfilePage() {
   const params = useParams<{ hotelId: string }>();
+  const hotelId = params.hotelId;
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   
-  const updateAction = updateHotelierProfileAction.bind(null, params.hotelId);
+  const updateAction = updateHotelierProfileAction.bind(null, hotelId);
   const [state, formAction, isPending] = useActionState(updateAction, initialState);
 
   useEffect(() => {
-    if (!params.hotelId) return;
-    const hotelRef = doc(db, 'hotels', params.hotelId);
+    if (!hotelId) return;
+    const hotelRef = doc(db, 'hotels', hotelId);
     const unsubscribe = onSnapshot(hotelRef, (doc) => {
         if (doc.exists()) {
             setHotel({ id: doc.id, ...doc.data() } as Hotel);
         }
     });
     return () => unsubscribe();
-  }, [params.hotelId]);
+  }, [hotelId]);
 
   useEffect(() => {
     if (state.message) {
