@@ -106,10 +106,10 @@ function AgencyDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-headline text-3xl font-bold">Hotelübersicht</h1>
+            <h1 className="font-headline text-3xl font-bold tracking-tight">Hotelübersicht</h1>
             <p className="mt-1 text-muted-foreground">
               Verwalten Sie alle Ihre Hotelpartner an einem Ort.
             </p>
