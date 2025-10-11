@@ -1,10 +1,11 @@
+
 'use server';
 
 import { initializeAdminApp } from '@/lib/firebase/admin';
 import { Timestamp, FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
-import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel } from '@/lib/types';
+import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel, InfantData } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
 
 type CreateHotelState = {
@@ -332,10 +333,8 @@ export async function updateHotelierProfileAction(
     
     const uid = hotelData.hotelier.uid;
 
-    // Nur die E-Mail im Firestore-Dokument aktualisieren
     const updates: any = { 'hotelier.email': email };
     
-    // Auth-Updates vorbereiten
     const authUpdates: any = {};
     if (email !== hotelData.hotelier.email) {
         authUpdates.email = email;
@@ -351,12 +350,10 @@ export async function updateHotelierProfileAction(
       authUpdates.password = newPassword;
     }
     
-    // Nur Auth aktualisieren, wenn es Änderungen gibt
     if (Object.keys(authUpdates).length > 0) {
       await auth.updateUser(uid, authUpdates);
     }
     
-    // Nur Firestore aktualisieren, wenn die E-Mail sich geändert hat
     if (email !== hotelData.hotelier.email) {
         await hotelRef.update(updates);
     }
@@ -382,8 +379,8 @@ export async function updateHotelLogo(hotelId: string, logoUrl: string) {
     await hotelRef.update({
       logoUrl: logoUrl,
     });
-    revalidatePath(`/dashboard/${hotelId}`);
     revalidatePath(`/dashboard/${hotelId}/profile`);
+    revalidatePath(`/dashboard/${hotelId}`);
     return { success: true, message: 'Logo updated successfully.' };
   } catch (error) {
     console.error('Error updating hotel logo:', error);
