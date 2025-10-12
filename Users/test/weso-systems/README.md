@@ -7,7 +7,7 @@ Dieses Dokument beschreibt die Architektur, die Workflows und die detaillierte F
 Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, die klar voneinander getrennt sind:
 
 1.  **Agentur-Workflow (`/admin`)**: Die Agentur ist der Super-Admin des Systems. Sie kann neue Hotelsysteme anlegen, bestehende verwalten und hat die volle Kontrolle über alle Konfigurationen.
-2.  **Hotelier-Workflow (`/dashboard`)**: Jeder Hotelier hat sein eigenes, abgeschottetes Dashboard. Er kann Buchungen erstellen, den Status verwalten, seine Stammdaten (teilweise) pflegen und hat Einblick in die Statistiken seines Hotels.
+2.  **Hotelier-Workflow (`/hotel-dashboard`)**: Jeder Hotelier hat sein eigenes, abgeschottetes Dashboard. Er kann Buchungen erstellen, den Status verwalten, seine Stammdaten (teilweise) pflegen und hat Einblick in die Statistiken seines Hotels.
 3.  **Gast-Workflow (`/guest`)**: Der Gast interagiert nicht direkt mit dem Dashboard. Er erhält einen einzigartigen, sicheren Link, über den er seine persönlichen Daten für eine bestehende Buchung vervollständigt, Dokumente hochlädt und die Zahlungsinformationen erhält.
 
 ### Technische Architektur im Überblick
@@ -34,10 +34,13 @@ Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, d
 *   **Zweck**: Sichere Anmeldung für die Agentur.
 *   **UI-Elemente**: Formular mit Feldern für "E-Mail" und "Passwort".
 *   **Funktionalität**:
-    1.  Das Formular sendet die Daten an die `loginAgencyAction` (Server Action).
-    2.  Auf dem Server werden die eingegebenen Daten gegen die in den Umgebungsvariablen (`AGENCY_EMAIL`, `AGENCY_PASSWORD`) hinterlegten Anmeldedaten geprüft.
-    3.  Bei Erfolg wird ein sicheres, `httpOnly` Session-Cookie gesetzt und der Benutzer wird zum Agentur-Dashboard (`/admin`) weitergeleitet.
-    4.  Bei Fehler wird eine Fehlermeldung angezeigt.
+    1.  Die Anmeldung erfolgt clientseitig über ein benutzerdefiniertes Token-Verfahren.
+    2.  Ein `useActionState`-Hook ruft die `loginAgencyAction` (Server Action) auf.
+    3.  Die Server Action prüft die Anmeldedaten gegen die in den Umgebungsvariablen gespeicherten Werte.
+    4.  Bei Erfolg generiert die Action ein `Custom Token` von Firebase Admin.
+    5.  Der Client empfängt das Token und meldet sich damit bei Firebase Auth (`signInWithCustomToken`) an.
+    6.  Das daraus resultierende ID-Token wird an die API-Route `/api/auth/login` gesendet, die ein sicheres, `httpOnly` Session-Cookie setzt.
+    7.  Der Benutzer wird zum Agentur-Dashboard (`/admin`) weitergeleitet.
 
 ### 2.3. Agentur-Dashboard (Parent Route: `/admin`)
 
@@ -50,7 +53,7 @@ Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, d
     *   **Datentabelle**: Zeigt alle Hotels mit den Spalten "Hotelname", "Domain", "Erstellt am".
         *   **Filter**: Ein Suchfeld, um die Liste der Hotels nach Namen zu filtern.
         *   **Aktionen pro Zeile (Dropdown-Menü)**:
-            *   **Hotelier-Dashboard ansehen**: Leitet zum Dashboard des jeweiligen Hotels weiter (`/dashboard/[hotelId]`).
+            *   **Hotelier-Dashboard ansehen**: Leitet zum Dashboard des jeweiligen Hotels weiter (`/hotel-dashboard/[hotelId]`).
             *   **Einstellungen**: Führt zur Bearbeitungsseite für dieses Hotel (`/admin/hotel/[hotelId]/edit`).
             *   **Initiale Zugangsdaten kopieren**: Kopiert E-Mail und initiales Passwort in die Zwischenablage.
             *   **Hotel & Benutzer löschen**: Öffnet einen Bestätigungsdialog. Bei Bestätigung wird das Hotel, der Firebase Auth User und alle zugehörigen Daten (Buchungslinks) gelöscht.
@@ -99,11 +102,11 @@ Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, d
     1.  Der Login geschieht **clientseitig** mit `signInWithEmailAndPassword` von Firebase.
     2.  Nach erfolgreichem Login wird das ID-Token des Benutzers an die Server-API `/api/auth/login` gesendet.
     3.  Die API verifiziert das Token, erstellt ein sicheres Session-Cookie und sendet es an den Browser.
-    4.  Der Client liest die `hotelId` aus den Custom Claims des ID-Tokens und leitet den Benutzer zu seinem Dashboard (`/dashboard/[hotelId]`) weiter.
+    4.  Der Client liest die `hotelId` aus den Custom Claims des ID-Tokens und leitet den Benutzer zu seinem Dashboard (`/hotel-dashboard/[hotelId]`) weiter.
 
-### 2.5. Hotelier-Dashboard (Parent Route: `/dashboard/[hotelId]`)
+### 2.5. Hotelier-Dashboard (Parent Route: `/hotel-dashboard/[hotelId]`)
 
-#### 2.5.1. Übersicht (`/dashboard/[hotelId]`)
+#### 2.5.1. Übersicht (`/hotel-dashboard/[hotelId]`)
 
 *   **Zweck**: Startseite mit den wichtigsten Kennzahlen und Aktivitäten für den Hotelier.
 *   **UI-Elemente**:
@@ -113,11 +116,11 @@ Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, d
     *   Kalender zur Visualisierung (Funktion noch nicht implementiert).
 *   **Funktionalität**: Daten werden in Echtzeit aus der `bookings`-Subcollection des Hotels geladen.
 
-#### 2.5.2. Buchungsübersicht (`/dashboard/[hotelId]/bookings`)
+#### 2.5.2. Buchungsübersicht (`/hotel-dashboard/[hotelId]/bookings`)
 
 *   **Zweck**: Anzeigen und Verwalten aller Buchungen eines Hotels.
 *   **UI-Elemente**:
-    *   Button: "Neue Buchung" -> Führt zu `/dashboard/[hotelId]/bookings/create`.
+    *   Button: "Neue Buchung" -> Führt zu `/hotel-dashboard/[hotelId]/bookings/create`.
     *   **Datentabelle**: Zeigt alle Buchungen mit Spalten für "ID", "Gast", "Check-in/out", "Status", "Letzte Änderung", "Zahlungsstatus".
         *   **Filter**: Suchfeld für Gastnamen und ein Dropdown zum Filtern nach Buchungsstatus.
         *   **Massenaktionen**: Checkboxen zum Auswählen mehrerer Buchungen. Ein "Löschen"-Button erscheint, der nach Bestätigung alle ausgewählten Buchungen und deren Buchungslinks löscht.
@@ -189,7 +192,7 @@ Die Anwendung ist um drei zentrale Benutzerrollen (Workflows) herum aufgebaut, d
 
 ### Workflow 2: Hotelier erstellt eine Buchung und Gast füllt Daten aus
 
-1.  **Route**: `/dashboard/[hotelId]/bookings/create`
+1.  **Route**: `/hotel-dashboard/[hotelId]/bookings/create`
 2.  **Aktion**: Hotelier füllt das Buchungsformular aus (Gastname, Preis, Zimmer etc.) und klickt "Buchung erstellen".
 3.  **`createBookingAction` (Server Action)**:
     *   `db.collection('hotels').doc(hotelId).collection('bookings').add()`: Erstellt die Kernbuchung in der Subcollection des Hotels. Status ist `Pending`.

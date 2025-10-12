@@ -1,7 +1,7 @@
 'use server';
 
-import { initializeAdminApp } from '@/lib/firebase/admin';
-import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase/admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { Booking, FellowTravelerData, GuestData, Hotel, InfantData } from '@/lib/types';
@@ -19,9 +19,6 @@ export async function finalizeBookingAction(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-    
   const bookingLinkRef = db.collection('bookingLinks').doc(linkId);
   
   try {

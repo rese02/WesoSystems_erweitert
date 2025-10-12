@@ -1,9 +1,8 @@
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
-import { getApps, initializeApp, App } from 'firebase-admin/app';
+import { getApps } from 'firebase-admin/app';
 
-// Diese Funktion stellt sicher, dass die Firebase Admin-App nur einmal initialisiert wird (Singleton-Pattern).
-export const initializeAdminApp = (): App => {
+function initializeAdminApp() {
   const apps = getApps();
   if (apps.length > 0) {
     return apps[0]!;
@@ -19,7 +18,7 @@ export const initializeAdminApp = (): App => {
     }
     const serviceAccount = JSON.parse(serviceAccountString);
     
-    return initializeApp({
+    return admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
@@ -28,7 +27,7 @@ export const initializeAdminApp = (): App => {
     // Fallback für die lokale Entwicklung, falls die Umgebungsvariable nicht gesetzt ist.
     try {
       const serviceAccount = require('../../../serviceAccountKey.json');
-      return initializeApp({
+      return admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
@@ -41,4 +40,12 @@ export const initializeAdminApp = (): App => {
       throw new Error('Firebase Admin SDK konnte nicht initialisiert werden. Siehe Server-Protokolle für Details.');
     }
   }
-};
+}
+
+const adminApp = initializeAdminApp();
+
+const db = admin.firestore();
+const auth = admin.auth();
+const storage = admin.storage();
+
+export { db, auth, storage };

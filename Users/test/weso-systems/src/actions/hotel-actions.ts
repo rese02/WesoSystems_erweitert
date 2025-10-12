@@ -1,11 +1,10 @@
 
 'use server';
 
-import { initializeAdminApp } from '@/lib/firebase/admin';
-import { Timestamp, FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { db, auth } from '@/lib/firebase/admin';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel, InfantData } from '@/lib/types';
+import { Booking, Room, IdUploadRequirement, BookingStatus, Hotel } from '@/lib/types';
 import { DateRange } from 'react-day-picker';
 
 type CreateHotelState = {
@@ -18,10 +17,6 @@ export async function createHotelAction(
   prevState: CreateHotelState,
   formData: FormData
 ): Promise<CreateHotelState> {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  const auth = getAuth(adminApp);
-
   const hotelierEmail = formData.get('hotelierEmail') as string;
   const hotelierPassword = formData.get('hotelierPassword') as string;
 
@@ -127,10 +122,6 @@ export async function createHotelAction(
 }
 
 export async function deleteHotelAction(hotelId: string) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  const auth = getAuth(adminApp);
-
   try {
     const hotelDoc = await db.collection('hotels').doc(hotelId).get();
     const hotelData = hotelDoc.data();
@@ -175,9 +166,6 @@ export async function createBookingAction(
   rooms: Room[],
   date?: DateRange
 ) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-
   if (!date?.from || !date?.to) {
     return {success: false, message: 'An- und Abreisedatum sind erforderlich.'};
   }
@@ -243,9 +231,6 @@ export async function updateBookingAction(
   rooms: Room[],
   date?: DateRange
 ) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  
   if (!date?.from || !date?.to) {
     return {success: false, message: 'An- und Abreisedatum sind erforderlich.'};
   }
@@ -311,10 +296,6 @@ export async function updateHotelierProfileAction(
   prevState: UpdateProfileState,
   formData: FormData
 ): Promise<UpdateProfileState> {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  const auth = getAuth(adminApp);
-
   const email = formData.get('email') as string;
   const newPassword = formData.get('new-password') as string;
   const confirmPassword = formData.get('confirm-password') as string;
@@ -376,9 +357,6 @@ export async function updateHotelierProfileAction(
 
 
 export async function updateHotelLogo(hotelId: string, logoUrl: string) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  
   try {
     const hotelRef = db.collection('hotels').doc(hotelId);
     await hotelRef.update({
@@ -398,9 +376,6 @@ export async function updateBookingStatus(
   bookingId: string,
   status: BookingStatus
 ) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-
   try {
     const bookingRef = db.collection('hotels').doc(hotelId).collection('bookings').doc(bookingId);
     await bookingRef.update({
@@ -416,9 +391,6 @@ export async function updateBookingStatus(
 }
 
 export async function deleteBookingsAction(hotelId: string, bookingIds: string[]) {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-
   if (!bookingIds || bookingIds.length === 0) {
     return { success: false, message: 'Keine Buchungen zum Löschen ausgewählt.' };
   }
@@ -461,9 +433,6 @@ export async function updateHotelSettingsAction(
   formData: FormData
 ): Promise<UpdateSettingsState> {
 
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
-  
   const hotelRef = db.collection('hotels').doc(hotelId);
 
   try {
@@ -521,8 +490,6 @@ export async function updateHotelByAgencyAction(
   prevState: UpdateSettingsState,
   formData: FormData
 ): Promise<UpdateSettingsState> {
-  const adminApp = initializeAdminApp();
-  const db = getFirestore(adminApp);
 
   const hotelRef = db.collection('hotels').doc(hotelId);
 

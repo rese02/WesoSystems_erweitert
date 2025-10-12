@@ -3,7 +3,7 @@
 import nodemailer from 'nodemailer';
 import { Booking, Hotel } from './types';
 import { bookingConfirmationEmailTemplate } from '@/components/email/booking-confirmation-email';
-import { initializeAdminApp } from './firebase/admin';
+import { db } from './firebase/admin';
 
 interface EmailPayload {
     booking: Booking;
@@ -11,8 +11,6 @@ interface EmailPayload {
 }
 
 export async function sendBookingConfirmation({ booking, hotel }: EmailPayload) {
-    initializeAdminApp(); // Ensures admin app is initialized
-
     if (!booking.guestDetails?.email) {
         console.error("E-Mail-Versand fehlgeschlagen: Gast-E-Mail ist nicht verfügbar.", {bookingId: booking.id});
         return { success: false, message: 'Guest email is not available.' };
